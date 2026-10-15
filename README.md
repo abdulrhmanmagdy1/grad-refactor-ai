@@ -13,6 +13,8 @@
 - [طريقة الشغل والتاسكات](CONTRIBUTING.md)
 - [التيم والمسؤوليات](docs/planning/team.md)
 - [لوحة العمل والروابط](docs/planning/github-workspace.md)
+- [تاسكات المشروع](docs/planning/task-index.md)
+- [خطوات أول يوم](docs/development/first-day.md)
 
 ## تشغيل سريع
 

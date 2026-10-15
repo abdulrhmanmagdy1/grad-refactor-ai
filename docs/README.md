@@ -16,6 +16,7 @@
 | [بطاقة الموديل](data-and-training/model-card.md) | أصل الموديل وحدوده ونتائجه |
 | [منهج التقييم](evaluation/protocol.md) | المقارنات والمقاييس |
 | [خطة المراحل](planning/roadmap.md) | نواتج الأسابيع ومراجعات الدكتورة |
+| [فهرس التاسكات](planning/task-index.md) | روابط المهام وشروط القبول على GitHub |
 | [التيم](planning/team.md) | الأسماء وقواعد توزيع العمل |
 | [المخاطر](planning/risks.md) | المخاطر والاستجابة لها |
 | [مساحة GitHub](planning/github-workspace.md) | روابط التاسكات ولوحة المتابعة |
