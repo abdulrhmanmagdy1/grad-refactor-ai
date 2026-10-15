@@ -1,0 +1,21 @@
+name: مراجعة الدكتورة
+description: عرض ناتج مرحلة وتسجيل القرارات
+title: "[Review] "
+labels: [supervisor]
+body:
+  - type: textarea
+    id: evidence
+    attributes:
+      label: المرحلة والمخرجات وروابط الديمو والنتائج
+    validations:
+      required: true
+  - type: textarea
+    id: questions
+    attributes:
+      label: الأسئلة والقرارات المطلوبة
+    validations:
+      required: true
+  - type: textarea
+    id: decisions
+    attributes:
+      label: الملاحظات والقرارات وتاسكات المتابعة بعد الاجتماع

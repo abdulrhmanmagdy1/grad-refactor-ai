@@ -1,0 +1,17 @@
+{
+  "model_id": "CHOOSE_AFTER_FEASIBILITY",
+  "model_revision": "CHOOSE_EXACT_REVISION",
+  "dataset": "data/curated.jsonl",
+  "output_dir": "runs/lora-first",
+  "seed": 42,
+  "max_length": 512,
+  "lora_rank": 8,
+  "lora_alpha": 16,
+  "target_modules": [
+    "q_proj",
+    "v_proj"
+  ],
+  "learning_rate": 0.0002,
+  "epochs": 1,
+  "gradient_accumulation_steps": 8
+}

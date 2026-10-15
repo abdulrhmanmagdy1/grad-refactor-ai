@@ -1,0 +1,16 @@
+name: مشكلة
+description: خطأ قابل لإعادة الإنتاج
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: خطوات إعادة المشكلة والمتوقع والفعلي
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: البيئة والإصدار والدليل
+      description: لا ترفق أسرارًا أو بيانات خاصة.

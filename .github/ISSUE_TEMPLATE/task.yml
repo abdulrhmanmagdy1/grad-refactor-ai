@@ -1,0 +1,21 @@
+name: تاسك تنفيذ أو بحث
+description: مهمة لها ناتج وشروط قبول
+title: "[Task] "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: الهدف والناتج
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: شروط القبول وطريقة التحقق
+      placeholder: قائمة قابلة للفحص وروابط المتطلبات
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: الاعتماديات والمسؤول والمراجع

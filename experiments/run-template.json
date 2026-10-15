@@ -1,0 +1,21 @@
+{
+  "status": "template_not_run",
+  "run_id": null,
+  "code_sha": null,
+  "model_id": null,
+  "model_revision": null,
+  "dataset_sha256": null,
+  "split_manifest": null,
+  "hardware": null,
+  "dependency_lock": null,
+  "config": null,
+  "seed": null,
+  "duration_seconds": null,
+  "peak_memory_mb": null,
+  "validation_metrics": null,
+  "test_metrics": null,
+  "failures": [],
+  "artifact_url": null,
+  "artifact_sha256": null,
+  "reviewer": null
+}
