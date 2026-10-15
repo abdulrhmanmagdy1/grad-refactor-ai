@@ -6,6 +6,8 @@
 - [التاسكات](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues)
 - [المراحل](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/milestones)
 - [لوحة المشروع](https://github.com/users/abdulrhmanmagdy1/projects/1)
+- [عرض المراحل والمسؤولين](https://github.com/users/abdulrhmanmagdy1/projects/1/views/2)
+- [فهرس التاسكات](task-index.md)
 
 ## مرجع العمل
 
@@ -19,6 +21,10 @@
 ## حالات اللوحة
 
 Backlog أفكار غير جاهزة؛ Ready تاسك محددة بلا اعتماد معطل؛ In Progress تنفيذ جارٍ؛ In Review لها PR أو مخرج ينتظر مراجعة؛ Done ناتج مقبول ومندمج. Blocked علامة مع سبب ورابط الاعتماد، وليست نسبة إنجاز.
+
+اللوحة تحتوي Team Board للحالات وTasks and Owners لجدول مجمع حسب Milestone، مع المسؤول وLabels والـPRs المرتبطة. أتمتة Project تضيف المهام الجديدة المفتوحة من المستودع، وتنقل التاسك إلى In Review عند ربط PR، وإلى Done عند إغلاقها. ربط PR في وضع Draft قد يستلزم إعادة الحالة يدويًا إلى In Progress. مراجعة شروط القبول قبل الإغلاق مسؤولية المراجع؛ الأتمتة لا تثبت جودة العمل.
+
+المهام المخططة 33، بخلاف [تاسك التأسيس المنفذة](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/34). مهمة الانطلاق T01 جاهزة ومسندة للمنسق، وبقية الإسناد ينتظر اجتماع التيم. حساب `abdelrhmanadel200` تم التحقق من مطابقته لإيميل عبدالرحمن عادل وإرسال دعوة المستودع ومنحه صلاحية كتابة للوحة. حسابات عبدالله وشهد ودانيا لم تُؤكد بعد؛ قبول الدعوات مطلوب للوصول إلى المستودع الخاص.
 
 ## الإشعارات
 
