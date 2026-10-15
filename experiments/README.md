@@ -1,3 +1,3 @@
-# سجل التجارب
+# Experiment records
 
-انسخ `run-template.json` لكل تجربة، واربطه بـIssue وPR والبيانات والـAdapter. لا ترفع ملفات تحتوي كود مستخدم خاص أو أسرارًا. لا توجد تجربة تدريب أو نتيجة موديل فعلية في مرحلة التأسيس.
+Copy run-template.json for each run and link the record to its Issue, code revision, dataset, and adapter. Remove credentials and private input before committing. There are no completed training experiments or model results in the foundation release.

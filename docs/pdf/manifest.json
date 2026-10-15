@@ -1,0 +1,41 @@
+{
+  "edition": "0.2",
+  "baseline_code_commit": "bce438269b44364e67ed422be6ea69c1531412d9",
+  "source_sha256": {
+    "docs/proposal/project-proposal.md": "b3d4f9adeed4dd6fda6b5d676a6c462b1b680517406e94bd895997856c82f19c",
+    "docs/requirements/srs.md": "111ae713c67932f8762b6b959604b03f97f2c447751794316dc5e1f036081719",
+    "docs/planning/roadmap.md": "8c86bb6f35169f3319cbda988ede99ab4a3daaab6d2b8ed17f7fe0edbabe7904",
+    "docs/planning/team.md": "282ce44e16264a6aa19c235f528db4490dcb37d4a48991ce7c774d83ac6811db",
+    "docs/architecture/system-design.md": "2c9545379f46e534eac61e6c0b50ff809f0b42fd2a964e5c439cee585e17746c",
+    "docs/architecture/decisions.md": "ea053877bcc8f933d9a61275b8cc6effe363ef71d31d135ed4e7949f32cf6549",
+    "docs/development/first-day.md": "2fe499d80bed1a39452b21895b0d12cf3cc2265b452b545160c5cfd323824251",
+    "docs/development/setup.md": "46dc14a489d1bfbdcb51206ca390aed95912743393778ce57f39e2662a49cc64",
+    "CONTRIBUTING.md": "cee3f3a8ca650f2807602d1295065e0498f2b597e9df2ffcd9e0108097ea57cf",
+    "docs/development/testing.md": "266ba27e4c6be2841a7dd23e7308d8b4e35ef2020be7c14b56fb6cae91757712",
+    "docs/research/related-work.md": "068385826bde81ae5502616159ed18db8f4241f637fb7dd1f5b57647b99c9dab",
+    "docs/data-and-training/data-plan.md": "0c87367dd5bac1df8f8abfb8a5897594e0c5ae667ab97b1fa5087b552ad41f7f",
+    "docs/data-and-training/training-plan.md": "67a2757b02524f64e78e435657b5330b687f1bf66a98c3f87ae5a60454134c18",
+    "docs/data-and-training/model-card.md": "7af59b1115efb8b3116ff54753af01ba6694117c227207f52365ded23ca92800",
+    "docs/evaluation/protocol.md": "6c246d304ebe8a6db8375eba40ba37bee7b70b86ae311e02b04494874d33e3b6",
+    "docs/planning/risks.md": "70f5b15e8a518931ac1796454dbe8b5c37bb8d8003c74edd1786aca730fd45de",
+    "docs/planning/github-workspace.md": "9f45acd163855670b1d9296d1f63968607c1b5b684bcf5301a1c0a4460733230",
+    "docs/supervisor-reviews/README.md": "3522f855a7dacb5d6d41a07c05ec462eb5ea10dc2992af8ffd42b188e06df75d",
+    "docs/supervisor-reviews/review-template.md": "84719c42f07720557c5a2a40abb5e65d616ba1e2e796011723a68c75582db29c",
+    "docs/delivery/user-guide.md": "57aa4fffceafa568468cf4f8d0247a0a2d7f7ee1a16d9d08acd04ac5da20db66",
+    "docs/delivery/checklist.md": "30386a2dde4cf3ecbab9a56875efad380a8153ccd369f4fb7e997b745b1df25d",
+    "docs/references.md": "18908d8ce77bbb17004e5db2b42ff2e354d70907a995add24ddeb4d1820e9c64",
+    "docs/planning/assignments.md": "5e16ff96195d5431022b94c4cbce33e59ffad04b89debd349111a9356e045181"
+  },
+  "files": [
+    {
+      "file": "01-project-documentation.pdf",
+      "pages": 29,
+      "sha256": "0d816866d7a4814408cfbc33ff4a0fd2ee3566bd97d76c3bc045b7a82f9486e4"
+    },
+    {
+      "file": "02-team-delivery-plan.pdf",
+      "pages": 7,
+      "sha256": "27c8f0bc642642205cfa275c10d93e710921dccca75d165ca8debbd82d05278e"
+    }
+  ]
+}

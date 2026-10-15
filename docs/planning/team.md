@@ -1,27 +1,15 @@
-# التيم والمسؤوليات
+# Team and workstreams
 
-أعضاء التيم: عبدالرحمن مجدي، عبدالله، عبدالرحمن عادل، شهد، ودانيا. المستوى متقارب بحسب التيم. المالك والمنسق: حساب `abdulrhmanmagdy1`. إيميلات الدعوة لا تُنشر في التوثيق. تم تأكيد حسابات بقية الأعضاء من ربط GitHub للإيميلات عند إرسال الدعوات.
-
-| العضو | حساب GitHub | الوصول عند التأسيس |
+| Member | GitHub | Main workstream |
 |---|---|---|
-| المالك والمنسق | `abdulrhmanmagdy1` | مالك المستودع واللوحة |
-| عبدالرحمن عادل | `abdelrhmanadel200` | دعوة كتابة للمستودع وصلاحية Write للوحة |
-| عبدالله | `abdallah414` | دعوة كتابة للمستودع وصلاحية Write للوحة |
-| شهد | `shahd-abdelhay` | دعوة كتابة للمستودع وصلاحية Write للوحة |
-| دانيا | `d5ania` | دعوة كتابة للمستودع وصلاحية Write للوحة |
+| Abdelrahman Magdy | abdulrhmanmagdy1 | Backend, integration, and coordination |
+| Abdullah Tarek | abdallah414 | Agent workflow and verification |
+| Abdelrahman Adel | abdelrhmanadel200 | Model selection, fine-tuning, and inference |
+| Shahd Abdelhay | shahd-abdelhay | Data, research, and evaluation |
+| Dania El-Walily | d5ania | Frontend, report assembly, and presentation |
 
-قبول الدعوات مسؤولية كل عضو؛ الإرسال لا يعني أنه دخل المستودع بالفعل.
+The [team delivery plan](assignments.md) states each member's outcomes in all five phases. Each Issue has one accountable owner. There is no assigned peer-review role. Owners run checks and publish evidence before completing work; supervisor reviews remain part of every phase.
 
-## توزيع العمل
+Magdy coordinates priorities, component handoffs, and supervisor meetings. Documentation is shared: members write the technical content for their own work, and Dania assembles the report and presentation. Model training and agent implementation are separate workstreams led by Adel and Abdullah, with an explicit interface between them.
 
-نختار مسؤولًا أساسيًا ومراجعًا لكل Issue. مسارات الشغل: البيانات والتقييم؛ التدريب والاستدلال؛ Workflow والأدوات؛ API والربط؛ الواجهة وتجربة الاستخدام. لا توزع هذه المسارات على الأسماء تلقائيًا؛ أول اجتماع يحسم التفضيلات والساعات المتاحة. يدور الشغل والمراجعة بحيث لا يحتكر شخص المعرفة بجزء حرج.
-
-المنسق مسؤول عن ترتيب الأولويات والاعتماديات وتجهيز مراجعة الدكتورة ومتابعة التعطيلات. ليس مسؤولًا وحده عن كتابة التوثيق أو اختبار شغل الجميع. كل منفذ يحدّث مستندات جزئه، والمراجع يتحقق منها.
-
-## قواعد يومية
-
-كل عضو يبدأ بتاسك واحدة أساسية، ويكتب تحديثًا عند التقدم أو التعطيل. التحديث: ما اكتمل، رابط الناتج، الخطوة التالية، وما يحتاج مساعدة. لا نستخدم نسب إنجاز غير مستندة إلى مخرجات. طلب المراجعة يكون عبر PR، والقرارات النهائية في Issue أو سجل القرار.
-
-## الاجتماع الأول
-
-قبول الدعوات؛ ضبط الإشعارات؛ تشغيل البيئة على الأجهزة الخمسة؛ تسجيل CPU/RAM/GPU/VRAM ونظام التشغيل والساعات الأسبوعية؛ تأكيد النطاق؛ اختيار المسؤول والمراجع لأول تاسكات؛ وتحديد موعد مراجعة الدكتورة الأولى.
+At this edition's access check, Abdullah, Adel, and Shahd had repository write access. Dania had Project write access with a repository invitation still pending. Email addresses are not published here.

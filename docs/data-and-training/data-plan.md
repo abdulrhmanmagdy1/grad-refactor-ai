@@ -1,23 +1,27 @@
-# إعداد بيانات Refactoring
+# Data preparation plan
 
-## وحدة البيانات
+## Record format
 
-سجل يحتوي `id` و`source_group` و`split` و`prompt` و`completion` و`license` و`refactoring_type`. الـprompt يصف المهمة والكود الأصلي، والـcompletion هو الناتج المرجعي الذي راجعه التيم. تحفظ معلومات المصدر والـcommit والاختبارات المرجعية في manifest مرافق.
+Each record contains id, source_group, split, prompt, completion, license, and refactoring_type. The prompt includes the task and original code. The completion is a reviewed reference output. A separate manifest records source URLs, commits, and reference tests.
 
-## الجمع والتنظيف
+## Collection and curation
 
-نختار مصادر مرخصة ومتوافقة مع تدريب وتوزيع المخرجات المطلوبة. نسجل الترخيص لكل مصدر ولا نفترض أن كل كود على GitHub مباح للتدريب. نراجع صحة Python قبل وبعد، ونستبعد تغيير الوظائف أو الأمثلة الغامضة والأسرار والبيانات الشخصية. يمكن بناء أمثلة تعليمية يدويًا أو بتحويلات محدودة ومراجعتها؛ صحتها وتنوعها أهم من العدد.
+Use sources with terms compatible with the intended training and distribution. Record the license for each source; public availability on GitHub is not a substitute for a license review.
 
-## التقسيم ومنع التسرب
+Check Python syntax before and after each change. Exclude functional changes, ambiguous examples, credentials, and personal data. Manually prepared teaching examples or controlled transformations are possible if reviewed. Correctness and source diversity matter more than an untested volume target.
 
-تقسيم مبدئي 80/10/10 حسب المشروع أو عائلة الأمثلة `source_group`، لا حسب الصفوف عشوائيًا. تُراجع النسبة مع حجم البيانات. نفس المصدر لا يظهر في تقسيمين، ونكشف تكرار المدخلات والأهداف والتشابه القريب عبر التقسيمات. script التحقق الحالي يكشف التكرار النصي الموحّد والمجموعات المتداخلة، ولا يكشف التشابه الدلالي؛ يلزم فحص أقوى في تاسك البيانات.
+## Splitting and leakage checks
 
-نستخدم validation لضبط الإعدادات، ونجمّد test قبل الاختيار النهائي. نحفظ hash للملف وmanifest للإصدارات. لا نخلط أمثلة الاختبار في prompts أو أمثلة التوثيق المستخدمة لضبط الموديل.
+Begin with a candidate 80/10/10 train/validation/test split by repository or example family, not by randomly distributing rows. Review the ratio against the available sample size. A source_group must not cross splits.
 
-## قبول البيانات
+Check duplicate prompts and targets and investigate near-duplicates. The current validation script detects normalized exact duplicates and overlapping groups; it does not detect semantic similarity. A stronger near-duplicate check remains a data task.
 
-مصدر وترخيص واضحان، مراجعة عينة موثقة، حقول مكتملة، كود مرجعي صالح، فصل حسب المصدر، سجل حذف وتكرار، واختبارات مرجعية للمهام التي نقيس الحفاظ على سلوكها. العدد النهائي يعتمد على المصادر والموارد والتجربة؛ لا يوجد حجم مضمون بعد.
+Use validation data for selection. Freeze test data before final model and prompt choices. Save dataset hashes and split manifests. Do not reuse test examples as prompt demonstrations while tuning.
 
-## التخزين على GitHub
+## Data acceptance
 
-الأمثلة الصغيرة المسموح بها والـmanifests في Git. البيانات الأكبر توضع في Release أو LFS بعد مراجعة الحدود والحصص؛ إذا لم تكفِ الحصة نصغّر المجموعة أو نحتفظ بروابط المصدر وسكريبت إعادة التجهيز بعد الاتفاق. الالتزام الحالي لا يشمل شراء تخزين أو استخدام خدمة خارج GitHub.
+Require clear provenance and licensing, a recorded sample review, complete fields, valid reference code, source-separated splits, a curation log, and reference tests for behavior-preservation measurements. Final dataset size depends on the sources and feasibility results.
+
+## GitHub storage
+
+Small permitted examples and manifests may be committed. Larger permitted data requires a Releases or LFS quota check. If the free allowance is insufficient, reduce the dataset or agree on reproducible source-download scripts. No paid storage or additional external storage service has been approved.

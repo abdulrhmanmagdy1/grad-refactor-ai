@@ -1,56 +1,60 @@
-# تصميم منصة Refactoring
+# System design
 
-التصميم المستهدف يفصل العرض وتنسيق الأدوار واستدلال الموديل والتحقق. التنفيذ الحالي خدمة FastAPI صغيرة للتحليل البنيوي فقط؛ لا توجد واجهة منتج أو موديل أو Runner منفذ بعد.
+The proposed design separates the interface, workflow coordination, model inference, and verification. The current implementation is a small FastAPI service for static analysis. The product interface, model provider, agents, persistent run history, and test runner are not yet implemented.
 
-## سياق النظام
+## System context
 
 ```mermaid
 flowchart LR
-    U[مطور أو طالب] --> S[منصة Refactoring محلية]
-    T[التيم] --> E[التدريب والتقييم]
-    E --> W[أوزان أساسية وAdapters]
+    U[Developer or student] --> S[Local refactoring platform]
+    T[Project team] --> E[Training and evaluation]
+    E --> W[Base model and adapters]
     W --> S
-    S --> R[Diff وتفسير ونتائج تحقق]
+    S --> R[Diff, explanation, and verification results]
     R --> U
 ```
 
-## المكونات المستهدفة
+## Proposed components
 
 ```mermaid
 flowchart TD
-    UI[واجهة المستخدم] --> API[FastAPI]
-    API --> O[منسق Workflow]
-    O --> A[دور التحليل]
-    A --> G[دور التعديل]
-    G --> V[دور المراجعة]
-    A --> M[Model Provider محلي]
+    UI[User interface] --> API[FastAPI service]
+    API --> O[Workflow coordinator]
+    O --> A[Analysis role]
+    A --> G[Refactoring role]
+    G --> V[Review role]
+    A --> M[Local model provider]
     G --> M
     V --> M
-    V --> C[فحص ثابت]
-    V --> X[Runner معزول عند اعتماده]
-    O --> DB[سجل التشغيلات]
+    V --> C[Static checks]
+    V --> X[Separate verified test runner]
+    O --> DB[Run history]
 ```
 
-الأدوار تتبادل JSON له schema وإصدار. حالة التشغيل المقترحة: queued ثم analyzing ثم generating ثم verifying ثم completed أو failed. نتيجة التحقق تجمع `syntax_valid` و`tests_available` و`tests_passed` و`review_verdict`؛ لا تدمجهم في حكم واحد غير مفسر. البيانات غير الموثوقة تُعامل كنص ولا تمنح الموديل صلاحية تنفيذ أو تعديل النظام.
+Roles exchange versioned JSON schemas. Proposed run states are queued, analyzing, generating, verifying, completed, and failed. Results keep syntax validity, test availability, test outcomes, and the agent's verdict separate. Input code is data; it does not grant the model permission to execute commands or change the host.
 
-## دورة التشغيل
+## Runtime sequence
 
-التحقق من حجم المدخل وصيغته، ثم جمع مؤشرات ثابتة، ثم تحليل وتوليد ومراجعة محدودة المحاولات. يحفظ المنسق معرف التشغيل والإعدادات ومدة كل خطوة. تعرض الواجهة التعديل للمستخدم قبل اعتماده. عند فشل التحقق تبقى النتيجة مرفوضة أو غير مؤكدة، ويمكن محاولة تصحيح واحدة في التجربة الأولى؛ تغيير الحد قرار تجريبي مسجل.
+Validate input size and structure, collect static indicators, and run bounded analysis, generation, and review. Record the run identifier, settings, model revision, timing, and failures. Present the change for explicit user review before acceptance.
 
-## العقود الموجودة الآن
+A failed check keeps the proposal rejected or uncertain. The initial experiment allows at most one correction attempt; changing this limit is an experimental decision that must be recorded.
 
-- `GET /health`: يعيد الحالة وإصدار الخدمة ووضع `scaffold`.
-- `POST /api/v1/analyze`: يستقبل `code` ويعيد `syntax_valid` و`findings` و`error`. التحليل استرشادي ثابت، بلا LLM أو تنفيذ.
-- `GET /docs` و`/openapi.json`: المرجع المولد من الخدمة.
+## Implemented API
 
-## العقود المؤجلة
+- GET /health returns service health, version, and scaffold mode.
+- POST /api/v1/analyze accepts a code field and returns syntax_valid, findings, and error. The engine is static heuristics, not a language model.
+- GET /docs and /openapi.json provide the generated API reference.
 
-`POST /runs` و`GET /runs/{id}` وقرار قبول التعديل تُصمم في مرحلة العقود قبل بناء الواجهة؛ لا توجد وعود API غير منفذة. نبدأ بـWorkflow صريح؛ اعتماد LangGraph يتوقف على مقارنة التعقيد والفائدة في تجربة صغيرة.
+## Planned contracts
 
-## التخزين والنشر
+POST /runs, GET /runs/{id}, and acceptance actions will be specified before interface implementation. They are not available endpoints yet. Begin with an explicit workflow; adopt LangGraph only if a small comparison shows a practical benefit for state handling or recovery.
 
-البداية تشغيل محلي دون قاعدة بيانات خارجية. SQLite مرشح لسجلات جهاز واحد؛ ننتقل لـPostgreSQL إذا ظهرت حاجة فعلية للتزامن أو تعدد المستخدمين. الواجهة مرشحها React وTypeScript بعد تثبيت العقود. واجهة FastAPI التفاعلية مناسبة لتجربة التأسيس فقط. لا نحتاج Microservices أو Kubernetes في نطاق الثمانية أسابيع.
+## Storage and deployment
 
-## حدود الثقة
+The foundation needs no external database. SQLite is a candidate for local run history; PostgreSQL is justified only if concurrent or multi-user access requires it. React and TypeScript are candidates for the product interface after the contracts are agreed. The FastAPI reference page is a development aid, not the final interface.
 
-لا يقرأ التحليل ملفات الجهاز ولا ينفذ Python المرسل. اختبارات الكود المُدخل لاحقًا تجري في Runner منفصل بدون أسرار أو شبكة أو Docker socket، وبمستخدم غير root وموارد محدودة. حاوية Docker وحدها ليست مبررًا لفتح تنفيذ كود مجهول للعامة. [خطة التحقق](../development/testing.md) تفصل الأدلة المطلوبة.
+The first release is local. Microservices and Kubernetes are outside the current scope.
+
+## Trust boundaries
+
+The analysis service must not read arbitrary host files or execute input. Any test runner must be separate, non-root, resource-limited, without secrets, network access, host paths, or the Docker socket. Docker alone is not sufficient grounds to expose arbitrary code execution to the public. The initial release remains limited to trusted examples.

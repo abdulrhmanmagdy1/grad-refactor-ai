@@ -1,13 +1,14 @@
-## الناتج والمشكلة
+## Outcome
 
 Closes #
 
-## شروط القبول ودليل التحقق
+## Completion checks
 
-- [ ] الناتج يحقق شروط Issue
-- [ ] الفحوصات المناسبة ناجحة مع رابط أو نتائج
-- [ ] التوثيق المتأثر محدث
-- [ ] مفيش أسرار أو ملفات بيانات أو أوزان كبيرة
-- [ ] طلبت مراجعة من عضو آخر
+- [ ] The linked task's acceptance criteria are met.
+- [ ] Relevant checks pass; evidence is included.
+- [ ] Affected documentation is updated.
+- [ ] No credentials, private data, or large weights are committed.
 
-## القيود أو القرارات المطلوبة
+## Remaining limitations or decisions
+
+The task owner may merge after completing these checks. A second-person approval is not required.

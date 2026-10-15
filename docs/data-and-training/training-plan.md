@@ -1,39 +1,43 @@
-# خطة تخصيص الموديل
+# Fine-tuning plan
 
-الحالة: خطة وتجهيز سكريبت؛ لم يبدأ تدريب ولم يُعتمد موديل أو عتاد. الهدف الأول تخصيص دور التعديل على أنواع Refactoring ضيقة، مع الحفاظ على baseline مستقل.
+No model, hardware configuration, or training result has been approved yet. The first candidate task is the refactoring role, while the original model remains the comparison baseline.
 
-## تجربة الجدوى في الأسبوع الأول
+## Feasibility experiment
 
-حصر الأجهزة، اختيار مرشحين صغيرين وفق الترخيص وجودة المهمة، قياس inference على جهاز العرض، ثم تجربة تدريب على عينة صغيرة للتأكد من الذاكرة والزمن والحفظ والاستئناف. عائلة Qwen Coder مثال مرشح وليست اختيارًا نهائيًا أو ادعاء بأنها الأفضل. نسجل revision الفعلي للموديل والتوكنيزر بعد اعتمادهما.
+Inventory hardware, select small candidates with suitable licenses, measure inference on the demonstration machine, and run a small training job. Check memory, elapsed time, adapter saving, reloading, and checkpoint recovery.
 
-## المسار
+Qwen Coder is one example candidate, not a final selection or a claim of best performance. Record exact model and tokenizer revisions after selection.
 
-PyTorch وTransformers وDatasets وPEFT مرشحات التنفيذ. نبدأ LoRA إن سمح العتاد؛ نختبر quantization فقط عند الحاجة والتوافق. ملف التدريب الحالي مسار LoRA غير مكمم ويتطلب CUDA؛ QLoRA غير منفذ. لا نستخدم CPU لتدريب طويل على افتراض أنه سينتهي ضمن الخطة، ولا نفترض توافر GPU مجاني دائمًا.
+## Candidate training path
 
-## التجهيز والتنفيذ
+The preliminary path uses PyTorch, Transformers, Datasets, and PEFT. Begin with LoRA if the hardware supports it. Consider quantization only after a compatibility test. The current script implements an unquantized CUDA LoRA path; QLoRA is not implemented.
 
-البيانات المطلوبة JSONL وفق [الخطة](data-plan.md). تحقق أولًا:
+Do not assume that CPU training or an intermittently available free GPU can meet the schedule. Set the model, precision, context length, batch settings, and training budget from measurements.
+
+## Preparation and execution
+
+Validate the curated JSONL file:
 
 ```bash
 uv run python scripts/validate_dataset.py data/curated.jsonl
 ```
 
-في بيئة التدريب المنفصلة، بعد تثبيت تبعيات متوافقة وتثبيت نسخها، املأ `configs/training.example.json` بمعرف وrevision معتمدين ومسارات البيانات ثم شغّل:
+In a separate, hardware-compatible training environment, copy the configuration example, select an approved model and exact revision, and run:
 
 ```bash
 python training/train_lora.py --config configs/training.local.json
 ```
 
-يرفض السكريبت الإعدادات غير المحسومة، والبيانات غير الصالحة، وبيئة بلا CUDA. يتعلم الـcompletion فقط مع إخفاء prompt من loss، ويستبعد test من Trainer. يدعم `--resume-from-checkpoint` بعد مراجعة المسار والإعدادات. طول السياق والحجم وbatch وprecision ليست إعدادات مثبتة قبل فحص العتاد. سكريبت التدريب يحتاج smoke test على GPU قبل اعتباره جاهزًا للتجارب.
+The script rejects unresolved settings, invalid data, and environments without CUDA. It masks prompt tokens from the loss and excludes test records from the Trainer. It supports --resume-from-checkpoint. A GPU smoke test is required before relying on it for experiments.
 
-## سجل كل تجربة
+## Experiment record
 
-معرف التجربة؛ SHA الكود؛ dataset hash وتقسيماته؛ الموديل وrevision؛ نسخ التبعيات وCUDA؛ العتاد والذاكرة؛ seed؛ LoRA targets/rank؛ batch وgradient accumulation؛ LR وepochs والسياق؛ الزمن وذروة الذاكرة؛ نتائج validation؛ مكان الـAdapter والـchecksum؛ وأي توقف أو فشل. النموذج في `experiments/run-template.json`.
+Record the run identifier, code SHA, dataset hash and split manifest, model revision, package and CUDA versions, hardware, seed, LoRA settings, batch and accumulation settings, learning rate, epochs, context length, duration, peak memory, validation results, adapter location and checksum, and any failure or interruption. Use experiments/run-template.json.
 
-## اختيار النسخة
+## Selection and reporting
 
-اختيار النموذج على validation وفق مقياس معلن، ثم تشغيل test مرة للمقارنة المعتمدة. loss وحده لا يقيس نجاح Refactoring. إذا لم يتحسن النموذج، نحلل البيانات والإعدادات ونبلغ النتيجة؛ لا نخفي حالات الفشل أو نعيد الضبط على test.
+Choose a candidate using declared validation metrics, then evaluate the agreed test set. Training loss alone does not measure successful refactoring. If fine-tuning does not improve results, investigate and report that outcome without tuning on the test set.
 
-## الموارد المجانية والتخزين
+## Free resources and storage
 
-يمكن تجربة Colab ضمن حدوده للاستخدام التفاعلي، لكنه ليس خادم استضافة دائمًا أو موردًا مضمونًا. احفظ Adapter وcheckpoints القابلة للاستئناف وفق الحصة المتاحة. GitHub يحتفظ بالـAdapter الصغير المعتمد وmetadata، لا بنسخة أخرى من الموديل الأساسي إذا كان متاحًا من مصدره.
+Colab may support interactive training experiments within its limits, but it is neither guaranteed compute nor permanent hosting. Save resumable artifacts within the available quota. Prefer a small adapter and metadata over redistributing the base model.

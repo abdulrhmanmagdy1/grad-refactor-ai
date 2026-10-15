@@ -3,114 +3,113 @@
     "key": "T01",
     "phase": "P1",
     "area": "coordination",
-    "title": "اجتماع الانطلاق وحصر الأجهزة والوقت",
-    "outcome": "تأكيد أعضاء الفريق والحسابات والتفرغ وموارد التدريب والعرض.",
+    "title": "Run kickoff and record hardware and availability",
+    "outcome": "Confirm the team accounts, development and training resources, and weekly availability.",
     "acceptance": [
-      "تسجيل CPU وRAM وGPU وVRAM ونظام التشغيل لكل جهاز دون نشر بيانات شخصية",
-      "تحديد ساعات أسبوعية ومسؤول ومراجع لكل تاسك قريبة",
-      "تأكيد موعد البداية والتسليم الرسمي وقالب الكلية"
+      "Record OS, CPU, RAM, GPU and VRAM for available machines without private identifiers.",
+      "Confirm the owner and reviewer allocation and weekly availability.",
+      "Confirm the team start date, official deadline, and university report requirements."
     ],
     "dependencies": [],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T02",
     "phase": "P1",
     "area": "environment",
-    "title": "تشغيل البيئة على أجهزة الفريق الخمسة",
-    "outcome": "كل عضو يشغّل نفس نسخة الخدمة والفحوصات.",
+    "title": "Reproduce the environment on all team machines",
+    "outcome": "Make the same foundation service and checks runnable by every member.",
     "acceptance": [
-      "uv sync --frozen ناجح على الأجهزة المتاحة",
-      "رفع تعليق بنتائج doctor وpytest دون أسرار",
-      "تسجيل مشاكل الأنظمة المختلفة وحلها"
+      "Run uv sync --frozen on the available team machines.",
+      "Post sanitized doctor and pytest results.",
+      "Record and resolve operating-system-specific setup problems."
     ],
     "dependencies": [
       "T01"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T03",
     "phase": "P1",
     "area": "research",
-    "title": "استطلاع الدراسات السابقة ومصادر البيانات",
-    "outcome": "اختيار أعمال أولية مرتبطة بالمشكلة ومصادر مرخصة.",
+    "title": "Review related work and candidate data sources",
+    "outcome": "Identify relevant primary studies and usable data sources.",
     "acceptance": [
-      "جدول قراءة لأعمال أولية بروابط وأدوات ومقاييس وقيود",
-      "تحديد ما يمكن إعادة تجربته على موارد التيم",
-      "قائمة مصادر بيانات وتراخيصها"
+      "Prepare a reading table with links, methods, metrics, and limitations.",
+      "Identify comparisons that fit the available resources.",
+      "Record candidate datasets and their licenses."
     ],
     "dependencies": [
       "T01"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "shahd-abdelhay"
   },
   {
     "key": "T04",
     "phase": "P1",
     "area": "model",
-    "title": "قياس موديلات مرشحة على جهاز العرض",
-    "outcome": "اختيار مرشح أساسي بناء على قياس لا على الاسم.",
+    "title": "Benchmark candidate models on the demonstration machine",
+    "outcome": "Select a model candidate using measurements.",
     "acceptance": [
-      "قياس الذاكرة والزمن وجودة أمثلة صغيرة لمرشحين مناسبين",
-      "تسجيل الترخيص وrevision والعتاد",
-      "اقتراح موديل وسقف مدخلات مع دليل"
+      "Measure latency, memory use, and small task examples for suitable candidates.",
+      "Record license, exact revision, and hardware.",
+      "Recommend a model and input limit with supporting results."
     ],
     "dependencies": [
       "T01"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T05",
     "phase": "P1",
     "area": "training",
-    "title": "تجربة LoRA مصغرة واختبار موارد التدريب",
-    "outcome": "إثبات القدرة على تدريب وحفظ واستئناف Adapter صغير.",
+    "title": "Run a small LoRA feasibility experiment",
+    "outcome": "Verify that a small adapter can be trained, saved, reloaded, and resumed.",
     "acceptance": [
-      "قفل نسخ بيئة التدريب المتوافقة مع الجهاز",
-      "smoke test للسكريبت على GPU",
-      "حفظ Adapter وسجل زمن وذاكرة واختبار إعادة تحميله",
-      "خطة بديلة واضحة إن تعذر التدريب"
+      "Pin a training environment compatible with the actual GPU.",
+      "Smoke-test the training script on the GPU.",
+      "Save and reload an adapter; record time and memory and a fallback if training is infeasible."
     ],
     "dependencies": [
       "T04"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T06",
     "phase": "P1",
     "area": "requirements",
-    "title": "اعتماد نطاق Python وأنواع Refactoring",
-    "outcome": "اختيار نوع أو نوعين محدودين وتعريف ما هو خارج النطاق.",
+    "title": "Agree on Python scope and supported refactoring types",
+    "outcome": "Select one or two bounded tasks and state what is outside the release.",
     "acceptance": [
-      "أمثلة قبل وبعد لكل نوع واختبارات مرجعية",
-      "تحديث SRS والمقترح",
-      "تحديد سقف حجم المدخل وإعادة المحاولة والموارد بناء على التجربة"
+      "Prepare before/after examples and reference tests for each task.",
+      "Update the proposal and requirements.",
+      "Set measured input, retry, and resource limits."
     ],
     "dependencies": [
       "T03",
       "T04"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "R1",
     "phase": "P1",
     "area": "supervisor",
-    "title": "مراجعة الدكتورة بعد مرحلة النطاق والجدوى",
-    "outcome": "عرض المقترح والموارد وتجربة الجدوى وحسم النطاق.",
+    "title": "Supervisor review: scope and feasibility",
+    "outcome": "Present the proposal and feasibility evidence and agree on the scope.",
     "acceptance": [
-      "تجهيز ملخص وروابط تجارب وأسئلة محددة",
-      "تسجيل ملاحظات الدكتورة والموافقات والمعلق",
-      "فتح Issues للمتابعة وتحديث الخطة"
+      "Prepare a short summary, experiment links, and specific questions.",
+      "Record supervisor feedback, agreed decisions, and pending questions.",
+      "Create follow-up Issues and update the plan."
     ],
     "dependencies": [
       "T02",
@@ -118,52 +117,52 @@
       "T06"
     ],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T07",
     "phase": "P2",
     "area": "data",
-    "title": "تجهيز عينة بيانات ومراجعة الجودة والترخيص",
-    "outcome": "بيانات مناسبة للمهمة مع manifest للمصدر.",
+    "title": "Curate a licensed sample dataset",
+    "outcome": "Prepare task-appropriate examples with a provenance manifest.",
     "acceptance": [
-      "توثيق المصدر والترخيص ومعايير الإدراج والحذف",
-      "مراجعة عينة لصحة الكود والحفاظ على السلوك",
-      "تقدير حجم قابل للتدريب دون التزام بعدد غير مجرب"
+      "Record source, license, inclusion criteria, and exclusion criteria.",
+      "Review a sample for valid code and behavior-preserving changes.",
+      "Estimate a feasible dataset size from evidence."
     ],
     "dependencies": [
       "R1"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "shahd-abdelhay"
   },
   {
     "key": "T08",
     "phase": "P2",
     "area": "data",
-    "title": "تقسيم البيانات ومنع التسرب والتكرار",
-    "outcome": "تقسيم مستقل قابل للإعادة حسب المصدر.",
+    "title": "Split data and check leakage and duplicates",
+    "outcome": "Produce reproducible splits separated by source.",
     "acceptance": [
-      "train وvalidation وtest منفصلة حسب source_group",
-      "فحص التكرار والتشابه القريب مع سجل قرارات",
-      "حفظ hash وmanifest وتجميد test"
+      "Create train, validation, and test splits by source_group.",
+      "Check exact and near-duplicates and record curation decisions.",
+      "Save hashes and a split manifest and freeze the test set."
     ],
     "dependencies": [
       "T07"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "shahd-abdelhay"
   },
   {
     "key": "T09",
     "phase": "P2",
     "area": "evaluation",
-    "title": "تنفيذ baseline لدور واحد",
-    "outcome": "نتائج مرجعية للموديل الأساسي على أمثلة التحقق.",
+    "title": "Implement and measure the single-role baseline",
+    "outcome": "Record baseline outputs from the original model.",
     "acceptance": [
-      "سكريبت inference بإعدادات ثابتة وسجل أخطاء وزمن",
-      "rubric أولي واختبارات مرجعية",
-      "لا استخدام test لضبط prompts"
+      "Provide an inference script with fixed settings, error records, and timing.",
+      "Use an initial task rubric and reference tests.",
+      "Do not use the test set to tune prompts."
     ],
     "dependencies": [
       "T04",
@@ -171,52 +170,52 @@
       "T08"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T10",
     "phase": "P2",
     "area": "evaluation",
-    "title": "تثبيت بروتوكول المقارنة والأهداف العددية",
-    "outcome": "فصل أثر التدريب عن تعدد الأدوار والموارد.",
+    "title": "Freeze the comparison protocol and numerical targets",
+    "outcome": "Separate model adaptation, role coordination, and resource effects.",
     "acceptance": [
-      "تعريف مجموعات A/B/C/D وسقف الموارد",
-      "تحديد المقاييس ومقامات النسب وسياسة timeout",
-      "تسجيل أهداف قابلة للقياس بعد baseline وقبل test"
+      "Define groups A/B/C/D and their resource budgets.",
+      "Specify measures, denominators, and timeout handling.",
+      "Record targets after the baseline and before final test evaluation."
     ],
     "dependencies": [
       "T09"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "shahd-abdelhay"
   },
   {
     "key": "T11",
     "phase": "P2",
     "area": "architecture",
-    "title": "تثبيت عقود API والأدوار وحالة التشغيل",
-    "outcome": "Schemas موحدة تسهل التطوير المتوازي.",
+    "title": "Specify API and role contracts and run states",
+    "outcome": "Agree on schemas before parallel implementation.",
     "acceptance": [
-      "توثيق request/result/errors وحالات run",
-      "قرار موثق عن Workflow والتخزين",
-      "أمثلة JSON واختبارات العقود"
+      "Document requests, results, errors, and run-state transitions.",
+      "Record the workflow and storage decisions.",
+      "Add example JSON and contract tests."
     ],
     "dependencies": [
       "R1"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "R2",
     "phase": "P2",
     "area": "supervisor",
-    "title": "مراجعة الدكتورة بعد البيانات وخط الأساس",
-    "outcome": "اعتماد البيانات والمقاييس والتجارب المخططة.",
+    "title": "Supervisor review: data and baseline",
+    "outcome": "Review data quality, baseline results, and planned comparisons.",
     "acceptance": [
-      "عرض عينات وتقسيم وتراخيص وbaseline",
-      "مراجعة الأهداف والتقييم",
-      "محضر وIssues للتعديلات"
+      "Present samples, licensing, split checks, and baseline results.",
+      "Review targets and the evaluation method.",
+      "Record decisions and follow-up Issues."
     ],
     "dependencies": [
       "T08",
@@ -224,108 +223,108 @@
       "T11"
     ],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T12",
     "phase": "P3",
     "area": "model",
-    "title": "بناء Model Provider محلي قابل للاستبدال",
-    "outcome": "واجهة واحدة للموديل الأساسي والـAdapter.",
+    "title": "Implement a replaceable local model provider",
+    "outcome": "Use one interface for the original model and adapted model.",
     "acceptance": [
-      "تحميل الموديل بإصدار ثابت",
-      "تحديد max tokens وtimeout وأخطاء واضحة",
-      "اختبار استبدال الأساس بالـAdapter دون تغيير API"
+      "Load a pinned model revision.",
+      "Bound generation and return clear timeout and inference errors.",
+      "Verify that an adapter can replace the baseline without changing the API contract."
     ],
     "dependencies": [
       "R2",
       "T05"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T13",
     "phase": "P3",
     "area": "agents",
-    "title": "تنفيذ دور التحليل بمخرجات منظمة",
-    "outcome": "تحليل محدود للمهمة المعتمدة.",
+    "title": "Implement structured analysis-role outputs",
+    "outcome": "Analyze the agreed task types using the shared schema.",
     "acceptance": [
-      "JSON مطابق للعقد مع نوع المشكلة وموضعها ودليلها",
-      "اختبار كود دون مشكلة وكود غير صالح",
-      "حد استدعاءات موثق"
+      "Return valid JSON with the finding type, location, and supporting reason.",
+      "Cover invalid code and code with no supported finding.",
+      "Enforce a documented inference-call limit."
     ],
     "dependencies": [
       "T12",
       "T11"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "T14",
     "phase": "P3",
     "area": "agents",
-    "title": "تنفيذ دور التعديل بمخرجات محدودة",
-    "outcome": "توليد اقتراح Refactoring مع سبب دون تنفيذ.",
+    "title": "Implement bounded refactoring proposals",
+    "outcome": "Generate a proposed change and reason without executing it.",
     "acceptance": [
-      "إرجاع الكود والسبب والنوع أو فشل واضح",
-      "استخدام سياق وحجم ومهمة معتمدين",
-      "اختبار syntax والمخرجات غير المطابقة"
+      "Return code, a reason, and task type, or an explicit failure.",
+      "Use the agreed task, context, and input limits.",
+      "Test syntax failures and schema-invalid model outputs."
     ],
     "dependencies": [
       "T12",
       "T11"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "T15",
     "phase": "P3",
     "area": "backend",
-    "title": "تنفيذ API للتشغيل وسجل الحالة",
-    "outcome": "ربط مسار التشغيل بمعرف وحالة وأخطاء.",
+    "title": "Implement run API and state records",
+    "outcome": "Expose traceable runs and clear failure handling.",
     "acceptance": [
-      "تنفيذ العقود المعتمدة وحالات الفشل",
-      "سجل إعدادات ومدة ونسخ الموديل",
-      "اختبارات تكامل دون GPU عبر provider وهمي معلن"
+      "Implement the agreed contracts and failure states.",
+      "Record settings, model revisions, and stage durations.",
+      "Use a clearly identified fake provider for GPU-independent integration tests."
     ],
     "dependencies": [
       "T11",
       "T12"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T16",
     "phase": "P3",
     "area": "frontend",
-    "title": "واجهة أولية لإدخال الكود وعرض النتيجة",
-    "outcome": "مسار استخدام واحد متصل بالخدمة.",
+    "title": "Build the initial code-input and result interface",
+    "outcome": "Connect one usable input-to-result interaction to the service.",
     "acceptance": [
-      "إدخال كود وتحميل نتيجة وحالة انتظار وفشل",
-      "Diff واضح مع تفسير",
-      "تشغيل محلي وتعليمات موثقة"
+      "Show input, waiting, result, and failure states.",
+      "Present a readable diff and explanation.",
+      "Document local frontend setup and operation."
     ],
     "dependencies": [
       "T11",
       "T15"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "d5ania"
   },
   {
     "key": "T17",
     "phase": "P3",
     "area": "training",
-    "title": "تنفيذ تجربة تخصيص أولى موثقة",
-    "outcome": "Adapter قابل لإعادة التحميل مع نتائج validation.",
+    "title": "Run and record the first fine-tuning experiment",
+    "outcome": "Save a reloadable adapter and validation results.",
     "acceptance": [
-      "train فقط لتحديث الأوزان وvalidation للاختيار",
-      "run manifest وإعدادات وقفل تبعيات",
-      "حفظ Adapter وchecksum ومقارنة أولية بالأساس"
+      "Use only train records for updates and validation records for selection.",
+      "Record settings, manifests, and a training dependency lock.",
+      "Save the adapter and checksum and compare with the baseline on validation data."
     ],
     "dependencies": [
       "R2",
@@ -333,18 +332,18 @@
       "T08"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T18",
     "phase": "P3",
     "area": "integration",
-    "title": "ديمو كامل مبكر للمسار الأساسي",
-    "outcome": "حالة واحدة من الإدخال حتى عرض النتيجة.",
+    "title": "Demonstrate an early end-to-end case",
+    "outcome": "Show one complete case from input to result.",
     "acceptance": [
-      "تشغيل الواجهة وAPI والموديل معًا",
-      "عرض الكود قبل وبعد ونتائج الفحص المتاحة",
-      "توثيق الفجوات بوضوح دون ادعاء اكتمال المراجعة"
+      "Run the interface, API, and model together.",
+      "Show original and proposed code with the available check results.",
+      "Record incomplete review features explicitly."
     ],
     "dependencies": [
       "T13",
@@ -352,36 +351,36 @@
       "T16"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "R3",
     "phase": "P3",
     "area": "supervisor",
-    "title": "مراجعة الدكتورة بعد الربط والتدريب الأول",
-    "outcome": "عرض المسار الكامل ونتيجة التدريب الأول.",
+    "title": "Supervisor review: integration and first training run",
+    "outcome": "Present the complete path and initial training comparison.",
     "acceptance": [
-      "ديمو وإعدادات ونتائج أولية",
-      "عرض الفشل وحدود الموارد",
-      "محضر وقرار عن أولويات المرحلة التالية"
+      "Show a demonstration and actual experiment settings and results.",
+      "Explain observed failures and resource constraints.",
+      "Record decisions and next-phase priorities."
     ],
     "dependencies": [
       "T17",
       "T18"
     ],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T19",
     "phase": "P4",
     "area": "agents",
-    "title": "تنفيذ المراجعة وتنسيق الأدوار",
-    "outcome": "Workflow واضح بمراجعة وحدود إعادة محاولة.",
+    "title": "Implement review and role coordination",
+    "outcome": "Coordinate the roles with bounded correction attempts.",
     "acceptance": [
-      "فصل حكم الـAgent عن نتائج الأدوات",
-      "محاولة تصحيح محدودة مع سبب توقف",
-      "اختبارات نهاية الوقت وفشل كل دور"
+      "Keep the agent verdict separate from deterministic check results.",
+      "Use a bounded correction path and an explicit stop reason.",
+      "Test timeouts and failures in each role."
     ],
     "dependencies": [
       "R3",
@@ -389,35 +388,35 @@
       "T14"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "T20",
     "phase": "P4",
     "area": "verification",
-    "title": "تصميم واختبار Runner منفصل للأمثلة الموثوقة",
-    "outcome": "تشغيل الاختبارات خارج API بحدود موارد وصلاحيات.",
+    "title": "Design and verify a separate runner for trusted examples",
+    "outcome": "Run reference tests outside the API with reviewed isolation controls.",
     "acceptance": [
-      "لا شبكة ولا أسرار ولا وصول خارج المهمة ولا Docker socket",
-      "حدود وقت وذاكرة وCPU وتنظيف العمليات",
-      "مراجعة بشرية للتصميم واختبارات العزل قبل التفعيل"
+      "Exclude network, secrets, host access, and the Docker socket.",
+      "Enforce time, memory, CPU, and process-cleanup limits.",
+      "Complete the runner safety checklist and isolation tests before enabling execution."
     ],
     "dependencies": [
       "R3"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "T21",
     "phase": "P4",
     "area": "integration",
-    "title": "دمج التحقق مع الواجهة وحالة الفشل",
-    "outcome": "نتيجة مفهومة دون علامة نجاح مضللة.",
+    "title": "Integrate verification and failure results into the interface",
+    "outcome": "Present evidence without a misleading success state.",
     "acceptance": [
-      "عرض syntax والاختبارات والمراجعة كل على حدة",
-      "تعامل مع tests unavailable",
-      "اختبار فشل الموديل أو runner دون تعديل الأصل"
+      "Show syntax, tests, and review as separate results.",
+      "Handle missing reference tests explicitly.",
+      "Verify model and runner failures without modifying original input."
     ],
     "dependencies": [
       "T19",
@@ -425,71 +424,71 @@
       "T16"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T22",
     "phase": "P4",
     "area": "model",
-    "title": "اختيار ودمج نسخة الموديل على validation",
-    "outcome": "استخدام أفضل نسخة مناسبة لا أحدث تجربة تلقائيًا.",
+    "title": "Select and integrate the model using validation data",
+    "outcome": "Use a justified candidate rather than automatically using the latest run.",
     "acceptance": [
-      "معيار اختيار معلن ونتائج validation",
-      "احتفاظ بالأساس إذا لم يتحسن التخصيص مع تفسير",
-      "تحديث بطاقة الموديل والـartifact"
+      "Record the selection rule and validation evidence.",
+      "Retain the original model if adaptation does not help, with an explanation.",
+      "Update the model card and artifact reference."
     ],
     "dependencies": [
       "T17",
       "T19"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdelrhmanadel200"
   },
   {
     "key": "T23",
     "phase": "P4",
     "area": "testing",
-    "title": "اختبارات قبول المتطلبات الأساسية",
-    "outcome": "أدلة تتبع FR01–FR09 وفق النطاق المتفق عليه.",
+    "title": "Verify first-release acceptance criteria",
+    "outcome": "Trace agreed P0 behavior to test evidence.",
     "acceptance": [
-      "مصفوفة متطلب واختبار ونتيجة",
-      "اختبارات الأخطاء والحجم والمهلة",
-      "تحقق من Diff والتحميل وعدم تعديل الأصل"
+      "Provide a requirement, test, and result matrix.",
+      "Cover errors, input limits, and timeouts.",
+      "Verify diff, download, and preservation of the original input."
     ],
     "dependencies": [
       "T21",
       "T22"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdallah414"
   },
   {
     "key": "R4",
     "phase": "P4",
     "area": "supervisor",
-    "title": "مراجعة الدكتورة بعد تكامل النسخة الأساسية",
-    "outcome": "تجربة حالات القبول وتجميد المزايا الأساسية.",
+    "title": "Supervisor review: integrated first release",
+    "outcome": "Review acceptance examples and freeze core features.",
     "acceptance": [
-      "ديمو قبول ومشاكل متبقية",
-      "اعتماد تفسير القيود وخطة القياس النهائي",
-      "محضر وIssues الإصلاح"
+      "Show the acceptance demonstration and remaining defects.",
+      "Review limitations and the final evaluation plan.",
+      "Record decisions and repair Issues."
     ],
     "dependencies": [
       "T23"
     ],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T24",
     "phase": "P5",
     "area": "evaluation",
-    "title": "تشغيل التقييم النهائي المستقل",
-    "outcome": "نتائج A/B/C/D على مجموعة test المجمدة.",
+    "title": "Run the independent final evaluation",
+    "outcome": "Evaluate groups A/B/C/D on the frozen test set.",
     "acceptance": [
-      "حفظ نتائج جميع المحاولات بما فيها الفشل",
-      "قياس الزمن والموارد مع الجودة",
-      "مراجعة بشرية لعينة وتحليل الخلاف والأخطاء"
+      "Retain every attempt, including failures and timeouts.",
+      "Measure latency and resource use alongside quality.",
+      "Assess a sample with the fixed rubric and explain ambiguous cases and failure patterns."
     ],
     "dependencies": [
       "R4",
@@ -497,94 +496,94 @@
       "T22"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "shahd-abdelhay"
   },
   {
     "key": "T25",
     "phase": "P5",
     "area": "testing",
-    "title": "اختبار التشغيل من جهاز ثان وإصلاح العيوب",
-    "outcome": "نسخة قابلة للتشغيل من تعليمات نظيفة.",
+    "title": "Verify second-machine setup and fix critical defects",
+    "outcome": "Reproduce the release from clean setup instructions.",
     "acceptance": [
-      "تشغيل كامل من clone نظيف على جهاز ثان",
-      "إصلاح العيوب الحرجة دون تغيير test",
-      "تحديث تعليمات البيئة وحدود الذاكرة"
+      "Complete a clean-clone installation and full run on a second machine.",
+      "Fix critical defects without tuning on the test set.",
+      "Update setup instructions and measured hardware limits."
     ],
     "dependencies": [
       "R4"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "T26",
     "phase": "P5",
     "area": "documentation",
-    "title": "كتابة التقرير الأكاديمي وتحديث الأدلة",
-    "outcome": "تقرير مبني على النتائج الحقيقية وقالب الكلية.",
+    "title": "Write the academic report and update the guides",
+    "outcome": "Prepare a report grounded in actual work and results.",
     "acceptance": [
-      "المشكلة والدراسات والمنهج والتصميم والتنفيذ والتجارب والقيود",
-      "تتبع الجداول والأرقام إلى سجلات فعلية",
-      "تحديث دليل المستخدم والمطور وبطاقة الموديل"
+      "Cover the problem, related work, method, design, implementation, experiments, and limitations.",
+      "Trace reported figures and numbers to retained evidence.",
+      "Update the developer guide, user guide, and model card."
     ],
     "dependencies": [
       "T24",
       "T25"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "d5ania"
   },
   {
     "key": "T27",
     "phase": "P5",
     "area": "delivery",
-    "title": "تجهيز العرض والديمو وتسجيل احتياطي",
-    "outcome": "عرض قابل للتكرار لكل أعضاء الفريق.",
+    "title": "Prepare the presentation and repeatable demonstration",
+    "outcome": "Prepare a team presentation and backup recording.",
     "acceptance": [
-      "سيناريو ديمو ثابت مع حالة نجاح وفشل",
-      "عرض وتوزيع شرح وتجربة مناقشة",
-      "تسجيل احتياطي صغير على GitHub Release ضمن الحدود"
+      "Use a stable demonstration with a success and failure example.",
+      "Agree on speaking roles and rehearse questions.",
+      "Store a small permitted backup recording in the GitHub release within quota."
     ],
     "dependencies": [
       "T24",
       "T25"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "d5ania"
   },
   {
     "key": "T28",
     "phase": "P5",
     "area": "delivery",
-    "title": "إصدار نسخة التسليم الأولى على GitHub",
-    "outcome": "Release موثق مع الملفات والروابط اللازمة.",
+    "title": "Publish the initial delivery release",
+    "outcome": "Publish an identifiable release and its supporting materials.",
     "acceptance": [
-      "tag وrelease notes وchecksums",
-      "الموديل والبيانات وفق الترخيص والحصة",
-      "قائمة تسليم كاملة وروابط التقرير والديمو"
+      "Create a tag, release notes, and artifact checksums.",
+      "Respect model/data licenses and storage limits.",
+      "Complete the delivery checklist and link the report and demonstration."
     ],
     "dependencies": [
       "T26",
       "T27"
     ],
     "priority": "P0",
-    "owner": "unassigned"
+    "owner": "abdulrhmanmagdy1"
   },
   {
     "key": "R5",
     "phase": "P5",
     "area": "supervisor",
-    "title": "مراجعة الدكتورة للنسخة الأولى وخطة التطوير",
-    "outcome": "تسجيل تقييم النسخة وأولويات العمل بعد الشهرين.",
+    "title": "Supervisor review: initial delivery and next priorities",
+    "outcome": "Record delivery feedback and prioritize subsequent development.",
     "acceptance": [
-      "عرض الإصدار والنتائج والقيود",
-      "محضر بملاحظات التسليم",
-      "Backlog مرتب للتطوير التالي دون توسيع غير مدروس"
+      "Present the release, findings, and limitations.",
+      "Record the supervisor review.",
+      "Prioritize follow-up work without assuming a larger scope."
     ],
     "dependencies": [
       "T28"
     ],
     "priority": "P0",
-    "owner": "coordinator"
+    "owner": "abdulrhmanmagdy1"
   }
 ]

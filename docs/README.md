@@ -1,30 +1,38 @@
-# دليل توثيق المشروع
+# Documentation index
 
-التوثيق مشترك داخل GitHub ويتحدث مع التنفيذ. النسخ الأكاديمية تُبنى من هذه المصادر وفق قالب الكلية عندما يتوفر. لا تُكتب نتائج تجارب قبل تنفيذها.
+These documents describe the proposed system and the work needed to deliver it. Implemented behavior is identified separately from planned behavior. Results will be added after experiments have been run.
 
-| المستند | الجمهور والغرض |
+## PDF editions
+
+- [Complete project documentation](pdf/01-project-documentation.pdf)
+- [Team delivery plan](pdf/02-team-delivery-plan.pdf)
+- [Edition notes](pdf/README.md)
+
+## Source documents
+
+| Document | Main use |
 |---|---|
-| [مقترح المشروع](proposal/project-proposal.md) | الدكتورة والتيم لاعتماد المشكلة والنطاق |
-| [المتطلبات](requirements/srs.md) | الوظائف وشروط قبولها |
-| [تصميم النظام](architecture/system-design.md) | المكونات والتفاعل وحدود الثقة |
-| [القرارات التقنية](architecture/decisions.md) | الخيارات وأسبابها وحالتها |
-| [إعداد البيئة](development/setup.md) | تشغيل نسخة موحدة على أجهزة الفريق |
-| [خطة التحقق](development/testing.md) | ما الذي نتحقق منه وكيف |
-| [خطة البحث](research/related-work.md) | جمع الدراسات والمقارنة بها |
-| [البيانات](data-and-training/data-plan.md) | المصادر والتجهيز والتقسيم |
-| [التدريب](data-and-training/training-plan.md) | تخصيص الموديل وتسجيل التجارب |
-| [بطاقة الموديل](data-and-training/model-card.md) | أصل الموديل وحدوده ونتائجه |
-| [منهج التقييم](evaluation/protocol.md) | المقارنات والمقاييس |
-| [خطة المراحل](planning/roadmap.md) | نواتج الأسابيع ومراجعات الدكتورة |
-| [فهرس التاسكات](planning/task-index.md) | روابط المهام وشروط القبول على GitHub |
-| [التيم](planning/team.md) | الأسماء وقواعد توزيع العمل |
-| [المخاطر](planning/risks.md) | المخاطر والاستجابة لها |
-| [مساحة GitHub](planning/github-workspace.md) | روابط التاسكات ولوحة المتابعة |
-| [مراجعات الدكتورة](supervisor-reviews/README.md) | آلية المراجعة والقرارات |
-| [دليل المستخدم](delivery/user-guide.md) | الاستخدام الحالي والمستهدف |
-| [خطة التسليم](delivery/checklist.md) | التقرير والديمو والإصدار |
-| [المراجع](references.md) | مصادر المنهج والأدوات |
+| [Project proposal](proposal/project-proposal.md) | Agree on the problem, scope, and contribution |
+| [Requirements](requirements/srs.md) | Define behavior and acceptance criteria |
+| [Roadmap](planning/roadmap.md) | Plan phase outcomes and supervisor reviews |
+| [Team](planning/team.md) | Identify members and responsibilities |
+| [Assignments](planning/assignments.md) | Find each task's owner |
+| [Task index](planning/task-index.md) | Open the corresponding GitHub Issues |
+| [System design](architecture/system-design.md) | Understand components and runtime behavior |
+| [Decision log](architecture/decisions.md) | Record technical choices and trade-offs |
+| [First day](development/first-day.md) | Join the workspace and start contributing |
+| [Environment setup](development/setup.md) | Reproduce the development environment |
+| [Testing](development/testing.md) | Plan and verify software behavior |
+| [Related work](research/related-work.md) | Organize the literature review |
+| [Data plan](data-and-training/data-plan.md) | Source, curate, and split the dataset |
+| [Training plan](data-and-training/training-plan.md) | Run and record fine-tuning experiments |
+| [Model card](data-and-training/model-card.md) | Describe model provenance and limitations |
+| [Evaluation protocol](evaluation/protocol.md) | Compare systems under declared conditions |
+| [Risks](planning/risks.md) | Track risks and responses |
+| [GitHub workspace](planning/github-workspace.md) | Use the board, access settings, and notifications |
+| [Supervisor reviews](supervisor-reviews/README.md) | Prepare reviews and record decisions |
+| [User guide](delivery/user-guide.md) | Use the current foundation service |
+| [Delivery checklist](delivery/checklist.md) | Prepare the release, report, and demonstration |
+| [References](references.md) | Locate the methodology and tool sources |
 
-## قواعد التحديث
-
-كل PR يغيّر سلوكًا أو عقد API يحدّث التوثيق المتأثر. نميّز بوضوح بين الوضع المنفذ والتصميم المستهدف. نراجع المستندات عند كل مرحلة. المالك الحالي للمراجعة التنظيمية هو منسق التيم؛ مسؤول المحتوى التقني هو منفذ الجزء ومراجعه.
+Update the affected documents in the same pull request as a behavior or API change. Review the documentation at every phase boundary. The coordinator maintains the overall structure; each task owner maintains the technical content they change.

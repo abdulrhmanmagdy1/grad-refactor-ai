@@ -1,48 +1,55 @@
-# مقترح منصة تحسين كود Python باستخدام عدة Agents
+# Project proposal
 
-الحالة: مسودة v0.1 لمراجعة الدكتورة. الأفق الأول ثمانية أسابيع من انطلاق التيم؛ تاريخ البداية والتسليم الرسمي لم يُعتمدا بعد.
+**Working title:** Multi-Agent Refactoring for Python  
+**Status:** planning draft for supervisor review  
+**Initial delivery window:** eight weeks from the agreed team start date
 
-## المشكلة والأهداف
+## Problem
 
-تحتاج عملية Refactoring إلى فهم المشكلة، إنتاج تعديل، والتحقق من الحفاظ على الوظيفة. قد تنتج النماذج اللغوية تعديلات غير صحيحة أو غير مرتبطة بالمشكلة؛ يدرس المشروع تنظيم هذه الخطوات في أدوار منفصلة مع أدوات تحقق قابلة للقياس.
+Refactoring requires more than producing code that looks cleaner. A useful change must address a specific structural problem and preserve the program's intended behavior. Language models can propose changes that are unnecessary, invalid, or behaviorally incorrect. This project investigates whether separating analysis, modification, and review into coordinated roles improves the reliability of a small refactoring workflow.
 
-المستخدم المستهدف طالب أو مطور يراجع كود Python صغيرًا. الهدف الأول تقديم تعديل مفهوم يمكن مراجعته، مع تفسير ونتائج فحص، وليس التعديل التلقائي على مشاريع المستخدمين.
+The intended user is a student or developer reviewing a small Python function or file. The system will present a proposed change and the evidence available to assess it. It will not modify the user's original files automatically.
 
-## الحل المقترح
+## Proposed approach
 
-منصة تستقبل دالة أو ملف Python ضمن حدود معلنة. يحلل Agent الكود، ويقترح Agent تعديلًا، ثم يراجعه دور ثالث مدعوم بأدوات الفحص. يعرض النظام Diff وتفسيرًا ونتائج تحقق وحالة نجاح أو فشل. يمكن للأدوار مشاركة نفس الموديل الأساسي؛ لا يتطلب تعدد الـAgents تعدد الموديلات.
+An analysis agent identifies a supported refactoring opportunity. A refactoring agent proposes a change. A review agent examines the change alongside deterministic checks. The interface presents the original and proposed code, a diff, an explanation, and separate verification results.
 
-يخصص التيم موديلًا مفتوح الأوزان باستخدام Fine-tuning لمهمة محددة، ويقارن أداءه بالموديل قبل التخصيص. تبدأ التجارب بدور التعديل؛ توسيع التدريب لأدوار أخرى يعتمد على الوقت والموارد.
+The roles may share one underlying code model. The team will fine-tune an existing open-weight model for a narrowly defined refactoring task, initially targeting the modification role. The original model will remain available as a baseline. Expanding fine-tuning to other roles depends on the feasibility results and available time.
 
-## النطاق
+## Objectives
 
-- Python فقط، ومدخلات صغيرة موثوقة في النسخة الأولى.
-- اختيار نوع أو نوعين من Refactoring بعد تجربة الجدوى واعتماد أمثلة قبول لكل نوع.
-- واجهة لإدخال الكود وعرض التغيير والتفسير وحالة التحقق.
-- موديل أساسي مجاني للتشغيل وفق ترخيصه، وتجربة تخصيص موثقة.
-- تقييم متعدد الأدوار مقابل دور واحد، والتخصيص مقابل الأساس.
-- تشغيل محلي قابل للإعادة؛ النشر العام ليس شرطًا لنسخة الشهرين.
+- Deliver a reproducible, locally runnable workflow for selected Python refactorings.
+- Prepare a documented dataset with source-level separation between training, validation, and test sets.
+- Run a traceable fine-tuning experiment and retain the adapter and configuration.
+- Measure the effects of fine-tuning and agent coordination separately.
+- Report failure cases, resource use, and limitations as well as successful examples.
 
-خارج النسخة الأولى: تدريب LLM من الصفر، دعم عدة لغات، مستودعات كبيرة، تعديل تلقائي لفروع GitHub، تنفيذ كود مجهول المصدر قبل تصميم عزل معتمد، وضمان التكافؤ السلوكي لجميع البرامج.
+## First-release scope
 
-## المساهمة العلمية
+The first release will accept a function or a small Python file. One or two refactoring types will be selected after the feasibility study, with reference examples and acceptance rules for each. The interface will support input, inspection of the proposed change, verification results, and explicit user acceptance or rejection.
 
-المساهمة المرشحة هي دراسة أثر تنسيق الأدوار مع تخصيص مهمة Refactoring ضيقة. لا نفترض مسبقًا أن تعدد الأدوار أو التدريب سيحسّن النتائج. إعداد البيانات، قابلية إعادة التجارب، وتحليل الفشل أجزاء أساسية من المشروع. قبول هذا المسار أكاديميًا يرجع للدكتورة.
+Paid model APIs and paid hosting are outside the budget. Public deployment is not required for the initial delivery. Test execution, if enabled, will be restricted to trusted examples in a separately reviewed runner.
 
-## أسئلة البحث
+Training a language model from scratch, supporting multiple languages or large repositories, automatically changing GitHub branches, and guaranteeing behavioral equivalence for all programs are outside this release.
 
-1. هل يرفع تنسيق التحليل والتعديل والمراجعة نسبة التعديلات المقبولة مقارنة بدور واحد؟
-2. ما أثر التخصيص على نفس المهام مقارنة بالموديل الأساسي؟
-3. كيف تتغير الجودة مقابل الزمن وعدد الاستدعاءات؟
+## Research questions
 
-## المخرجات ومعيار النجاح
+1. Does a coordinated analysis, modification, and review workflow produce more acceptable refactorings than a single-agent workflow on the selected tasks?
+2. How does task-specific fine-tuning change performance relative to the original model?
+3. What quality improvements, if any, justify the additional inference time and resource use?
 
-نسخة قابلة للتشغيل بمسار كامل، بيانات موثقة بتقسيم مستقل، تجربة تدريب ونتائج قابلة للإعادة، تقرير تقييم يشمل حالات الفشل، وتقرير وعرض وديمو. نجاح المنصة يقاس بتنفيذ متطلبات القبول؛ نجاح الفرضية البحثية يقرره القياس حتى لو كانت النتيجة سلبية. تُحدد الأهداف العددية بعد خط الأساس وقبل اختبار المجموعة النهائية.
+The proposed contribution is an empirical study of this bounded workflow. Improvement is a hypothesis, not a promised result. Dataset preparation, reproducibility, and failure analysis are part of the contribution. The supervisor will confirm whether the proposed scope meets the department's academic requirements.
 
-## الموارد والمراجعات
+## Deliverables and success criteria
 
-خمسة أعضاء بمستوى متقارب، والمنسق هو مالك المستودع. الميزانية صفر، والأجهزة وساعات العمل الأسبوعية قيد الحصر. نهاية كل مرحلة تتضمن عرضًا للدكتورة، ومحضر قرارات وتحديثًا للتاسكات. تفاصيل المراحل في [الخطة](../planning/roadmap.md).
+Deliverables are a working end-to-end prototype, documented data preparation, a recorded fine-tuning experiment, an evaluation report, developer and user documentation, and a presentation with a repeatable demonstration.
 
-## قرارات مطلوبة في المراجعة الأولى
+Prototype completion is assessed against the agreed acceptance criteria. Research findings are assessed through the evaluation protocol, including negative results. Numerical performance targets will be recorded after the baseline study and before the final test set is evaluated.
 
-اعتماد المشكلة والنطاق ومساهمة التخصيص؛ تحديد أنواع Refactoring؛ توضيح قالب الكلية ومواعيد التسليم؛ تحديد إمكانية استخدام GPU بالكلية؛ واعتماد منهج التقييم المقترح.
+## Resources and supervision
+
+The team has five members with similar reported experience. The repository owner coordinates the work. Hardware and weekly availability will be recorded at kickoff. Each phase ends with a supervisor review, written decisions, and follow-up Issues.
+
+## Decisions for the first supervisor review
+
+Confirm the problem and proposed contribution; select the refactoring types; review the training resources; confirm the university report template and official dates; and agree on the evaluation approach.

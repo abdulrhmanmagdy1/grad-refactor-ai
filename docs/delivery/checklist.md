@@ -1,16 +1,16 @@
-# قائمة التسليم الأول
+# Initial delivery checklist
 
-- [ ] تأكيد قالب الكلية والمواعيد الرسمية مع الدكتورة.
-- [ ] متطلبات منفذة موثقة بروابط الأدلة، مع المستبعد وأسبابه.
-- [ ] تشغيل نظيف على جهازين وتعليمات مثبتة.
-- [ ] بيانات مرخصة ومنظفة وتقييم مستقل ونسخ قابلة للتتبع.
-- [ ] تدريب موثق وAdapter قابل للتحميل وفق الترخيص والحصة.
-- [ ] مقارنة قبل وبعد التخصيص، ودور واحد مقابل عدة أدوار.
-- [ ] نتائج تشمل حالات الفشل والتكلفة والقيود.
-- [ ] دليل مستخدم ودليل مطور وبطاقة موديل محدثة.
-- [ ] تقرير أكاديمي: المشكلة، الأعمال السابقة، المنهج، التصميم، التنفيذ، التجارب، النتائج، القيود، والخطوات التالية؛ حسب قالب الكلية.
-- [ ] عرض ومثال ديمو ثابت وتسجيل احتياطي صغير كمرفق Release.
-- [ ] Tag وإصدار GitHub Release مع ملاحظات وchecksums وروابط التجارب.
-- [ ] محضر مراجعة P5 وتاسكات التطوير بعد الشهرين.
+- [ ] Confirm the university template and official dates with the supervisor.
+- [ ] Trace implemented, deferred, and excluded requirements to evidence.
+- [ ] Reproduce setup and a complete run on two machines.
+- [ ] Record data licensing, curation, independent splits, and versions.
+- [ ] Record fine-tuning settings and a reloadable adapter within storage and license limits.
+- [ ] Compare original and adapted models, and single-role and coordinated workflows.
+- [ ] Include failures, resource use, and limitations in the evaluation.
+- [ ] Update developer and user guides and the model card.
+- [ ] Write the academic report using the university template: problem, related work, method, design, implementation, experiments, results, limitations, and future work.
+- [ ] Prepare the presentation, repeatable demonstration, and a small backup recording.
+- [ ] Tag the release and publish notes, checksums, and experiment links on GitHub.
+- [ ] Record the P5 review and prioritize subsequent development.
 
-لا يوجد تقرير نهائي أو عرض أو فيديو جاهز في مرحلة التأسيس؛ تنشأ من النتائج الحقيقية لاحقًا.
+The final report, presentation, and demonstration recording are not complete at the foundation stage. They must reflect the work and results actually produced.

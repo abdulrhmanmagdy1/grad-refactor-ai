@@ -1,13 +1,13 @@
-# أول يوم للتيم
+# First-day guide
 
-ابدأ بقبول دعوة المستودع، ثم افتح [لوحة الشغل](https://github.com/users/abdulrhmanmagdy1/projects/1) و[فهرس التوثيق](../README.md).
+Accept the repository invitation, then open the [Project board](https://github.com/users/abdulrhmanmagdy1/projects/1) and [documentation index](../README.md).
 
-1. اقرأ [مقترح المشروع](../proposal/project-proposal.md) و[خطة الأسابيع](../planning/roadmap.md). سجل أي اعتراض في Issue بدل تعديل النطاق دون اتفاق.
-2. اتبع [إعداد البيئة](setup.md). شغّل doctor وpytest وأرفق نتيجة مختصرة في [تاسك البيئة](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/2).
-3. سجل العتاد والوقت المتاح في [اجتماع الانطلاق](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/1). لا ترفق معلومات شخصية أو مفاتيح وصول.
-4. اتفقوا على المسؤول والمراجع للتاسكات القريبة. اختاروا تاسك واحدة أساسية لكل عضو دون تعارض مع الاعتماديات.
-5. عند إنجاز الشغل افتح PR واطلب مراجعة واربط Issue. راجع [المساهمة](../../CONTRIBUTING.md) لتعريف Done.
+1. Read the proposal and roadmap. Raise scope concerns in an Issue before changing the plan.
+2. Follow the environment setup guide. Add a short doctor and test result to Issue #2 without credentials or personal information.
+3. Record hardware and weekly availability in Issue #1.
+4. Read your workstream and phase outcomes in the team delivery plan. Start one primary task after its dependencies are ready, and tell the coordinator if availability or hardware requires a change.
+5. Submit work in a linked pull request, include verification evidence, and run the acceptance checks before merging.
 
-في لوحة Project يمكن الفلترة بـ`assignee:@me` لإظهار شغلك، وبـ`label:phase:P1` لمرحلة البداية. الـIssue تعرض التفاصيل والاعتماديات، والـMilestone يجمع مخرجات المرحلة. لو اللوحة غير متاحة رغم الوصول للمستودع، يضيف المالك حسابك إلى صلاحيات Project أيضًا.
+Use assignee:@me on the Project board to find assigned work, or label:phase:P1 to focus on the first phase. Issues contain task details and dependencies; milestones group phase outcomes. Project access is separate from repository access.
 
-لا تبدأ تجربة تدريب كبيرة قبل اعتماد العتاد والبيانات والـbaseline. نسخة التأسيس الحالية تحلل Python بنيويًا فقط، ولا تحتوي موديلًا مدربًا أو نظام Agents جاهزًا.
+Do not begin a large training run before agreeing on hardware, data, and the baseline. The foundation service currently performs static analysis only.

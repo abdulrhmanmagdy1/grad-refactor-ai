@@ -1,37 +1,35 @@
-# مساحة GitHub المشتركة
+# GitHub workspace
 
-المستودع خاص تحت حساب `abdulrhmanmagdy1` باسم `grad-refactor-ai`، وهو اسم عمل قابل للتغيير.
+The private repository is owned by abdulrhmanmagdy1. grad-refactor-ai is a working repository name.
 
-- [المستودع](https://github.com/abdulrhmanmagdy1/grad-refactor-ai)
-- [التاسكات](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues)
-- [المراحل](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/milestones)
-- [لوحة المشروع](https://github.com/users/abdulrhmanmagdy1/projects/1)
-- [عرض المراحل والمسؤولين](https://github.com/users/abdulrhmanmagdy1/projects/1/views/2)
-- [فهرس التاسكات](task-index.md)
+- [Repository](https://github.com/abdulrhmanmagdy1/grad-refactor-ai)
+- [Project board](https://github.com/users/abdulrhmanmagdy1/projects/1)
+- [Tasks and Owners view](https://github.com/users/abdulrhmanmagdy1/projects/1/views/2)
+- [Issues](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues)
+- [Milestones](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/milestones)
+- [Assignment table](assignments.md)
+- [PDF editions](../pdf/README.md)
 
-## مرجع العمل
+## Where work belongs
 
-- Issues للمهام، مع مرحلة وأولوية ومسار وشروط قبول.
-- Milestones للمراحل الخمس ومراجعة الدكتورة لكل مرحلة.
-- Project لعرض التاسكات حسب الحالة والمسؤول والمرحلة.
-- `docs/` للمصدر الأساسي للتوثيق؛ Wiki غير مطلوب كي لا نكرر المحتوى.
-- Pull Requests لرفع الشغل وطلب المراجعة، وActions لفحوصات البيئة.
-- Releases لنسخ التسليم ومرفقاتها الصغيرة؛ الأوزان والبيانات تخضع لسياسة الحجم والترخيص.
+Issues contain tasks, evidence, and dependencies. Milestones group phase outcomes. The Project provides status and ownership views. Source documentation lives in docs/ rather than a separate Wiki. Pull requests record changes and check results, and Actions run the foundation checks. Releases may hold permitted artifacts after quota and license checks.
 
-## حالات اللوحة
+## Board states
 
-Backlog أفكار غير جاهزة؛ Ready تاسك محددة بلا اعتماد معطل؛ In Progress تنفيذ جارٍ؛ In Review لها PR أو مخرج ينتظر مراجعة؛ Done ناتج مقبول ومندمج. Blocked علامة مع سبب ورابط الاعتماد، وليست نسبة إنجاز.
+Backlog contains planned work that has not entered execution, including tasks waiting on earlier outcomes. Ready means the task is defined and its dependencies allow it to start. In Progress means work has started. In Review is optional when an output is waiting for a decision or supervisor feedback. Done means the output has been accepted. Use blocked as a label with a written reason and dependency link.
 
-اللوحة تحتوي Team Board للحالات وTasks and Owners لجدول مجمع حسب Milestone، مع المسؤول وLabels والـPRs المرتبطة. أتمتة Project تضيف المهام الجديدة المفتوحة من المستودع، وتنقل التاسك إلى In Review عند ربط PR، وإلى Done عند إغلاقها. ربط PR في وضع Draft قد يستلزم إعادة الحالة يدويًا إلى In Progress. مراجعة شروط القبول قبل الإغلاق مسؤولية المراجع؛ الأتمتة لا تثبت جودة العمل.
+Team Board shows status columns. Tasks and Owners groups a table by milestone. The Project automatically adds matching new Issues, changes linked work to In Progress, and marks closed work Done. A draft pull request may require moving the task back to In Progress manually. Automation does not verify acceptance criteria.
 
-المهام المخططة 33، بخلاف [تاسك التأسيس المنفذة](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/34). مهمة الانطلاق T01 جاهزة ومسندة للمنسق، وبقية الإسناد ينتظر اجتماع التيم. تم ربط إيميلات الأعضاء بحساباتهم عبر GitHub وإرسال دعوات كتابة للمستودع للأربعة: `abdelrhmanadel200` و`abdallah414` و`shahd-abdelhay` و`d5ania`. أضيفت الحسابات الأربعة بصلاحية Write للوحة أيضًا. الدعوات للمستودع في انتظار قبول الأعضاء؛ وصولهم الفعلي يُختبر بعد القبول.
+## Assignments and access
 
-## الإشعارات
+There are 33 planned tasks plus the completed setup Issue #34. Each task has one accountable owner. The delivery plan defines stable workstream ownership and outcomes across all five phases; no peer reviewer is assigned.
 
-بعد قبول الدعوة، يختار كل عضو Watch للمستودع حسب تفضيله، ويتابع الـIssues المسندة إليه وطلبات مراجعة PRs. رفع commit وحده لا يكفي لتنبيه التيم أو إعلان انتهاء التاسك؛ افتح PR وحدد المراجع وأضف تحديثًا في Issue. التنبيهات تعتمد على إعدادات حساب كل عضو.
+All four teammates have Project write access. At the edition check, Abdullah, Abdelrahman Adel, and Shahd had accepted repository access; Dania's repository invitation was still pending. Her ownership is recorded in the Issue body; native assignment requires acceptance. Current access is determined by GitHub settings, not this snapshot.
 
-## الوصول والخصوصية
+## Notifications
 
-المالك يدير المستودع، وبقية الفريق Collaborators للكتابة بعد تأكيد حساباتهم. لا ننشر الإيميلات أو نحاول تحويل اسم البريد إلى اسم حساب دون تحقق. دعوات المستودع منفصلة عن صلاحية تعديل Project الشخصي؛ يجب اختبار الاثنين. حماية `main` تعتمد على إتاحة الخطة للمستودع الخاص؛ إذا لم تتوفر، يلتزم الفريق بسياسة PR والمراجعة المكتوبة دون الادعاء بأنها مفروضة تقنيًا.
+Each member chooses repository notification preferences and follows assigned Issues and review requests. Uploading a commit alone is not a reliable team completion signal. Open a linked pull request, include the check results, and update the Issue.
 
-فحص الإعداد في 15 أكتوبر 2026: GitHub رفض تفعيل حماية الفروع على المستودع الخاص بالخطة الحالية وطلب ترقية أو تحويله إلى عام. احتفظنا بالخصوصية والميزانية صفر؛ المراجعة البشرية سياسة عمل وليست حماية مفروضة تقنيًا حاليًا. الدمج معدّ على Squash مع حذف الفروع المدمجة.
+## Main-branch policy
+
+The current GitHub plan rejected enforced branch protection for this private repository. The project remains private and has no paid upgrade. Owners complete acceptance checks before merging; a second-person approval is not part of the team workflow. Squash merging and deletion of merged branches are enabled.

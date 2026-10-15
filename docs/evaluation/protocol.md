@@ -1,37 +1,37 @@
-# منهج تقييم المنصة والموديل
+# Evaluation protocol
 
-الحالة: بروتوكول أولي لاعتماد P2، قبل تشغيل الاختبار النهائي. الهدف فصل أثر التدريب عن أثر تنسيق الأدوار.
+This draft is to be agreed during P2 before the final test evaluation. The comparison separates the effect of fine-tuning from the effect of role coordination.
 
-## مجموعات المقارنة
+## Comparison groups
 
-| المجموعة | الموديل | تنظيم العمل |
+| Group | Model configuration | Workflow |
 |---|---|---|
-| A | الأساسي | دور واحد مع نفس أدوات التحقق المتاحة |
-| B | الأساسي | تحليل وتعديل ومراجعة |
-| C | مخصص في دور التعديل | دور واحد |
-| D | مخصص في دور التعديل مع بقية الأدوار الأساسية | تحليل وتعديل ومراجعة |
+| A | Original model | One role with the same available verification tools |
+| B | Original model | Analysis, refactoring, and review roles |
+| C | Fine-tuned modification model | One role |
+| D | Fine-tuned modification role; original model for other roles | Analysis, refactoring, and review roles |
 
-نثبت البيانات ونسخة الأدوات وأنواع المهام وسياسة التوليد قدر الإمكان. نقارن تحت سقف إجمالي للاستدعاءات والتوكنز، ونوضح توزيع السقف على الأدوار. إن تعذر تساوي التكلفة نعرض الجودة مع الزمن وعدد الاستدعاءات والتوكنز؛ لا ننسب فرق الموارد كله إلى المعمارية.
+Hold data, tool versions, task definitions, and generation settings constant where practical. Declare a total call and token budget and explain its distribution across roles. If equal resource budgets are impractical, report quality alongside elapsed time, calls, and tokens rather than attributing every difference to coordination.
 
-## المقاييس
+## Measures
 
-- صلاحية syntax: نسبة النتائج التي يمكن تحليلها كـPython.
-- الحفاظ على السلوك بالاختبارات: نسبة اجتياز الاختبارات المرجعية من الحالات التي لها اختبارات؛ نظهر عدد الحالات المغطاة.
-- نجاح Refactoring: استيفاء rubric محدد لكل نوع، دون تغييرات وظيفية غير مقصودة ظاهرة في الأدلة المتاحة.
-- القبول الكلي: تحقق syntax والاختبارات المتاحة وrubric، مع إعلان حدود التغطية.
-- الزمن الكلي ومدة المراحل وعدد الاستدعاءات والتوكنز والذاكرة، حسب إمكانية القياس.
-- جودة بنيوية مثل طول الدالة أو التعقيد للمهمة المناسبة؛ انخفاض المؤشر وحده ليس نجاحًا كافيًا.
+- Syntax validity: the proportion of outputs that parse as Python.
+- Reference-test preservation: the proportion passing reference tests among cases with those tests, with coverage and case counts shown.
+- Refactoring success: compliance with a task-specific rubric without an unintended functional change apparent in the available evidence.
+- Overall acceptance: the declared combination of syntax, available reference tests, and rubric, with coverage limitations stated.
+- End-to-end and stage latency, calls, tokens, and memory where measurable.
+- Task-appropriate structural indicators, such as function length or complexity. A lower indicator alone is not sufficient evidence of success.
 
-مقام النسب يشمل المحاولات الفاشلة والمنتهية بالوقت؛ لا نحذفها من النتائج. نقارن النتائج بصورة paired لنفس الأمثلة، ونذكر حجم العينة وتنوع المصادر ونكرر البذور إذا سمحت الموارد. لا نختلق دلالة إحصائية من عينة صغيرة.
+Include failures and timeouts in the denominator. Compare the same examples across groups. Report sample size and source diversity, and repeat seeds if resources allow. Do not imply statistical confidence unsupported by the sample.
 
-## المراجعة البشرية
+## Qualitative assessment
 
-اثنان يراجعان عينة دون معرفة المجموعة إن أمكن، باستخدام rubric واحد، ويسجلان الخلاف وتسويته. أمثلة التدريب أو مخرجات نفس الموديل ليست حكمًا مرجعيًا تلقائيًا.
+Shahd assesses a sample using the fixed task rubric and records ambiguous cases and failure patterns. This is evaluation of model output, not a peer-review assignment between teammates. Model-generated examples are not automatic ground truth.
 
-## سجل الحالة
+## Case-level record
 
-معرف الحالة وsource group وsplit؛ إصدار البيانات والموديل والكود؛ المجموعة والبذرة؛ المدخل والهدف والخرج أو hashes وروابطهم؛ نتائج syntax والاختبارات والـrubric؛ الزمن والاستدعاءات والتوكنز؛ نوع الفشل؛ والمراجع. نتائج test تحفظ دون تعديل انتقائي.
+Record case ID, source group, split, data/model/code versions, group, seed, input and output references or hashes, syntax and test results, rubric assessment, timing, calls, tokens, failure type, and evaluator. Preserve the full test result record rather than a selected set of successes.
 
-## شروط اعتماد النسخة
+## Release acceptance
 
-المتطلبات P0 المتفق عليها تعمل على جهاز العرض وجهاز ثانٍ؛ سجل نتائج قابل للإعادة؛ تحليل للأخطاء؛ شرح القيود؛ وموافقة الدكتورة على تفسير النتيجة. نحدد أهدافًا عددية بعد baseline ونوثقها قبل فتح الاختبار النهائي، ولا نشترط تفوقًا بحثيًا غير مضمون لتسمية المنصة عاملة.
+The agreed P0 behavior must run on the demonstration machine and a second machine. The release needs reproducible results, an error analysis, documented limitations, and a supervisor review. Numerical targets are set after the baseline and before the final test evaluation. A working prototype does not depend on proving that the research hypothesis is true.

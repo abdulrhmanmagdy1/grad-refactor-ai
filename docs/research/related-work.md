@@ -1,15 +1,15 @@
-# خطة الدراسات السابقة
+# Related-work review plan
 
-الهدف تحديد الفجوة ومقارنات قابلة للتنفيذ؛ لم تُنجز مراجعة أدبية بعد. نبدأ بالمصادر الأولية والأوراق الأصلية ونحفظ بيانات الاستشهاد والرابط والتاريخ.
+The literature review has not been completed. Its purpose is to identify a defensible research question and comparisons that can be reproduced with the team's resources.
 
-## محاور البحث
+## Search areas
 
-LLM based refactoring؛ multi-agent code improvement؛ parameter efficient fine-tuning for code؛ تقييم الحفاظ على السلوك؛ وكشف code smells. نميز بين إصلاح أخطاء وتغيير سلوك مقصود وبين Refactoring يحافظ على الوظيفة.
+Review primary work on language-model-based refactoring, multi-agent code improvement, parameter-efficient fine-tuning for code, code smells, and behavior-preservation evaluation. Distinguish refactoring from bug fixing and deliberate functional changes.
 
-## جدول القراءة
+## Reading record
 
-لكل ورقة: العنوان والمؤلفون والسنة والرابط؛ المشكلة؛ اللغة والبيانات والترخيص؛ الموديل والعتاد؛ الأدوار والأدوات؛ baseline؛ المقاييس؛ النتائج؛ القيود؛ وإمكانية إعادة التجربة ضمن مواردنا. نختار عددًا مناسبًا من الأعمال المرتبطة مباشرة بدل جمع قائمة كبيرة بلا تحليل.
+For each paper, record its authors, year, link, problem, language, data and license, model and hardware, roles and tools, baseline, metrics, findings, limitations, and reproducibility requirements. Prefer a focused set of directly relevant studies over a long unexamined bibliography.
 
-## ما نعتمده بعد القراءة
+## Decisions supported by the review
 
-اختيار أنواع Refactoring وأمثلة قبولها، مصدر بيانات قابل للاستخدام، baseline واقعي، وبروتوكول مقارنة. لا نصف المشروع بأنه أول حل أو أفضل حل دون بحث ودليل. الدكتورة تراجع الفجوة المقترحة في P1 ومنهج المقارنة في P2.
+Use the review to choose task types, data sources, a practical baseline, and the evaluation method. Do not claim novelty or superiority without evidence. Discuss the proposed gap during P1 and the comparison method during P2.

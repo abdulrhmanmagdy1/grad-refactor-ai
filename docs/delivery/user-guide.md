@@ -1,7 +1,9 @@
-# دليل استخدام نسخة التأسيس
+# Foundation user guide
 
-النسخة الحالية تختبر البيئة والتحليل البنيوي فقط. اتبع [إعداد البيئة](../development/setup.md)، وافتح http://127.0.0.1:8000/docs، واختر `POST /api/v1/analyze` ثم Try it out. أرسل كود Python كنص JSON في الحقل `code`، ثم راجع `syntax_valid` و`findings` و`error`.
+The current service supports environment verification and static analysis. It does not yet provide a refactoring product.
 
-لا تحتاج مفتاح API أو موديل. النتائج الحالية مؤشرات ثابتة استرشادية، وقد لا تغطي كل مشكلات الكود. لا يوجد تعديل أو تنزيل ناتج أو تدريب تلقائي أو تشغيل للاختبارات من مدخلات المستخدم في هذه النسخة.
+Follow the setup guide, open http://127.0.0.1:8000/docs, select POST /api/v1/analyze, and choose Try it out. Submit Python text in the code field. Inspect syntax_valid, findings, and error.
 
-الواجهة المستهدفة للمنتج ستتيح إدخال كود، مراجعة Diff وتفسير ونتائج تحقق، وقبول التعديل أو رفضه. يُحدّث هذا الدليل بعد تنفيذها والتحقق منها.
+No model or API key is needed. Findings are limited structural heuristics and do not cover every code-quality issue. The foundation does not modify code, download a refactoring, run user tests, or start training.
+
+The planned interface will support code input, a diff, an explanation, verification results, and user acceptance or rejection. Update this guide when that behavior is implemented and verified.

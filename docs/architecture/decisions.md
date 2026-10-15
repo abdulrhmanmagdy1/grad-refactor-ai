@@ -1,21 +1,21 @@
-# سجل القرارات التقنية
+# Technical decision log
 
-كل قرار كبير يسجل السياق والبدائل والنتائج. المستخدم اعتمد Python وFine-tuning وGitHub فقط والميزانية صفر؛ الخيارات الأخرى قابلة للمراجعة.
+Record context, alternatives, consequences, and evidence for significant decisions. Python input, fine-tuning, GitHub collaboration, and a zero paid-services budget were agreed by the team owner. Other choices remain subject to feasibility and supervisor review.
 
-| القرار | الحالة | السبب والأثر |
-|---|---|---|
-| ADR01 لغة المدخل Python | معتمد من التيم | يقلل النطاق ويسهل أدوات التحقق |
-| ADR02 تخصيص موديل موجود | معتمد من التيم | يلائم الهدف والوقت؛ لا تدريب LLM من الصفر |
-| ADR03 GitHub للكود والتوثيق والتاسكات | معتمد من التيم | مرجع واحد للتغيير والمراجعات |
-| ADR04 ميزانية صفر وتشغيل محلي أولًا | معتمد من التيم | لا خدمة مدفوعة أو نشر عام مطلوب |
-| ADR05 مستودع خاص تحت حساب المالك | تأسيس | يحفظ التحكم بيد abdulrhmanmagdy1؛ لا Organization جديدة مطلوبة |
-| ADR06 Python 3.11 وuv وFastAPI | اختيار تأسيس | بيئة مقفلة وAPI قابلة للفحص؛ يمكن تعديلها بمبرر |
-| ADR07 تدريب دور التعديل أولًا | مقترح | تقليل عبء البيانات والتدريب؛ موافقة الدكتورة وتجربة الجدوى تحسمه |
-| ADR08 موديل صغير مفتوح الأوزان وLoRA | مقترح | الحجم والدقة وQLoRA تتحدد حسب العتاد والتجربة |
-| ADR09 SQLite للتشغيل المحلي | مقترح | نتجنب إدارة خادم DB قبل وجود حاجة |
-| ADR10 Workflow صريح قبل إطار Agents | مقترح | نثبت السلوك أولًا؛ نقارن LangGraph إذا احتجنا حالة واستئنافًا متقدمًا |
-| ADR11 أوزان وبيانات كبيرة على GitHub | قيد التحقق | نراجع سعة Git LFS/Releases والحصص والتراخيص؛ لا نرفع ملفات ضخمة إلى Git العادي |
+| ID | Decision | Status | Rationale |
+|---|---|---|---|
+| ADR01 | Python as the input language | Agreed | Limits the task and simplifies verification |
+| ADR02 | Fine-tune an existing model | Agreed | Avoids training a code language model from scratch |
+| ADR03 | GitHub for shared code, documentation, and tasks | Agreed | Keeps changes and review together |
+| ADR04 | Local operation and no paid services | Agreed | Matches the budget |
+| ADR05 | Private repository owned by abdulrhmanmagdy1 | Implemented | Preserves the requested ownership and access |
+| ADR06 | Python 3.11, uv, and FastAPI | Foundation choice | Provides a locked core environment and inspectable API |
+| ADR07 | Fine-tune the modification role first | Proposed | Keeps the first training task bounded |
+| ADR08 | Small open-weight model with LoRA | Proposed | Model size and precision depend on the measured hardware limits |
+| ADR09 | SQLite for local run history | Proposed | Avoids an external database before one is needed |
+| ADR10 | Explicit workflow before a dedicated agent framework | Proposed | Establishes behavior before adding framework complexity |
+| ADR11 | GitHub storage for distributable artifacts | Feasibility check | Confirm size, quota, and licensing before uploading weights or data |
 
-## نموذج قرار جديد
+## New decision record
 
-العنوان؛ الحالة؛ التاريخ؛ صاحب الاقتراح والمراجع؛ السياق؛ البدائل؛ القرار؛ المزايا والتكاليف؛ دليل التجربة؛ أثر القرار على المتطلبات؛ موعد إعادة النظر.
+Include a title, status, date, owner, context, alternatives, decision, consequences, evidence, affected requirements, and a condition for revisiting the choice.

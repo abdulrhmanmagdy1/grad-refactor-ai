@@ -1,27 +1,31 @@
-# خطة النسخة الأولى خلال ثمانية أسابيع
+# Eight-week delivery plan
 
-التوقيت نسبي من يوم انطلاق التيم؛ لا يوجد موعد رسمي معتمد. الخطة تفترض توافرًا أسبوعيًا يُحسم في اجتماع الانطلاق. نفصل أعمال التأسيس المنفذة عن جاهزية المنتج التي تتطلب المراحل التالية.
+Weeks are relative to the team's agreed start date. The official deadline has not been confirmed. The schedule must be checked against weekly availability at kickoff. Repository setup is complete; the product milestones below are still planned work.
 
-| المرحلة | التوقيت | المخرجات وشروط الخروج | مراجعة الدكتورة |
+| Phase | Window | Required outcome | Supervisor review |
 |---|---|---|---|
-| P1 النطاق والجدوى | الأسبوع 1 | حصر عتاد وساعات التيم، اختيار حالات صغيرة، تجربة inference وتدريب مصغر، اعتماد النطاق والميزانية | المشكلة والمساهمة والموارد وقالب الكلية |
-| P2 البيانات وخط الأساس | الأسبوع 2 | مصادر مرخصة، بيانات منظفة مقسمة حسب المصدر، خط أساس وسيناريوهات قبول، تثبيت بروتوكول التقييم | البيانات والمقاييس وأنواع Refactoring |
-| P3 الربط والتدريب الأول | الأسبوعان 3 و4 | مسار كامل بموديل أساسي وواجهة أولية، أول Adapter محفوظ، عقود واختبارات | ديمو ونتائج قبل وبعد التدريب |
-| P4 تكامل النسخة الأساسية | الأسبوعان 5 و6 | أدوار مترابطة، Diff، تحقق محدود وآمن، سجل تشغيل وحدود محاولات، معالجة فشل | تجربة المتطلبات وتحديد ما يلزم حذفه أو إصلاحه |
-| P5 التقييم والتسليم الأول | الأسبوعان 7 و8 | نتائج مستقلة، إصلاحات، تشغيل من جهاز ثانٍ، تقرير وعرض وديمو وRelease | مراجعة النسخة وخطة التطوير اللاحقة |
+| P1 Scope and feasibility | Week 1 | Hardware and availability inventory, bounded tasks, model inference measurements, a small training smoke test, and an agreed scope | Problem, contribution, resources, and report requirements |
+| P2 Data and baseline | Week 2 | Licensed and curated data, independent splits, a baseline, acceptance examples, API contracts, and an evaluation protocol | Data quality, task selection, metrics, and experiment design |
+| P3 Integration and first training run | Weeks 3-4 | An end-to-end example using the base model, an initial interface, a saved adapter, and preliminary validation results | Demonstration and first before/after comparison |
+| P4 First-release integration | Weeks 5-6 | Coordinated roles, a reviewed verification path, diff presentation, bounded retries, and acceptance evidence | Agreed use cases, remaining defects, and feature freeze |
+| P5 Evaluation and initial delivery | Weeks 7-8 | Independent evaluation, critical fixes, a second-machine run, report, presentation, demonstration, and release | Results, limitations, delivery feedback, and next priorities |
 
-## بوابات القرار
+## Decision points
 
-نهاية الأسبوع الأول: إذا لم نجد موارد تكفي للتخصيص، نصغّر الموديل أو المهمة ونبحث عن GPU بالكلية مع الدكتورة. لا نؤجل حسم الجدوى إلى الأسبوع السادس. نهاية الأسبوع الثاني: تثبيت مجموعة الاختبار؛ لا نستخدمها لاختيار إعدادات التدريب. نهاية الأسبوع الرابع: يجب عرض حالة واحدة كاملة؛ عند التأخر نوقف المزايا الإضافية. بداية الأسبوع السابع: تجميد المزايا الأساسية والتركيز على القياس والإصلاح والتسليم.
+At the end of Week 1, confirm that the selected task and model fit the training resources. If not, reduce the model, context, or task scope and discuss university GPU access with the supervisor.
 
-## إيقاع العمل
+At the end of Week 2, freeze the test set. Use validation data, rather than test data, to select prompts and training settings.
 
-تخطيط كل أسبوعين مع مراجعة أسبوعية قصيرة وديمو نهاية الدورة. تحديثات مكتوبة عند الإنجاز أو التعطيل. يُحدد موعد الدكتورة قبل نهاية المرحلة؛ بعد المراجعة تُسجل القرارات وتُربط بالتاسكات. لا ندعي حدوث موافقة لم تُسجل.
+By the end of Week 4, demonstrate at least one complete input-to-result case. If integration is late, defer optional features. At the start of Week 7, freeze core features and focus on evaluation, fixes, and delivery.
 
-## أول أسبوعين
+## Working rhythm
 
-القائمة التنفيذية في `planning/backlog.json` وتُنشر كـGitHub Issues. الأسبوع الأول يشمل حصر الأجهزة، تشغيل البيئة على الأجهزة الخمسة، مراجعة المقترح، استطلاع المصادر، وتجربة تشغيل وتخصيص صغيرة. الأسبوع الثاني يشمل تنظيف وتقسيم البيانات، قياس خط الأساس، تثبيت العقود، اعتماد التقييم ومراجعة P2.
+Plan in two-week cycles with a short weekly review and a demonstration at the end of each cycle. Record progress and blockers in Issues. Arrange supervisor reviews before a phase ends, then record decisions and create follow-up tasks. Independent work may continue while a review is pending; decisions that change scope or evaluation wait for agreement.
 
-## التطوير بعد النسخة الأولى
+## Assignments and dependencies
 
-يتحدد حسب القياس: أنواع Refactoring إضافية، مدخلات أكبر، تحسين البيانات والموديل، تكامل GitHub أو نشر داخلي. دعم لغة جديدة ونشر عام يحتاجان نطاقًا وتقييمًا جديدين؛ ليسا التزامًا لنسخة الثمانية أسابيع.
+The [assignment table](assignments.md) defines each member's main workstream and outputs in every phase. There is one accountable owner per task and no assigned peer-review role. Scope and dates are updated with supervisor decisions. An assigned task remains in Backlog until its dependencies and acceptance criteria are ready.
+
+## After the first release
+
+Subsequent work will be selected from the evaluation findings: additional refactoring types, better data, larger inputs, improved models, or repository integration. Another programming language or public deployment requires a revised scope and evaluation plan.

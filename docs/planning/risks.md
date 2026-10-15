@@ -1,15 +1,15 @@
-# مخاطر المشروع
+# Project risks
 
-| الخطر | العلامة المبكرة | الاستجابة | المسؤول |
+| Risk | Early signal | Response | Responsible role |
 |---|---|---|---|
-| عدم توافر GPU | فشل تجربة التدريب في P1 | تصغير الموديل والسياق والمهمة وطلب موارد الكلية | المنسق ومسؤول التدريب |
-| موارد مجانية متقطعة | توقف جلسات التدريب | checkpoints صغيرة واستئناف موثق؛ لا تعتمد استضافة الديمو على جلسة مجانية | مسؤول التدريب |
-| ضعف بيانات Refactoring | أمثلة غير صحيحة أو تراخيص مجهولة | تدقيق عينة، اختبارات مرجعية، حذف المصادر غير المناسبة | مسؤول البيانات ومراجعه |
-| تسرب بيانات | نفس المشروع أو أمثلة متشابهة عبر التقسيمات | تقسيم حسب repository/source family ثم فحص التشابه | مسؤول التقييم |
-| تدهور بعد التخصيص | validation أسوأ من الأساس | تقليل LR ومراجعة البيانات والاحتفاظ بخط الأساس؛ تسجيل النتيجة بأمانة | مسؤول التدريب |
-| فشل الربط | لا يوجد ديمو كامل في الأسبوع الرابع | عقود مبكرة ومسار ضيق كامل وتقليل المزايا | مسؤول التكامل |
-| تضخم المشروع | إضافة لغات أو Agents بلا دليل | اعتماد النطاق والاحتفاظ بالإضافات في Backlog | التيم |
-| تنفيذ كود ضار | طلب تشغيل مدخل خارجي | منع التنفيذ حتى اعتماد Runner وتقييد MVP لأمثلة موثوقة | مسؤول API والتحقق |
-| تأخر مراجعة الدكتورة | غياب موعد قبل نهاية المرحلة | حجز مبكر وحزمة مراجعة مكتوبة ومتابعة الأعمال المستقلة | المنسق |
-| حدود GitHub المجانية | ملفات أو استهلاك يتجاوز الحصة | اختبار التخزين مبكرًا؛ الاحتفاظ بAdapters وسجلات صغيرة بدل نسخ الموديل الأساسي | المنسق |
-| تضارب صلاحيات الحساب | أعضاء لا يرون الـProject | التحقق من وصول المستودع واللوحة لكل عضو بعد قبول الدعوة | المالك |
+| No suitable GPU | Training smoke test fails in P1 | Reduce model, context, or task; discuss university resources | Coordinator and training owner |
+| Interrupted free compute | Sessions terminate | Record checkpoints and recovery; keep demonstration hosting independent | Training owner |
+| Weak data | Invalid changes or unclear licenses | Review samples, reference tests, and source suitability | Data owner |
+| Data leakage | Related projects or examples cross splits | Split by source and check near-duplicates | Evaluation owner |
+| Fine-tuning regression | Validation is worse than baseline | Review data and settings; retain and report the baseline | Training owner |
+| Late integration | No full case by Week 4 | Prioritize one complete path and defer extras | Integration owner |
+| Scope growth | More languages or roles without evidence | Enforce the agreed release scope | Team |
+| Unsafe execution | Untrusted code reaches execution | Keep execution disabled until runner review; use trusted MVP examples | API and verification owners |
+| Delayed supervisor review | No appointment before phase end | Arrange early; prepare written evidence; continue independent work | Coordinator |
+| GitHub quota limits | Artifacts exceed the free allowance | Check early; prefer small adapters and manifests | Coordinator |
+| Incomplete team access | A member cannot open the repo or board | Verify both permissions and invitation acceptance | Repository owner |

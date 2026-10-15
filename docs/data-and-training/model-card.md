@@ -1,17 +1,17 @@
-# بطاقة الموديل المخصص
+# Model card
 
-الحالة: غير مدرب. تُملأ البطاقة بعد أول تجربة فعلية ولا تستخدم كادعاء بوجود موديل جاهز.
+**Status: not trained.** Complete this card from the first actual experiment; it is not evidence that a trained model exists.
 
-| الحقل | القيمة الحالية |
+| Field | Current value |
 |---|---|
-| المهمة | Refactoring محدود لكود Python |
-| الموديل الأساسي وrevision | لم يُعتمدا |
-| الترخيص وشروط Adapter | قيد المراجعة |
-| بيانات التدريب ومصدرها | لم تُجهز |
-| طريقة التخصيص | LoRA مرشح مبدئي |
-| الجهاز ومدة التدريب | لم تُقاس |
-| مجموعة الاختبار | لم تُعتمد |
-| النتائج والمقارنة | لا نتائج بعد |
-| artifact وchecksum | غير متاحين |
+| Intended task | Selected refactorings for small Python inputs |
+| Base model and revision | Not selected |
+| License and adapter terms | Not reviewed |
+| Training data and provenance | Not prepared |
+| Adaptation method | LoRA is the initial candidate |
+| Hardware and training duration | Not measured |
+| Test set | Not approved |
+| Results and baselines | No results yet |
+| Artifact and checksum | Not available |
 
-حدود الاستخدام المستهدفة: كود صغير، أنواع محددة، مراجعة بشرية، وعدم ضمان الحفاظ الكامل على السلوك. تُضاف حدود فعلية بعد تحليل الأخطاء، مع بيان لغات الكود المدعومة وحجم السياق وحالات الفشل المعروفة.
+The intended use requires human review and does not guarantee behavioral preservation. Add measured context limits, supported task types, and observed failure cases after evaluation.

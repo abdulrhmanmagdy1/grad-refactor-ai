@@ -1,11 +1,11 @@
-# مراجعات الدكتورة
+# Supervisor reviews
 
-بعد P1 وP2 وP3 وP4 وP5، جهز Issue للمراجعة مرتبطة بالـMilestone. لا يوجد موعد محجوز أو موافقة مسجلة حتى الآن.
+Hold a review after P1, P2, P3, P4, and P5. Each review has an Issue linked to its milestone. No appointment or academic approval is implied by the existence of a task.
 
-## قبل المراجعة
+## Before the meeting
 
-ملخص صفحة، وروابط المخرجات، وديمو عند توافره، ونتائج فعلية، ومشاكل وبدائل، وقرارات محددة نطلب رأي الدكتورة فيها. تُحجز المراجعة مبكرًا؛ لا توجد رسائل أو دعوات للدكتورة تُرسل تلقائيًا.
+Prepare a short summary, links to outputs, a demonstration where available, actual results, open problems, alternatives, and specific decisions needed. Arrange the review before the phase ends. No supervisor messages or calendar invitations are sent automatically.
 
-## محضر المراجعة
+## After the meeting
 
-انسخ [النموذج](review-template.md) باسم المرحلة والتاريخ. سجل الحضور والمخرجات المعروضة والملاحظات والقرارات وحالتها، ثم افتح Issues للتعديلات واربطها بالمحضر. فرق بين اقتراح التيم وقرار الدكتورة. الأعمال المستقلة تستمر أثناء انتظار المراجعة، والقرارات التي تغير النطاق أو التقييم تتوقف لحين حسمها.
+Copy the review template, record the date and attendees, identify the exact version shown, and record feedback, agreed decisions, and pending questions. Create linked follow-up Issues. Distinguish a team proposal from a supervisor decision. Continue independent work while waiting; hold decisions that change scope or evaluation until agreement.

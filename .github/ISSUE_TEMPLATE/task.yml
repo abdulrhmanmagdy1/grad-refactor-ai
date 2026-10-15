@@ -1,21 +1,21 @@
-name: تاسك تنفيذ أو بحث
-description: مهمة لها ناتج وشروط قبول
+name: Implementation or research task
+description: A task with a defined outcome and acceptance criteria
 title: "[Task] "
 body:
   - type: textarea
     id: outcome
     attributes:
-      label: الهدف والناتج
+      label: Purpose and deliverable
     validations:
       required: true
   - type: textarea
     id: acceptance
     attributes:
-      label: شروط القبول وطريقة التحقق
-      placeholder: قائمة قابلة للفحص وروابط المتطلبات
+      label: Acceptance criteria and verification
+      placeholder: Include checkable criteria and relevant requirement IDs.
     validations:
       required: true
   - type: textarea
     id: dependencies
     attributes:
-      label: الاعتماديات والمسؤول والمراجع
+      label: Dependencies and task owner

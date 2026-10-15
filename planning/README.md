@@ -1,5 +1,5 @@
-# قائمة العمل الأولية
+# Planning data
 
-`backlog.json` مصدر تأسيس Issues للمراحل الخمس. بعد النشر تكون Issues وProject مرجع الحالة والمسؤولين؛ لا نحدّث الحالة في الملف بالتوازي. يحتوي كل بند مخرجًا وشروط قبول واعتماديات وأولوية. توزيع الأسماء ينتظر حسابات الفريق واتفاق اجتماع الانطلاق؛ المنسق مسؤول متابعة مراجعات الدكتورة.
+backlog.json records the initial task definitions. assignments.json records the workstream and task ownership allocation. After publication, GitHub Issues and the Project board are the source of truth for current status and assignments; these files are not a parallel status tracker.
 
-مراحل P1 وP2 لها تفاصيل تشغيل مبكرة، والمراحل التالية تقديرات تُراجع عند بوابات المراحل. لا تعني إضافة Issue اكتمال ناتجها. تواريخ Milestones لا تُثبت قبل تأكيد البداية والتسليم.
+P1 and P2 form the immediate plan. Keep the agreed workstream ownership and update scope and dates when supervisor decisions require it. Publishing or assigning a task does not mean its outcome has been delivered.
