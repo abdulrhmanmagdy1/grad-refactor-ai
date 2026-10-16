@@ -8,7 +8,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T02",
@@ -19,7 +20,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T03",
@@ -30,7 +32,8 @@
     "owner_name": "Shahd Abdelhay",
     "owner_login": "shahd-abdelhay",
     "workstream": "Data, research, and evaluation",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T04",
@@ -41,7 +44,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T05",
@@ -52,7 +56,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T06",
@@ -63,7 +68,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "R1",
@@ -74,7 +80,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T07",
@@ -85,7 +92,8 @@
     "owner_name": "Shahd Abdelhay",
     "owner_login": "shahd-abdelhay",
     "workstream": "Data, research, and evaluation",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T08",
@@ -96,7 +104,8 @@
     "owner_name": "Shahd Abdelhay",
     "owner_login": "shahd-abdelhay",
     "workstream": "Data, research, and evaluation",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T09",
@@ -107,7 +116,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T10",
@@ -118,7 +128,8 @@
     "owner_name": "Shahd Abdelhay",
     "owner_login": "shahd-abdelhay",
     "workstream": "Data, research, and evaluation",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T11",
@@ -129,7 +140,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "R2",
@@ -140,7 +152,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T12",
@@ -151,7 +164,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T13",
@@ -162,7 +176,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T14",
@@ -173,7 +188,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T15",
@@ -184,7 +200,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T16",
@@ -195,7 +212,8 @@
     "owner_name": "Dania El-Walily",
     "owner_login": "d5ania",
     "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": false
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T17",
@@ -206,7 +224,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T18",
@@ -217,7 +236,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "R3",
@@ -228,7 +248,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T19",
@@ -239,7 +260,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T20",
@@ -250,7 +272,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T21",
@@ -261,7 +284,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T22",
@@ -272,7 +296,8 @@
     "owner_name": "Abdelrahman Adel",
     "owner_login": "abdelrhmanadel200",
     "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T23",
@@ -283,7 +308,8 @@
     "owner_name": "Abdullah Tarek",
     "owner_login": "abdallah414",
     "workstream": "Agent workflow and verification",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "R4",
@@ -294,7 +320,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T24",
@@ -305,18 +332,20 @@
     "owner_name": "Shahd Abdelhay",
     "owner_login": "shahd-abdelhay",
     "workstream": "Data, research, and evaluation",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T25",
     "phase": "P5",
-    "title": "Verify second-machine setup and fix critical defects",
+    "title": "Verify clean setup and fix critical defects",
     "issue": 29,
     "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29",
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T26",
@@ -327,7 +356,8 @@
     "owner_name": "Dania El-Walily",
     "owner_login": "d5ania",
     "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": false
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T27",
@@ -338,7 +368,8 @@
     "owner_name": "Dania El-Walily",
     "owner_login": "d5ania",
     "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": false
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T28",
@@ -349,7 +380,8 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "R5",
@@ -360,6 +392,7 @@
     "owner_name": "Abdelrahman Magdy",
     "owner_login": "abdulrhmanmagdy1",
     "workstream": "Backend, integration, and coordination",
-    "github_assigned": true
+    "github_assigned": true,
+    "window": "Days 16-21 (Week 3)"
   }
 ]

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "not_started",
+  "last_verified_commit": null,
+  "branch": null,
+  "hardware_report": null,
+  "environment_records": [],
+  "steps": [
+    {
+      "id": 0,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 1,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 2,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 3,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 4,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 5,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    }
+  ],
+  "supervisor_reviews": [
+    {
+      "phase": "P1",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P2",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P3",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P4",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P5",
+      "status": "pending_human",
+      "record": null
+    }
+  ],
+  "next_action": "Inspect checkout and run Step 0 foundation checks.",
+  "notes": "Template only. No product implementation, training or review is certified by this file."
+}

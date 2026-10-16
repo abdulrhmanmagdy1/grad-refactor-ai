@@ -34,4 +34,4 @@ Record case ID, source group, split, data/model/code versions, group, seed, inpu
 
 ## Release acceptance
 
-The agreed P0 behavior must run on the demonstration machine and a second machine. The release needs reproducible results, an error analysis, documented limitations, and a supervisor review. Numerical targets are set after the baseline and before the final test evaluation. A working prototype does not depend on proving that the research hypothesis is true.
+The agreed P0 behavior must run on the demonstration machine and from a clean clone in a fresh environment. Prefer a second physical machine; if unavailable, label the reproduction as same-laptop clean setup and record cross-machine validation as untested. The release needs reproducible results, an error analysis, documented limitations, and a supervisor review. Numerical targets are set after the baseline and before the final test evaluation. A working prototype does not depend on proving that the research hypothesis is true.

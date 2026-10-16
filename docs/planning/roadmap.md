@@ -1,31 +1,35 @@
-# Eight-week delivery plan
+# Three-week delivery plan
 
-Weeks are relative to the team's agreed start date. The official deadline has not been confirmed. The schedule must be checked against weekly availability at kickoff. Repository setup is complete; the product milestones below are still planned work.
+The first delivery is planned for 21 calendar days from the team's agreed kickoff. Calendar dates and the official university deadline remain unconfirmed. This replaces the previous schedule. Repository setup is complete; the product phases are planned work, not completed milestones.
 
 | Phase | Window | Required outcome | Supervisor review |
 |---|---|---|---|
-| P1 Scope and feasibility | Week 1 | Hardware and availability inventory, bounded tasks, model inference measurements, a small training smoke test, and an agreed scope | Problem, contribution, resources, and report requirements |
-| P2 Data and baseline | Week 2 | Licensed and curated data, independent splits, a baseline, acceptance examples, API contracts, and an evaluation protocol | Data quality, task selection, metrics, and experiment design |
-| P3 Integration and first training run | Weeks 3-4 | An end-to-end example using the base model, an initial interface, a saved adapter, and preliminary validation results | Demonstration and first before/after comparison |
-| P4 First-release integration | Weeks 5-6 | Coordinated roles, a reviewed verification path, diff presentation, bounded retries, and acceptance evidence | Agreed use cases, remaining defects, and feature freeze |
-| P5 Evaluation and initial delivery | Weeks 7-8 | Independent evaluation, critical fixes, a second-machine run, report, presentation, demonstration, and release | Results, limitations, delivery feedback, and next priorities |
+| P1 Scope and feasibility | Days 1-2 (Week 1) | Hardware inventory, one supported refactoring type, measured local inference, tiny LoRA save/reload smoke test or a recorded blocker | R1 on Day 2: scope and resource decision |
+| P2 Data and baseline | Days 3-5 (Week 1) | Small licensed dataset, source-separated splits, base-model baseline, shared API/role contracts, frozen comparison protocol | R2 on Day 5: data, baseline and contracts |
+| P3 Integration and first training run | Days 6-10 (Weeks 1-2) | One real-model input-to-result case, initial frontend, adapter training and validation evidence if resources permit | R3 on Day 10: demo, actual training status and failures |
+| P4 First-release integration | Days 11-15 (Weeks 2-3) | Three bounded roles, trusted-example verification path, honest status display, acceptance checks and feature freeze | R4 on Day 15: readiness for final evaluation |
+| P5 Evaluation and initial delivery | Days 16-21 (Week 3) | Frozen-test comparison, critical fixes, clean setup, report, presentation, demo and release | R5 by Day 21: delivery and next priorities |
 
-## Decision points
+## Scope that fits the window
 
-At the end of Week 1, confirm that the selected task and model fit the training resources. If not, reduce the model, context, or task scope and discuss university GPU access with the supervisor.
+Start with one Python file/function and one refactoring type selected using real examples on Day 2. One local web interface, one FastAPI process, one local model shared by three logical roles, and at most one correction attempt are sufficient. Use local files or SQLite for run records. Authentication, public hosting, repository-wide edits, extra languages, multiple model services and optional orchestration frameworks are deferred.
 
-At the end of Week 2, freeze the test set. Use validation data, rather than test data, to select prompts and training settings.
+Fine-tuning an existing open-weight model remains a research objective. The plan cannot guarantee its completion before checking hardware. By Day 2, measure inference and a tiny adapter run, including save and reload. If the laptop cannot support training, reduce model/context/batch size or obtain confirmed free university GPU access. Record the blocker and discuss it at R1. A base-model demonstration is useful but does not satisfy the fine-tuning deliverable. Never report it as trained.
 
-By the end of Week 4, demonstrate at least one complete input-to-result case. If integration is late, defer optional features. At the start of Week 7, freeze core features and focus on evaluation, fixes, and delivery.
+## Critical path and daily rhythm
 
-## Working rhythm
+Days 1-2: resources and scope. Days 3-5: data/splits, baseline and contracts. Days 6-10: provider, roles, API and UI converge on a real-model demonstration. Days 11-15: verification and model selection. Days 16-21: final evaluation and delivery.
 
-Plan in two-week cycles with a short weekly review and a demonstration at the end of each cycle. Record progress and blockers in Issues. Arrange supervisor reviews before a phase ends, then record decisions and create follow-up tasks. Independent work may continue while a review is pending; decisions that change scope or evaluation wait for agreement.
+Use a short daily update in Issues: completed output, next action, blocker and evidence link. Keep one primary implementation task active per person. Reserve Day 21 for final checks and the supervisor discussion, not new features. A phase ending does not automatically complete its tasks.
 
-## Assignments and dependencies
+Schedule the five supervisor discussions at kickoff. Record real feedback after each phase; never mark a review approved before it happens. Independent work can continue while feedback is pending. Scope, data-split and evaluation changes awaiting a decision remain pending.
 
-The [assignment table](assignments.md) defines each member's main workstream and outputs in every phase. There is one accountable owner per task and no assigned peer-review role. Scope and dates are updated with supervisor decisions. An assigned task remains in Backlog until its dependencies and acceptance criteria are ready.
+## Resource and delivery gates
 
-## After the first release
+Freeze the test split by Day 5 and never use it for tuning. Demonstrate a real model by Day 10. Freeze core features and model choice by Day 15. Use Days 16-20 for test evaluation, failure analysis, critical fixes and report assembly. If a gate is missed, reduce optional scope and explicitly record incomplete requirements with the supervisor; do not silently change acceptance criteria.
 
-Subsequent work will be selected from the evaluation findings: additional refactoring types, better data, larger inputs, improved models, or repository integration. Another programming language or public deployment requires a revised scope and evaluation plan.
+A clean clone and new environment on the same laptop proves clean setup only. Record whether a second physical machine was actually tested. The optional agent execution pack follows the same gates and evidence requirements.
+
+## Ownership and follow-up
+
+See [the person-by-week matrix](assignments.md) and [tasks grouped by owner](by-owner.md). Each task has one accountable owner and no assigned peer reviewer. Each member supplies notes for their work; Dania assembles delivery materials. The optional [agent execution pack](../agent-execution/README.md) does not change human ownership. Improvements after Day 21 require a separate plan based on evaluation and supervisor feedback.

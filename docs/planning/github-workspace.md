@@ -24,7 +24,7 @@ Team Board shows status columns. Tasks and Owners groups a table by milestone. T
 
 There are 33 planned tasks plus the completed setup Issue #34. Each task has one accountable owner. The delivery plan defines stable workstream ownership and outcomes across all five phases; no peer reviewer is assigned.
 
-All four teammates have Project write access. At the edition check, Abdullah, Abdelrahman Adel, and Shahd had accepted repository access; Dania's repository invitation was still pending. Her ownership is recorded in the Issue body; native assignment requires acceptance. Current access is determined by GitHub settings, not this snapshot.
+All four teammates have accepted repository access and have Project write access. Every planned Issue has a native assignee. Current access is determined by GitHub settings, not this snapshot.
 
 ## Notifications
 
@@ -33,3 +33,5 @@ Each member chooses repository notification preferences and follows assigned Iss
 ## Main-branch policy
 
 The current GitHub plan rejected enforced branch protection for this private repository. The project remains private and has no paid upgrade. Owners complete acceptance checks before merging; a second-person approval is not part of the team workflow. Squash merging and deletion of merged branches are enabled.
+
+[By Owner: live Project view](https://github.com/users/abdulrhmanmagdy1/projects/1/views/3) groups all tracked work by its native GitHub assignee.

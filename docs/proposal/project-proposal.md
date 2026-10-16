@@ -2,7 +2,7 @@
 
 **Working title:** Multi-Agent Refactoring for Python  
 **Status:** planning draft for supervisor review  
-**Initial delivery window:** eight weeks from the agreed team start date
+**Initial delivery window:** three weeks from the agreed team start date
 
 ## Problem
 
@@ -26,7 +26,7 @@ The roles may share one underlying code model. The team will fine-tune an existi
 
 ## First-release scope
 
-The first release will accept a function or a small Python file. One or two refactoring types will be selected after the feasibility study, with reference examples and acceptance rules for each. The interface will support input, inspection of the proposed change, verification results, and explicit user acceptance or rejection.
+The first release will accept a function or a small Python file. One refactoring type will be selected after the feasibility study, with reference examples and acceptance rules for each. The interface will support input, inspection of the proposed change, verification results, and explicit user acceptance or rejection.
 
 Paid model APIs and paid hosting are outside the budget. Public deployment is not required for the initial delivery. Test execution, if enabled, will be restricted to trusted examples in a separately reviewed runner.
 

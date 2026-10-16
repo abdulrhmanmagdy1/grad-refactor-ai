@@ -17,6 +17,8 @@ These documents describe the proposed system and the work needed to deliver it. 
 | [Roadmap](planning/roadmap.md) | Plan phase outcomes and supervisor reviews |
 | [Team](planning/team.md) | Identify members and responsibilities |
 | [Assignments](planning/assignments.md) | Find each task's owner |
+| [Tasks by owner](planning/by-owner.md) | See all tasks for each person in one row |
+| [Optional agent execution pack](agent-execution/README.md) | Implement or resume the full project on one laptop |
 | [Task index](planning/task-index.md) | Open the corresponding GitHub Issues |
 | [System design](architecture/system-design.md) | Understand components and runtime behavior |
 | [Decision log](architecture/decisions.md) | Record technical choices and trade-offs |

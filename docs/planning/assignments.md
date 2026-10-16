@@ -2,7 +2,7 @@
 
 This plan assigns each member a main workstream from kickoff to the first delivery. Each task has one accountable owner. Larger outcomes are delivered through named handoffs between workstreams, not a separate peer-review process. The owner checks the work against the task's acceptance criteria and publishes evidence on GitHub.
 
-Access at this edition: At the access check, Dania had Project write access but had not accepted the repository invitation. Her workstream and tasks are allocated in this plan; native Issue assignment will be completed after acceptance. This does not change her responsibilities.
+All four teammates have accepted repository access. Each tracked task has a native GitHub assignee.
 
 ## Workstream ownership
 
@@ -16,7 +16,21 @@ Access at this edition: At the access check, Dania had Project write access but 
 
 The review agent is a software component that checks model output. It is not a teammate assigned to review someone else's task. All members write the technical notes for their own work; Dania assembles the report and presentation rather than writing everyone else's contribution.
 
-## P1 Scope and feasibility - Week 1
+## Three-week overview by person
+
+Day 1 is the team's agreed kickoff, not the publication date. Week 1 is Days 1-7, Week 2 is Days 8-14, and Week 3 is Days 15-21. The detailed phase tables below define the same work at finer resolution.
+
+| Member | Week 1: feasibility, data, contracts, first build | Week 2: integration and verification | Week 3: freeze, evaluation, delivery |
+|---|---|---|---|
+| Abdelrahman Magdy | T01, T02, T11; R1 and R2; begin T15 | Finish T15; T18; begin T21; R3 | Finish T21; T25, T28; R4 and R5 |
+| Abdullah Tarek | T06; begin T13 and T14 after provider handoff | Finish T13 and T14; T19, T20; begin T23 | Finish T23; repair workflow defects and supply report notes |
+| Abdelrahman Adel | T04, T05, T09; begin T12 and T17 | Finish T12 and T17; begin T22 | Finish T22 by Day 15; freeze model and supply reproducibility records |
+| Shahd Abdelhay | T03, T07, T08, T10; freeze test split by Day 5 | Build and dry-run the evaluation harness; maintain data manifests | T24; final results, figures, failure analysis, report notes |
+| Dania El-Walily | Sketch screens; agree contracts; begin T16 | Finish T16; integrate verification display; draft report structure | T26 and T27; final report, slides, demo and user guide |
+
+Every person owns one large workstream throughout. The same person owns its fixes and technical notes. Preparation may overlap phases; dependent implementation starts only after its required inputs exist. Supporting work in these rows belongs to the listed workstream Issues; it does not create hidden extra assignments.
+
+## P1 Scope and feasibility - Days 1-2 (Week 1)
 
 | Member | Work and output |
 |---|---|
@@ -28,7 +42,7 @@ The review agent is a software component that checks model output. It is not a t
 
 All five attend the supervisor discussion where available. Magdy records decisions and updates the plan. Scope approval follows the feasibility evidence; parallel sketches and candidate examples are preparatory work, not early approval of the scope.
 
-## P2 Data and baseline - Week 2
+## P2 Data and baseline - Days 3-5 (Week 1)
 
 | Member | Work and output |
 |---|---|
@@ -40,7 +54,7 @@ All five attend the supervisor discussion where available. Magdy records decisio
 
 Freeze the test set before model or prompt selection. Each member contributes their section of the supervisor evidence; Magdy schedules the meeting and records decisions.
 
-## P3 First integration and training - Weeks 3 and 4
+## P3 First integration and training - Days 6-10 (Weeks 1-2)
 
 | Member | Work and output |
 |---|---|
@@ -52,7 +66,7 @@ Freeze the test set before model or prompt selection. Each member contributes th
 
 The two main integration pairs are Adel + Abdullah for model-to-agent behavior and Magdy + Dania for API-to-interface behavior. Magdy connects these paths for the demonstration. P3 ends with a supervisor review of the working case and actual training results.
 
-## P4 Complete the first-release behavior - Weeks 5 and 6
+## P4 Complete the first-release behavior - Days 11-15 (Weeks 2-3)
 
 | Member | Work and output |
 |---|---|
@@ -64,11 +78,11 @@ The two main integration pairs are Adel + Abdullah for model-to-agent behavior a
 
 Freeze core features at the end of P4 after the supervisor discussion. Keep unresolved defects explicit rather than expanding the feature list.
 
-## P5 Evaluation and initial delivery - Weeks 7 and 8
+## P5 Evaluation and initial delivery - Days 16-21 (Week 3)
 
 | Member | Work and output |
 |---|---|
-| Abdelrahman Magdy | Reproduce the system on a second machine, coordinate critical fixes, publish the release, and arrange the final supervisor review. Output: a tagged release, setup evidence, and delivery checklist. |
+| Abdelrahman Magdy | Reproduce the system from a clean clone and environment, preferably on a second machine, coordinate critical fixes, publish the release, and arrange the final supervisor review. Output: a tagged release, setup evidence, and delivery checklist. |
 | Abdullah Tarek | Fix workflow and verification defects and document the implemented limits. Output: stable behavior and the workflow/testing sections for the report. |
 | Abdelrahman Adel | Supply final model versions, inference settings, adapter checksums, and training records. Output: reproducible model artifacts and the training section. |
 | Shahd Abdelhay | Run the independent A/B/C/D comparison and analyze failures and resource use. Output: complete results, figures, and the evaluation section. |
@@ -129,7 +143,7 @@ The phase tables include ongoing work inside each member's workstream. The table
 | [T23 Verify first-release acceptance criteria](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/26) | P4 | Abdullah Tarek |
 | [R4 Supervisor review: integrated first release](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/27) | P4 | Abdelrahman Magdy |
 | [T24 Run the independent final evaluation](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/28) | P5 | Shahd Abdelhay |
-| [T25 Verify second-machine setup and fix critical defects](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29) | P5 | Abdelrahman Magdy |
+| [T25 Verify clean setup and fix critical defects](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29) | P5 | Abdelrahman Magdy |
 | [T26 Write the academic report and update the guides](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/30) | P5 | Dania El-Walily |
 | [T27 Prepare the presentation and repeatable demonstration](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/31) | P5 | Dania El-Walily |
 | [T28 Publish the initial delivery release](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/32) | P5 | Abdelrahman Magdy |

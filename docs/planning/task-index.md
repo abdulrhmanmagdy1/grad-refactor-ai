@@ -32,7 +32,7 @@ Open an Issue for its acceptance criteria, dependencies, owner, and delivery evi
 | T23 Verify first-release acceptance criteria | P4 | Abdullah Tarek | [#26](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/26) |
 | R4 Supervisor review: integrated first release | P4 | Abdelrahman Magdy | [#27](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/27) |
 | T24 Run the independent final evaluation | P5 | Shahd Abdelhay | [#28](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/28) |
-| T25 Verify second-machine setup and fix critical defects | P5 | Abdelrahman Magdy | [#29](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29) |
+| T25 Verify clean setup and fix critical defects | P5 | Abdelrahman Magdy | [#29](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29) |
 | T26 Write the academic report and update the guides | P5 | Dania El-Walily | [#30](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/30) |
 | T27 Prepare the presentation and repeatable demonstration | P5 | Dania El-Walily | [#31](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/31) |
 | T28 Publish the initial delivery release | P5 | Abdelrahman Magdy | [#32](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/32) |

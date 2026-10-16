@@ -2,7 +2,7 @@
 
 - [ ] Confirm the university template and official dates with the supervisor.
 - [ ] Trace implemented, deferred, and excluded requirements to evidence.
-- [ ] Reproduce setup and a complete run on two machines.
+- [ ] Reproduce setup and a complete run from a clean clone and fresh environment; prefer a second machine and state actual hardware coverage.
 - [ ] Record data licensing, curation, independent splits, and versions.
 - [ ] Record fine-tuning settings and a reloadable adapter within storage and license limits.
 - [ ] Compare original and adapted models, and single-role and coordinated workflows.

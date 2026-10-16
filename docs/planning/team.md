@@ -12,4 +12,4 @@ The [team delivery plan](assignments.md) states each member's outcomes in all fi
 
 Magdy coordinates priorities, component handoffs, and supervisor meetings. Documentation is shared: members write the technical content for their own work, and Dania assembles the report and presentation. Model training and agent implementation are separate workstreams led by Adel and Abdullah, with an explicit interface between them.
 
-At this edition's access check, Abdullah, Adel, and Shahd had repository write access. Dania had Project write access with a repository invitation still pending. Email addresses are not published here.
+All four teammates have accepted repository access; native task assignments use their GitHub accounts. Email addresses are not published here.

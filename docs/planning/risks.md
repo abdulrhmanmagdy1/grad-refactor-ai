@@ -7,7 +7,7 @@
 | Weak data | Invalid changes or unclear licenses | Review samples, reference tests, and source suitability | Data owner |
 | Data leakage | Related projects or examples cross splits | Split by source and check near-duplicates | Evaluation owner |
 | Fine-tuning regression | Validation is worse than baseline | Review data and settings; retain and report the baseline | Training owner |
-| Late integration | No full case by Week 4 | Prioritize one complete path and defer extras | Integration owner |
+| Late integration | No full case by Day 10 | Prioritize one complete path and defer extras | Integration owner |
 | Scope growth | More languages or roles without evidence | Enforce the agreed release scope | Team |
 | Unsafe execution | Untrusted code reaches execution | Keep execution disabled until runner review; use trusted MVP examples | API and verification owners |
 | Delayed supervisor review | No appointment before phase end | Arrange early; prepare written evidence; continue independent work | Coordinator |

@@ -7,12 +7,13 @@
     "outcome": "Confirm the team accounts, development and training resources, and weekly availability.",
     "acceptance": [
       "Record OS, CPU, RAM, GPU and VRAM for available machines without private identifiers.",
-      "Confirm the owner and reviewer allocation and weekly availability.",
+      "Confirm the workstream ownership and weekly availability.",
       "Confirm the team start date, official deadline, and university report requirements."
     ],
     "dependencies": [],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T02",
@@ -29,7 +30,8 @@
       "T01"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T03",
@@ -46,7 +48,8 @@
       "T01"
     ],
     "priority": "P0",
-    "owner": "shahd-abdelhay"
+    "owner": "shahd-abdelhay",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T04",
@@ -63,7 +66,8 @@
       "T01"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T05",
@@ -80,14 +84,15 @@
       "T04"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T06",
     "phase": "P1",
     "area": "requirements",
     "title": "Agree on Python scope and supported refactoring types",
-    "outcome": "Select one or two bounded tasks and state what is outside the release.",
+    "outcome": "Select one bounded Python refactoring type and state what is outside the three-week release.",
     "acceptance": [
       "Prepare before/after examples and reference tests for each task.",
       "Update the proposal and requirements.",
@@ -98,7 +103,8 @@
       "T04"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "R1",
@@ -117,7 +123,8 @@
       "T06"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 1-2 (Week 1)"
   },
   {
     "key": "T07",
@@ -134,7 +141,8 @@
       "R1"
     ],
     "priority": "P0",
-    "owner": "shahd-abdelhay"
+    "owner": "shahd-abdelhay",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T08",
@@ -151,7 +159,8 @@
       "T07"
     ],
     "priority": "P0",
-    "owner": "shahd-abdelhay"
+    "owner": "shahd-abdelhay",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T09",
@@ -170,7 +179,8 @@
       "T08"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T10",
@@ -187,7 +197,8 @@
       "T09"
     ],
     "priority": "P0",
-    "owner": "shahd-abdelhay"
+    "owner": "shahd-abdelhay",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T11",
@@ -204,7 +215,8 @@
       "R1"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "R2",
@@ -223,7 +235,8 @@
       "T11"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 3-5 (Week 1)"
   },
   {
     "key": "T12",
@@ -241,7 +254,8 @@
       "T05"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T13",
@@ -259,7 +273,8 @@
       "T11"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T14",
@@ -277,7 +292,8 @@
       "T11"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T15",
@@ -295,7 +311,8 @@
       "T12"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T16",
@@ -313,7 +330,8 @@
       "T15"
     ],
     "priority": "P0",
-    "owner": "d5ania"
+    "owner": "d5ania",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T17",
@@ -332,7 +350,8 @@
       "T08"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T18",
@@ -351,7 +370,8 @@
       "T16"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "R3",
@@ -369,7 +389,8 @@
       "T18"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 6-10 (Weeks 1-2)"
   },
   {
     "key": "T19",
@@ -388,7 +409,8 @@
       "T14"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T20",
@@ -405,7 +427,8 @@
       "R3"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T21",
@@ -424,7 +447,8 @@
       "T16"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T22",
@@ -442,7 +466,8 @@
       "T19"
     ],
     "priority": "P0",
-    "owner": "abdelrhmanadel200"
+    "owner": "abdelrhmanadel200",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T23",
@@ -460,7 +485,8 @@
       "T22"
     ],
     "priority": "P0",
-    "owner": "abdallah414"
+    "owner": "abdallah414",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "R4",
@@ -477,7 +503,8 @@
       "T23"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 11-15 (Weeks 2-3)"
   },
   {
     "key": "T24",
@@ -496,16 +523,17 @@
       "T22"
     ],
     "priority": "P0",
-    "owner": "shahd-abdelhay"
+    "owner": "shahd-abdelhay",
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T25",
     "phase": "P5",
     "area": "testing",
-    "title": "Verify second-machine setup and fix critical defects",
+    "title": "Verify clean setup and fix critical defects",
     "outcome": "Reproduce the release from clean setup instructions.",
     "acceptance": [
-      "Complete a clean-clone installation and full run on a second machine.",
+      "Complete a clean-clone installation in a fresh environment; prefer a second machine, and explicitly record whether different hardware was actually tested.",
       "Fix critical defects without tuning on the test set.",
       "Update setup instructions and measured hardware limits."
     ],
@@ -513,7 +541,8 @@
       "R4"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T26",
@@ -531,7 +560,8 @@
       "T25"
     ],
     "priority": "P0",
-    "owner": "d5ania"
+    "owner": "d5ania",
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T27",
@@ -549,7 +579,8 @@
       "T25"
     ],
     "priority": "P0",
-    "owner": "d5ania"
+    "owner": "d5ania",
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "T28",
@@ -567,7 +598,8 @@
       "T27"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 16-21 (Week 3)"
   },
   {
     "key": "R5",
@@ -584,6 +616,7 @@
       "T28"
     ],
     "priority": "P0",
-    "owner": "abdulrhmanmagdy1"
+    "owner": "abdulrhmanmagdy1",
+    "window": "Days 16-21 (Week 3)"
   }
 ]

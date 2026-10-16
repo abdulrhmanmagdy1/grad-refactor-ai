@@ -2,7 +2,7 @@
 
 A graduation project investigating whether a coordinated analysis, refactoring, and review workflow can improve Python code while preserving its intended behavior. The team will fine-tune an existing open-weight code model and evaluate it against the original model and a single-agent baseline.
 
-**Current status:** project foundation. The repository contains the project specification, an eight-week delivery plan, team assignments, a working static-analysis API, and a preliminary training script. The model, agent workflow, and product interface have not been implemented or evaluated yet.
+**Current status:** project foundation. The repository contains the project specification, a three-week delivery plan, team assignments, a working static-analysis API, and a preliminary training script. The model, agent workflow, and product interface have not been implemented or evaluated yet.
 
 ## Project documents
 
@@ -13,13 +13,13 @@ A graduation project investigating whether a coordinated analysis, refactoring, 
 | [Documentation index](docs/README.md) | Editable source documents |
 | [Team assignments](docs/planning/assignments.md) | Workstream owners and phase outcomes |
 
-The PDFs are version 0.2 planning snapshots. Source documents, Issues, and the Project board remain the current working references. The team keeps clear workstream ownership across the five phases and records scope changes with the supervisor.
+The PDFs are version 0.3 planning snapshots. Source documents, Issues, and the Project board remain the current working references. The team keeps clear workstream ownership across the five phases and records scope changes with the supervisor.
 
 ## Scope of the first release
 
-The first release will support small Python inputs and one or two agreed refactoring types. It will show a proposed change, an explanation, and separate verification results for human review. Training from scratch, multiple programming languages, large repositories, and public execution of arbitrary code are outside this release.
+The first release will support small Python inputs and one agreed refactoring type. It will show a proposed change, an explanation, and separate verification results for human review. Training from scratch, multiple programming languages, large repositories, and public execution of arbitrary code are outside this release.
 
-The initial delivery window is eight weeks from the team's agreed start date. The official deadline and university report template still need confirmation. A supervisor review is planned after each phase. The project has no budget for paid services.
+The initial delivery window is three weeks from the team's agreed start date. The official deadline and university report template still need confirmation. A supervisor review is planned after each phase. The project has no budget for paid services.
 
 ## Run the foundation service
 
@@ -57,3 +57,14 @@ The repository and Project board are private. Team members publish work through 
 `src/` contains the service, `tests/` its tests, `scripts/` validation utilities, `training/` the preliminary fine-tuning path, `configs/` configuration examples, `experiments/` experiment records, `planning/` the initial task and assignment data, and `docs/` the documentation.
 
 Large datasets and model weights do not belong in ordinary Git history. The feasibility phase will check whether adapters and permitted data can fit within GitHub's free storage limits. No paid storage or hosting is assumed.
+
+## Three-week execution references
+
+- [Start here: 21-day roadmap](docs/planning/roadmap.md)
+- [Every member's tasks in one row](docs/planning/by-owner.md)
+- [Weekly ownership matrix and detailed phase outputs](docs/planning/assignments.md)
+- [Optional Codex / Claude execution pack](docs/agent-execution/README.md)
+
+All four teammates have accepted repository access. The execution pack is a preparation guide; it does not imply that the product, training or evaluation has been completed.
+
+[By Owner: live Project view](https://github.com/users/abdulrhmanmagdy1/projects/1/views/3) groups all tracked work by its native GitHub assignee.
