@@ -338,6 +338,8 @@ export interface HealthResponse {
   provider: ProviderInfo;
   runner: RunnerInfo;
   queue: QueueInfo;
+  /** True when the refactoring role uses the LoRA adapter; analysis and review use the base model. */
+  refactor_use_adapter: boolean;
 }
 
 export interface ErrorDetail {

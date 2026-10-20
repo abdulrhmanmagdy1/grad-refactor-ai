@@ -24,6 +24,8 @@ from refactor_ai.contracts import (
 from refactor_ai.providers.base import failed_result
 from refactor_ai.providers.fake import FakeProvider
 from refactor_ai.runs.components import (
+    ADAPTER_MISSING_REASON,
+    MODEL_LOADING_DETAIL,
     RUNNER_CHECKS_RUNNING,
     RUNNER_DISABLED_REASON,
     DisabledRunner,
@@ -60,6 +62,8 @@ def no_leaked_workers():
 
 
 def settings_for(tmp_path, **overrides) -> Settings:
+    if "provider_name" in overrides:
+        overrides["provider"] = overrides.pop("provider_name")
     overrides.setdefault("db_path", tmp_path / "runs.sqlite3")
     overrides.setdefault("frontend_dist", None)
     overrides.setdefault("shutdown_grace_s", 5.0)
@@ -525,3 +529,162 @@ def test_restart_applies_a_lower_retention(tmp_path):
     with TestClient(build(tmp_path, retention=2)) as client:
         listed = [run["run_id"] for run in client.get("/api/v1/runs").json()["runs"]]
     assert listed == [ids[3], ids[2]]
+
+
+# --- LoRA adapter requests (REFACTOR_AI_REFACTOR_USE_ADAPTER) ------------------------
+
+
+def test_health_reports_whether_runs_use_the_adapter(tmp_path):
+    with TestClient(build(tmp_path)) as client:
+        body = client.get("/health").json()
+    assert body["refactor_use_adapter"] is False
+    assert body["provider"]["ready"] is True
+
+
+def test_adapter_requested_without_an_adapter_is_stated_and_runs_fail(tmp_path):
+    workflow = ScriptedWorkflow()
+    app = build(tmp_path, workflow=workflow, refactor_use_adapter=True)
+    with TestClient(app) as client:
+        health = client.get("/health").json()
+        run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+        record = wait_for(client, run_id)
+        proposal = client.get(f"/api/v1/runs/{run_id}/proposal")
+        summary = client.get("/api/v1/runs").json()["runs"][0]
+    assert health["refactor_use_adapter"] is True
+    assert health["provider"]["ready"] is False
+    assert health["provider"]["detail"].startswith(ADAPTER_MISSING_REASON)
+    assert record["status"] == "failed"
+    assert record["error"] == {
+        "code": "adapter_unavailable",
+        "message": ADAPTER_MISSING_REASON,
+        "stage": None,
+    }
+    assert record["settings"]["refactor_use_adapter"] is True
+    assert record["call_count"] == 0 and record["proposed_code"] is None
+    assert summary["disposition"] == "failed"
+    assert proposal.status_code == 409
+    assert workflow.calls == []  # no model call, so the base model is never used instead
+
+
+def test_adapter_requested_with_an_adapter_runs_normally(tmp_path):
+    info = ProviderInfo(
+        provider_mode=ProviderMode.LOCAL_MODEL,
+        model_id="org/code-model",
+        model_revision="a" * 40,
+        adapter_id="guard-lora",
+        ready=True,
+    )
+    workflow = ScriptedWorkflow()
+    provider = StubLocalProvider(info=info)
+    app = build(tmp_path, workflow=workflow, provider=provider, refactor_use_adapter=True)
+    with TestClient(app) as client:
+        health = client.get("/health").json()
+        run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+        record = wait_for(client, run_id)
+    assert health["refactor_use_adapter"] is True
+    assert health["provider"]["ready"] is True
+    assert health["provider"]["adapter_id"] == "guard-lora"
+    assert record["status"] == "completed"
+    assert workflow.settings_seen[0].refactor_use_adapter is True
+
+
+def test_adapter_flag_is_read_from_the_environment(tmp_path, monkeypatch):
+    for name in ("REFACTOR_AI_PROVIDER", "REFACTOR_AI_MAX_PENDING", "REFACTOR_AI_RETENTION"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("REFACTOR_AI_REFACTOR_USE_ADAPTER", "true")
+    monkeypatch.setenv("REFACTOR_AI_DB", str(tmp_path / "env.sqlite3"))
+    monkeypatch.setenv("REFACTOR_AI_RUNNER", "disabled")
+    app = create_app(workflow=ScriptedWorkflow(), registry=[CASE])
+    with TestClient(app) as client:
+        body = client.get("/health").json()
+    assert body["refactor_use_adapter"] is True
+    assert body["provider"]["detail"].startswith(ADAPTER_MISSING_REASON)
+
+
+# --- model warm-up (REFACTOR_AI_PROVIDER=local) --------------------------------------
+
+
+class WarmingLocalProvider(StubLocalProvider):
+    """warm_up() blocks like a model load until the test releases it."""
+
+    def __init__(self, error=None):
+        super().__init__(
+            info=ProviderInfo(
+                provider_mode=ProviderMode.LOCAL_MODEL,
+                model_id="org/code-model",
+                model_revision="a" * 40,
+                ready=False,
+                detail="Worker not started; the model loads on the first request.",
+            )
+        )
+        self.release = threading.Event()
+        self.warm_ups = 0
+        self.warm_error = error
+
+    def warm_up(self):
+        self.warm_ups += 1
+        assert self.release.wait(10)
+        if self.warm_error is not None:
+            raise self.warm_error
+        self._info = self._info.model_copy(update={"ready": True, "detail": "Model loaded."})
+        return self._info
+
+
+def test_local_provider_warms_up_in_the_background(tmp_path):
+    provider = WarmingLocalProvider()
+    workflow = ScriptedWorkflow()
+    app = build(tmp_path, workflow=workflow, provider=provider, provider_name="local")
+    try:
+        started = time.monotonic()
+        with TestClient(app) as client:
+            assert time.monotonic() - started < 5.0  # startup does not wait for the model
+            during = client.get("/health").json()
+            assert during["provider"]["ready"] is False
+            assert during["provider"]["detail"] == MODEL_LOADING_DETAIL
+            run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+            time.sleep(0.3)
+            waiting = client.get(f"/api/v1/runs/{run_id}").json()
+            assert (waiting["status"], waiting["started_at"]) == ("queued", None)
+            assert workflow.calls == []
+            provider.release.set()
+            assert wait_for(client, run_id)["status"] == "completed"
+            after = client.get("/health").json()["provider"]
+            assert (after["ready"], after["detail"]) == (True, "Model loaded.")
+    finally:
+        provider.release.set()
+    assert provider.warm_ups == 1
+    assert provider.closed == 1
+
+
+def test_failed_warm_up_does_not_block_runs(tmp_path):
+    provider = WarmingLocalProvider(error=RuntimeError("model directory missing"))
+    provider.release.set()
+    workflow = ScriptedWorkflow()
+    app = build(tmp_path, workflow=workflow, provider=provider, provider_name="local")
+    with TestClient(app) as client:
+        run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+        record = wait_for(client, run_id)
+    assert record["status"] == "completed"  # the scripted workflow ignores the provider
+    assert provider.warm_ups == 1
+
+
+def test_shutdown_during_warm_up_closes_the_provider(tmp_path):
+    provider = WarmingLocalProvider()
+    app = build(tmp_path, provider=provider, provider_name="local", shutdown_grace_s=0.2)
+    try:
+        with TestClient(app) as client:
+            run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+        assert provider.closed == 1
+    finally:
+        provider.release.set()
+    with TestClient(build(tmp_path)) as client:
+        record = client.get(f"/api/v1/runs/{run_id}").json()
+    assert record["status"] == "failed" and record["error"]["code"] == "interrupted"
+
+
+def test_fake_mode_never_warms_up(tmp_path):
+    provider = WarmingLocalProvider()
+    provider.release.set()
+    with TestClient(build(tmp_path, provider=provider)) as client:
+        client.get("/health")
+    assert provider.warm_ups == 0

@@ -11,6 +11,7 @@ import type {
   ProviderMode,
   ReferenceTestFailureKind,
   ReferenceTestsStatus,
+  Role,
   RubricStatus,
   RunStatus,
   Stage,
@@ -204,11 +205,41 @@ const RUN_ERROR_HINTS: Record<string, string> = {
   unavailable: "The model provider is not available.",
   internal_error: "The service hit an unexpected error; the server log has the details.",
   workflow_unavailable: "The refactoring workflow is not available on the server.",
+  adapter_unavailable:
+    "The fine-tuned adapter was requested for the refactoring role but is not available. The run stopped before any model call instead of quietly using the base model.",
 };
 
 export function runErrorHint(code: string): string | null {
   return RUN_ERROR_HINTS[code] ?? null;
 }
+
+/** RunRecord.stop_reason values written by src/refactor_ai/agents/coordinator.py. */
+export const STOP_REASON_LABELS: Record<string, string> = {
+  unsupported_input: "Input outside the supported task (no model call)",
+  single_role_complete: "Single-role run verified",
+  no_correction_needed: "No correction needed",
+  correction_used: "The one correction was made and verified",
+  correction_disabled: "A correction was needed but corrections are disabled",
+  call_budget_exhausted: "A correction was needed but the call budget was used up",
+  correction_input_too_long:
+    "Correction skipped: its prompt exceeded the refactoring role's input limit, so the first proposal is reported",
+  provider_error: "Model provider error",
+  run_timeout: "The run reached its time limit",
+  unparseable_output: "The model output could not be parsed",
+  invalid_settings: "Invalid workflow settings",
+  reference_case_mismatch: "The code did not match the reference case",
+  internal_error: "Internal error",
+};
+
+export function stopReasonLabel(code: string): string {
+  return STOP_REASON_LABELS[code] ?? humanize(code);
+}
+
+export const ROLE_LABELS: Record<Role, string> = {
+  analysis: "Analysis",
+  refactor: "Refactoring",
+  review: "Review",
+};
 
 export type ActiveRunStatus = Exclude<RunStatus, "completed" | "failed">;
 

@@ -20,7 +20,7 @@ Workstream: backend and integration (owner Abdelrahman Magdy). Tasks: T11 exampl
 
 | Method and path | Success | Errors |
 |---|---|---|
-| GET /health | 200 `HealthResponse` | 503 `service_unavailable` |
+| GET /health | 200 `HealthResponse`, including `refactor_use_adapter` | 503 `service_unavailable` |
 | POST /api/v1/analyze | 200 `AnalysisResult` (static, unchanged) | 413, 422 `validation_error` |
 | GET /api/v1/reference-cases | 200 list of `ReferenceCaseSummary` | 500 `reference_cases_unavailable` |
 | POST /api/v1/runs | 202 `RunAccepted`, `Location` header | 413; 422 `validation_error`, `invalid_syntax`, `unknown_reference_case`, `reference_case_mismatch`; 503 `busy` with `Retry-After: 10` |
@@ -78,7 +78,7 @@ All errors, including FastAPI request-validation errors, unknown routes and wron
 | `cors_rejected` | 400 | A browser preflight from an origin other than the Vite development server |
 | `internal_error` | 500 | Unexpected server error; details only in the server log |
 
-Codes stored in `RunRecord.error` by the service itself are `internal_error`, `interrupted` and `workflow_unavailable`; the workflow reports its own failures (for example `timeout`) with its own codes.
+Codes stored in `RunRecord.error` by the service itself are `internal_error`, `interrupted`, `workflow_unavailable` and `adapter_unavailable`; the workflow reports its own failures (for example `timeout`) with its own codes.
 
 ## Safety
 
@@ -86,14 +86,21 @@ The API never executes submitted or generated code (NFR01). It parses input with
 
 ## Integration with the other workstreams
 
-At startup the service imports `refactor_ai.agents.coordinator.run_workflow`, `refactor_ai.providers.local.LocalProvider.from_config(REFACTOR_AI_MODEL_CONFIG)` (only when `REFACTOR_AI_PROVIDER=local`; it reads the settings and loads the model on the first request), `refactor_ai.verification.create_runner()` (unless `REFACTOR_AI_RUNNER=disabled`) and the demonstration cases through `refactor_ai.verification.CaseRegistry.from_file()`, which owns the rules for `src/refactor_ai/fixtures/demo_cases.json`. `create_app()` accepts each component directly for tests.
+At startup the service imports `refactor_ai.agents.coordinator.run_workflow`, `refactor_ai.providers.local.LocalProvider.from_config(REFACTOR_AI_MODEL_CONFIG)` (only when `REFACTOR_AI_PROVIDER=local`), `refactor_ai.verification.create_runner()` (unless `REFACTOR_AI_RUNNER=disabled`) and the demonstration cases through `refactor_ai.verification.CaseRegistry.from_file()`, which owns the rules for `src/refactor_ai/fixtures/demo_cases.json`. `create_app()` accepts each component directly for tests.
 
 When a component is missing it is reported, never replaced by a pretend result: a missing workflow fails each run with `workflow_unavailable`; a missing local provider appears in `/health` as `ready: false` with the reason; a missing runner is reported as disabled with the reason; a missing case file is an empty allowlist, and an invalid one makes GET /api/v1/reference-cases answer `reference_cases_unavailable`.
 
 The real runner runs its isolation self-checks on its first `info()` call and holds a lock meanwhile; on the demonstration laptop that took 9.5 s, with all 19 checks passing. The service therefore reads it once in a background thread at startup and waits for it at most 1 second. Until the reading is available, `/health` reports `enabled: false` with the reason "The reference runner is still running its isolation self-checks", which is true; a run submitted meanwhile simply waits for the runner.
 
+## Model warm-up and the LoRA adapter
+
+With `REFACTOR_AI_PROVIDER=local` the service calls `LocalProvider.warm_up()` in a background thread at startup, so the model loads before the first run instead of during it. Startup and `/health` do not wait: the provider's `info()` does not take the lock that `warm_up()` holds, and while the load runs `/health` reports `ready: false` with "The model is loading in the background since startup; runs wait until it is ready." The worker keeps runs `queued` until the warm-up ends, because a generation call waiting for the provider lock would otherwise give up after its own timeout and fail as `busy`. A failed warm-up is logged, and runs then fail with the provider's error. Stopping the service ends the wait, and closing the provider ends a load in progress.
+
+`REFACTOR_AI_REFACTOR_USE_ADAPTER=true` sets `WorkflowSettings.refactor_use_adapter` for every API run (arms C and D) and is reported as `refactor_use_adapter` in `/health`. The provider reports a configured adapter through `ProviderInfo.adapter_id`. When none is configured, `/health` sets `ready: false` and starts the provider detail with "REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter configured. Runs fail instead of using the base model.", and each run fails with error code `adapter_unavailable` before any model call. The fake provider has no adapter, so the same applies in fake mode. When the provider information cannot be read, the run proceeds and the coordinator's own check (a provider reporting a different adapter state fails the run with `model_load_error`) still prevents a silent fallback.
+
 ## Known limitations
 
+- Runs wait at most one hour for the model warm-up; the local provider bounds its own load (`load_timeout_s`, at most one hour), so this limit only matters if the provider misbehaves.
 - A workflow call that never returns blocks the queue; time limits belong to the workflow (`run_timeout_s`) and the provider (per-call timeouts). Shutdown then gives up after its grace periods and the next start marks the run interrupted.
 - `HealthResponse` has no field for workflow availability; it appears only in failed runs and the server log.
 - The `Retry-After` value is a fixed 10 seconds, not an estimate.
@@ -107,6 +114,8 @@ python -m uv run pytest tests/test_api.py tests/test_api_runs.py tests/test_api_
 python -m uv run python scripts/export_contract_examples.py --check
 ```
 
-The suites cover every endpoint and error code, polling to completion, the persisted status sequence, queue saturation with `Retry-After`, serialized workflow calls, restarts with interrupted runs (after a clean shutdown and after a stuck worker), retention and deletion, proposal download headers, decision rules, reference-case matching, health in fake and local mode, CORS, the static frontend, oversized and malformed input, and non-execution of submitted code. Three tests run the real coordinator with the fake provider and the runner disabled through POST /api/v1/runs to completion; one of them uses the default wiring, including the real demonstration cases.
+The suites cover every endpoint and error code, polling to completion, the persisted status sequence, queue saturation with `Retry-After`, serialized workflow calls, restarts with interrupted runs (after a clean shutdown and after a stuck worker), retention and deletion, proposal download headers, decision rules, reference-case matching, health in fake and local mode, CORS, the static frontend, oversized and malformed input, and non-execution of submitted code. Three tests run the real coordinator with the fake provider and the runner disabled through POST /api/v1/runs to completion; one of them uses the default wiring, including the real demonstration cases. Further tests cover the adapter flag (parsing, `/health`, failing runs without any model call, normal runs with an adapter) and the warm-up (runs held as `queued`, `/health` answering during the load, a failed warm-up, shutdown during the load, no warm-up in fake mode, and the real `LocalProvider` stopping at its pre-check without starting a process).
+
+The completed and failed run records in `docs/architecture/examples/` come from the real coordinator with the fake provider; reference-test results are replayed from the real runner, and `scripts/export_contract_examples.py --verify-runner` confirmed on 2026-10-20 that the captured results match a live run.
 
 A manual check on 2026-10-20 ran the real coordinator, the fake provider and the real reference runner through the API: a multi-role run with a reference case completed as `proposal_ready` (three calls, 3 of 3 reference tests passed), a single-role run without a case as `uncertain`, and an unsupported input as `no_change` with zero calls. A second manual check started uvicorn on port 8765, killed the process while a run was verifying and another was queued, and restarted it on the same database: both runs were reported as `interrupted` with stages `verifying` and `queued`. These checks show the plumbing only; the fake provider's output is not model output.

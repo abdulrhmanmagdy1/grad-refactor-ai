@@ -6,17 +6,21 @@ run_workflow() implements docs/architecture/contracts.md and docs/architecture/w
    with disposition no_change, reason codes and zero model calls.
 2. Analyze (multi-role): one call; strict JSON with one deterministic repair; findings
    outside the input are dropped; unusable output falls back to the static findings.
-3. Generate: one refactoring call (refactor-v1 prompt; multi-role adds analysis notes).
+3. Generate: one refactoring call (task_format's prompt, PROMPT_VERSION; multi-role adds
+   analysis notes).
 4. Verify: syntax (ast only), task rubric and trusted reference tests, kept separate.
 5. Review (multi-role): one call; the verdict never overrides a failed check.
 6. Correct once (multi-role): when a check fails, the review rejects or no code was
-   produced, one corrected generation, its verification and one more review.
+   produced, one corrected generation, its verification and one more review. If the
+   provider refuses the correction prompt as input_too_long (it holds the code twice),
+   the correction is skipped with a warning and the first proposal is reported.
 
 Budgets: single-role makes exactly one call; multi-role at most settings.max_calls (five
 by default) and settings.max_corrections (one). settings.run_timeout_s bounds the whole
 run: it is checked before every model call and verification step, and each call's
 timeout is the smaller of its role setting and the time left. Provider errors in any role
-fail the run with the provider's error code; unexpected exceptions become internal_error
+fail the run with the provider's error code (except input_too_long on the correction, see
+above); unexpected exceptions become internal_error
 without exception text in user-facing messages. The original code is never modified, and
 the diff is computed by the application, never taken from a model.
 """
@@ -76,6 +80,7 @@ STOP_NO_CORRECTION_NEEDED = "no_correction_needed"  # nothing failed and no reje
 STOP_CORRECTION_USED = "correction_used"  # the single correction was made and verified
 STOP_CORRECTION_DISABLED = "correction_disabled"  # needed, but max_corrections is 0
 STOP_CALL_BUDGET_EXHAUSTED = "call_budget_exhausted"  # needed, but < 2 calls were left
+STOP_CORRECTION_INPUT_TOO_LONG = "correction_input_too_long"  # correction prompt refused
 # Failed runs (WorkflowOutcome.error is set).
 STOP_PROVIDER_ERROR = "provider_error"
 STOP_RUN_TIMEOUT = "run_timeout"
@@ -92,6 +97,7 @@ COMPLETED_STOP_REASONS = frozenset(
         STOP_CORRECTION_USED,
         STOP_CORRECTION_DISABLED,
         STOP_CALL_BUDGET_EXHAUSTED,
+        STOP_CORRECTION_INPUT_TOO_LONG,
     }
 )
 FAILED_STOP_REASONS = frozenset(
@@ -268,26 +274,48 @@ class _Workflow:
             messages = prompts.build_correction_messages(
                 self.code, self.findings, first.proposed_code, self._problems(first)
             )
-            self._attempt(1, messages, "correction")
-            stop = STOP_CORRECTION_USED
+            stop = self._correct(messages)
         final = next(
             (item for item in reversed(self.attempts) if item.proposed_code is not None), None
         )
         if final is None:
-            last = self.attempts[-1]
-            text = PARSE_ERROR_TEXT.get(last.parse_error or "", last.parse_error or "unknown")
+            errors = [item.parse_error for item in self.attempts if item.parse_error]
+            error = errors[-1] if errors else "unknown"
+            text = PARSE_ERROR_TEXT.get(error, error)
             raise _RunFailed(
                 ERROR_UNPARSEABLE_OUTPUT,
                 f"The refactoring output could not be parsed: {text}.",
                 "generation",
                 STOP_UNPARSEABLE_OUTPUT,
             )
-        if final is not self.attempts[-1]:
+        if stop == STOP_CORRECTION_USED and final is not self.attempts[-1]:
             self._warn(
                 "The correction produced no parseable code; the first proposal and its "
                 "verification are reported."
             )
         return self._completed(final, stop)
+
+    def _correct(self, messages: list[ChatMessage]) -> str:
+        """The single correction. The correction prompt holds the code twice, so it is the
+        one prompt that can exceed the refactoring role's max_input_tokens when the first
+        prompt fit. The provider checks the limit exactly, before generating; a refusal
+        skips the correction instead of failing the run. Any other error still fails it."""
+        try:
+            self._attempt(1, messages, "correction")
+        except _RunFailed as failure:
+            # Only the corrected generation may be skipped; the review of a corrected
+            # proposal (stage "review") and every other error still fail the run.
+            refused = failure.code == ProviderErrorCode.INPUT_TOO_LONG.value
+            if not refused or failure.stage != "generation":
+                raise
+            self._warn(
+                "The correction prompt exceeded the refactoring role's input limit "
+                f"({failure.message}); the correction was skipped and the first proposal is "
+                "reported."
+            )
+            self._set_status(RunStatus.VERIFYING)
+            return STOP_CORRECTION_INPUT_TOO_LONG
+        return STOP_CORRECTION_USED
 
     # --- Steps ------------------------------------------------------------------------
 

@@ -1,6 +1,6 @@
 # Data preparation plan and record (guard_clauses-v1)
 
-Status: dataset built and test split frozen on 2026-10-20 by the data and evaluation workstream (coding agent working for Shahd Abdelhay); pending the owner's inspection and the P2 supervisor review. All numbers below come from [manifest.json](../../datasets/guard_clauses/v1/manifest.json) and [curation-log.json](../../experiments/data/curation-log.json).
+Status: dataset built and test split frozen on 2026-10-20, re-rendered in prompt format refactor-v2 the same day with unchanged cases (see [prompt version change](#prompt-version-change-refactor-v1-to-refactor-v2)), by the data and evaluation workstream (coding agent working for Shahd Abdelhay); pending the owner's inspection and the P2 supervisor review. All numbers below come from [manifest.json](../../datasets/guard_clauses/v1/manifest.json) and [curation-log.json](../../experiments/data/curation-log.json).
 
 ## Command and reproducibility
 
@@ -8,6 +8,7 @@ Status: dataset built and test split frozen on 2026-10-20 by the data and evalua
 python -m uv run python scripts/curate_dataset.py --download   # first run: fetch pinned sources into data/raw/
 python -m uv run python scripts/curate_dataset.py               # rebuild everything
 python -m uv run python scripts/curate_dataset.py --check       # rebuild in memory, compare with the committed files
+python -m uv run python scripts/curate_dataset.py --refreeze-rendering "<reason>"  # only for a new prompt format of unchanged frozen cases
 python -m uv run python scripts/validate_dataset.py datasets/guard_clauses/v1/records.jsonl --extended \
     --manifest datasets/guard_clauses/v1/manifest.json --freeze experiments/data/test-split-freeze.json \
     --external training/pilot
@@ -17,10 +18,10 @@ The library code is in `src/refactor_ai/data/`. Seed 20261020 drives every rando
 
 ## Record format
 
-Every line of `datasets/guard_clauses/v1/records.jsonl` has exactly the fields of the dataset-record contract ([contracts](../architecture/contracts.md)): `id`, `source_group`, `split`, `prompt`, `completion`, `license`, `refactoring_type`, `original_code`, `target_code`, `function_name`, `tests` (list of `ReferenceTest`), `source`, `source_url`, `provenance`, `prompt_version` (`refactor-v1`) and `task_version` (1). Record ids are valid reference-case ids (`gc1-<family>-NN`, `gc1-mbpp-task-N`, `gc1-humaneval-95`). Per-record curation details (family, attempt, check layout, nesting depth before and after, guard clauses created, test coverage and mutation metrics, whether the prompt has analysis notes) are in `metadata.jsonl`.
+Every line of `datasets/guard_clauses/v1/records.jsonl` has exactly the fields of the dataset-record contract ([contracts](../architecture/contracts.md)): `id`, `source_group`, `split`, `prompt`, `completion`, `license`, `refactoring_type`, `original_code`, `target_code`, `function_name`, `tests` (list of `ReferenceTest`), `source`, `source_url`, `provenance`, `prompt_version` (`refactor-v2`) and `task_version` (1). Record ids are valid reference-case ids (`gc1-<family>-NN`, `gc1-mbpp-task-N`, `gc1-humaneval-95`). Per-record curation details (family, attempt, check layout, nesting depth before and after, guard clauses created, test coverage and mutation metrics, whether the prompt has analysis notes) are in `metadata.jsonl`.
 
 - `prompt` = `task_format.build_refactor_user_prompt(original_code)`; for about half of the training records (309 of 627) it also passes the static findings of `guard_clauses.check_input` as analysis notes, so the adapter also sees the multi-role prompt variant. Rule: a training record gets notes when the first byte of `sha256(f"{seed}:findings:{id}")` is even. Validation and test prompts never have notes.
-- `completion` = `task_format.render_refactor_completion(explanation, target_code)`, where `target_code` = `guard_clauses.to_guard_clauses(original_code)` and the explanation is generated deterministically from the same planning rules as the transformation (`refactor_ai.data.explain`): it lists the conditionals turned into guard clauses in target order, what each guard does (returns X or raises E) and the measured nesting depth before and after, for example "Turned 3 if/else conditionals into guard clauses: `weight <= 0` raises ValueError, `weight > 25` returns None and ... The remaining logic is dedented, reducing the maximum nesting depth from 2 to 1." A test checks that every condition named in an explanation is an `if` test of the target.
+- `completion` = `task_format.render_refactor_completion(explanation, target_code)`: in refactor-v2 the fenced code block comes first, followed by one `Explanation:` line. Here `target_code` = `guard_clauses.to_guard_clauses(original_code)` and the explanation is generated deterministically from the same planning rules as the transformation (`refactor_ai.data.explain`): it lists the conditionals turned into guard clauses in target order, what each guard does (returns X or raises E) and the measured nesting depth before and after, for example "Turned 3 if/else conditionals into guard clauses: `weight <= 0` raises ValueError, `weight > 25` returns None and ... The remaining logic is dedented, reducing the maximum nesting depth from 2 to 1." A test checks that every condition named in an explanation is an `if` test of the target.
 
 ## Sources and licenses
 
@@ -58,11 +59,13 @@ Result over all 799 records: 5,168 tests (3,829 returns, 1,339 raises; 3 to 10 p
 
 ## Splits
 
-| Split | Records | Source groups | sha256 |
-|---|---|---|---|
-| train | 627 | 57 families | `dc4ac5348ac13613155f933098f0d9d53da64b063076a01ccf6f7fe65454d9be` |
-| validation | 84 | 12 families | `4b8c76255b6e88669715990bb4c1b83a829b5add41d1b63691929352885fe848` |
-| test (frozen) | 88 | 12 families + 3 MBPP + 1 HumanEval | `b765dbb8ba3c3f76771ed6aa4a05e645372de19751f720805ccfc511d5535b72` |
+| Split | Records | Source groups | Rendered sha256 (refactor-v2) | Case-content sha256 |
+|---|---|---|---|---|
+| train | 627 | 57 families | `b6a7fc0240c33aba0e06c984f073a94f2056d1e1721c52dd0dd0d29c05e236da` | `e4f075dc28a84bd64b49e2a204cc1e6ea1838ce18c50a0c23e1e8cbcdd6491b0` |
+| validation | 84 | 12 families | `d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5` | `b3b44b8f20c7cedd78e11086a7b838677dae19e84e7cbd7c9fc39724c2282601` |
+| test (frozen) | 88 | 12 families + 3 MBPP + 1 HumanEval | `27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633` | `3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12` |
+
+The rendered hash covers the records exactly as written (it changes with the prompt format); the case-content hash (`refactor_ai.data.content`) covers ids, split and source fields, original and target code, tests, provenance, explanation text and analysis notes, and does not depend on prompt rendering.
 
 The split ratio is 78.5 / 10.5 / 11.0. Whole source groups go to one split: a template family is one group and every MBPP or HumanEval item is its own group. Twelve validation and twelve test families are drawn with a seeded shuffle, at most one per category while categories remain, so each held-out split covers 12 domains that training never sees. Held-out families contribute 7 variants each and training families 11, which bounds evaluation cost while keeping family diversity. All real-source items go to the test split as an out-of-template probe; with n = 4 they support descriptive reporting only, and pretraining overlap with these public benchmarks cannot be excluded for the base model.
 
@@ -84,7 +87,13 @@ Twenty records (10 train, 4 validation, 6 test including 2 MBPP; seeded, one per
 
 ## Test-split freeze
 
-[test-split-freeze.json](../../experiments/data/test-split-freeze.json) records the 88 test ids, the split hash above, the freeze date 2026-10-20, the curation command, seed and the hashes of the curation code. The curation command refuses to write any output that would change the frozen test split, and the evaluation harness refuses the test split without an explicit confirmation flag, a frozen protocol and a matching hash. Nobody may train, tune prompts, select models or set targets on the test split; a change requires a new dataset version and a new evaluation protocol version.
+[test-split-freeze.json](../../experiments/data/test-split-freeze.json) records the 88 test ids, two hashes (the case-content hash `3a1e6b95…`, which must never change, and the rendered split hash `27b6d0ec…` of the current prompt version), the prompt version, the freeze date 2026-10-20, the curation command, seed, the hashes of the curation code and the history of earlier freezes. The curation command refuses any output with other test ids or other case content. An output that changes only the rendering is refused unless `--refreeze-rendering` gives a reason; the previous freeze then moves to the history. The validator and the evaluation harness check both hashes, and the harness refuses the test split without an explicit confirmation flag and a frozen protocol. Nobody may train, tune prompts, select models or set targets on the test split; a change of cases requires a new dataset version and a new evaluation protocol version.
+
+## Prompt version change (refactor-v1 to refactor-v2)
+
+On 2026-10-20 the coordinator adopted prompt format refactor-v2 (code block first, then one `Explanation:` line), selected on 24 validation records only: the base model parsed 2 of 24 with refactor-v1 and 24 of 24 with refactor-v2 ([selection record](../../experiments/models/2026-10-20-prompt-format-selection.md)). No model or person had been evaluated on the test split. The dataset was rebuilt with the same command and re-frozen with the reason "prompt rendering changed from refactor-v1 to refactor-v2 on validation-only evidence before any test evaluation; test case content unchanged, see content_sha256".
+
+A record-by-record comparison with the committed refactor-v1 file (commit 446db35) is in [2026-10-20-refactor-v2-regeneration.json](../../experiments/data/2026-10-20-refactor-v2-regeneration.json): all 799 records keep their ids and order, every field other than `prompt`, `completion` and `prompt_version` is byte-identical, each new prompt and completion contains exactly the same lines as before in a different order, and the case-content hashes of all three splits are unchanged. `metadata.jsonl` and the demonstration cases are byte-identical. Rendered hashes changed as follows: records file `6c586c71…` to `299b4f7f…`; train `dc4ac534…` to `b6a7fc02…`; validation `4b8c7625…` to `d18845b0…`; test `b765dbb8…` to `27b6d0ec…`. The refactor-v1 freeze is kept in the freeze record's history, together with a note on the two pre-commit wave-1 freezes (`164ce75e…`) that were superseded when the reference tests were strengthened.
 
 ## Sizes and limits
 

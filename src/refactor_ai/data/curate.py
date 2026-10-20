@@ -378,6 +378,8 @@ def _record_id(cand: Candidate, index: int | None) -> str:
 
 def curate(config: CurationConfig) -> CurationResult:
     log: dict = {
+        "prompt_version": PROMPT_VERSION,
+        "task_version": guard_clauses.TASK_VERSION,
         "generation": {"duplicates_skipped": 0, "families": {}},
         "exclusions": [],
         "real_sources": {},

@@ -26,6 +26,17 @@ def test_completion_renders_and_parses():
     assert parsed.explanation == "Uses a guard clause."
 
 
+def test_refactor_v2_puts_the_code_block_first():
+    assert tf.PROMPT_VERSION == "refactor-v2"
+    prompt = tf.build_refactor_user_prompt(CODE)
+    fmt = prompt.split("Respond in exactly this format:\n", 1)[1].split("\n\nCode:", 1)[0]
+    assert fmt == (
+        "```python\n<the complete refactored function>\n```\nExplanation: <one or two sentences>"
+    )
+    completion = tf.render_refactor_completion("Guard first.", CODE)
+    assert completion == f"```python\n{CODE.rstrip()}\n```\nExplanation: Guard first."
+
+
 def test_parse_errors_are_typed():
     assert tf.parse_refactor_output("").error == "empty_output"
     assert tf.parse_refactor_output("I cannot help.").error == "no_code_block"

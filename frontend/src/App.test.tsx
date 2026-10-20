@@ -83,7 +83,13 @@ describe("service status header", () => {
     expect(within(status).getByText("Local model")).toBeInTheDocument();
     expect(within(status).getByText(/example-org\/example-code-model/)).toBeInTheDocument();
     expect(within(status).getByText(/at revision 0123456789ab…/)).toBeInTheDocument();
-    expect(within(status).getByText(/Adapter guard-clauses-lora \(sha256 ffffffffffff…\), device cuda:0/)).toBeInTheDocument();
+    expect(within(status).getByText("Device cuda:0")).toBeInTheDocument();
+    expect(within(status).getByText("Fine-tuned LoRA adapter")).toBeInTheDocument();
+    expect(
+      within(status).getByText("guard-clauses-lora (sha256 ffffffffffff…). Analysis and review use the base model."),
+    ).toBeInTheDocument();
+    expect(within(status).getByText("Ready")).toBeInTheDocument();
+    expect(within(status).queryByRole("status")).toBeNull();
     expect(within(status).getByText("Runner enabled")).toBeInTheDocument();
     expect(within(status).getByText("API 0.1.0")).toBeInTheDocument();
     expect(screen.queryByRole("note", { name: "Fake provider warning" })).toBeNull();
@@ -97,9 +103,57 @@ describe("service status header", () => {
     expect(banner).toHaveTextContent("Do not present these results as AI output.");
     const status = screen.getByRole("region", { name: "Service status" });
     expect(within(status).getByText("Fake provider (test only)")).toBeInTheDocument();
-    expect(within(status).getByText("Base model, no adapter, device none")).toBeInTheDocument();
+    expect(within(status).getByText("Device none")).toBeInTheDocument();
+    expect(within(status).getByText("Fixed rules (fake provider)")).toBeInTheDocument();
     expect(within(status).getByText("Runner disabled")).toBeInTheDocument();
     expect(within(status).getByText(/REFACTOR_AI_RUNNER=disabled/)).toBeInTheDocument();
+  });
+
+  it("says when the refactoring role uses the base model", async () => {
+    const server = setupServer();
+    server.onJson("GET", "/health", health("local_model", { refactor_use_adapter: false }));
+    await renderReady();
+    const status = screen.getByRole("region", { name: "Service status" });
+    expect(within(status).getByText("Base model")).toBeInTheDocument();
+    expect(within(status).getByText("Adapter guard-clauses-lora is configured but not used.")).toBeInTheDocument();
+  });
+
+  it("shows why the model is not ready while it loads", async () => {
+    const server = setupServer();
+    const loading = health();
+    loading.provider = {
+      ...loading.provider,
+      ready: false,
+      detail: "The model is loading in the background since startup; runs wait until it is ready.",
+    };
+    server.onJson("GET", "/health", loading);
+    await renderReady();
+    const status = screen.getByRole("region", { name: "Service status" });
+    expect(within(status).getByText("Loading")).toHaveAttribute("data-tone", "progress");
+    expect(within(status).getByRole("status")).toHaveTextContent(
+      "The model is loading. The model is loading in the background since startup; runs wait until it is ready.",
+    );
+  });
+
+  it("warns that runs fail when the requested adapter is missing", async () => {
+    const server = setupServer();
+    const missing = health();
+    missing.provider = {
+      ...missing.provider,
+      adapter_id: null,
+      adapter_sha256: null,
+      ready: false,
+      detail:
+        "REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter configured. Runs fail instead of using the base model.",
+    };
+    server.onJson("GET", "/health", missing);
+    await renderReady();
+    const status = screen.getByRole("region", { name: "Service status" });
+    expect(within(status).getByText("Adapter requested, none configured")).toHaveAttribute("data-tone", "fail");
+    expect(within(status).getByText("Adapter missing")).toBeInTheDocument();
+    expect(within(status).getByRole("status")).toHaveTextContent(
+      "The fine-tuned adapter is missing. REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter configured.",
+    );
   });
 
   it("reports an unreachable service and checks again on request", async () => {
@@ -214,7 +268,15 @@ describe("running a refactoring", () => {
     const meta = (label: string) => within(record).getByText(label, { selector: "dt" }).nextElementSibling;
     expect(meta("Run ID")).toHaveTextContent(RUN_ID);
     expect(meta("Model calls")).toHaveTextContent("3 of at most 5");
-    expect(meta("Stop reason")).toHaveTextContent("Completed (completed)");
+    expect(meta("Stop reason")).toHaveTextContent("No correction needed (no_correction_needed)");
+    expect(meta("Refactoring weights")).toHaveTextContent("Base model");
+    const limits = within(record).getByRole("table", { name: "Generation limits per role" });
+    expect(within(limits).getAllByRole("row").map((row) => row.textContent)).toEqual([
+      "RoleMax new tokensMax input tokensTime limitTemperature",
+      "Analysis38420481 min 00 s0",
+      "Refactoring102420482 min 00 s0",
+      "Review76840961 min 30 s0",
+    ]);
     expect(meta("Created")).toHaveTextContent("20 Oct 2026, 09:02:00");
     expect(meta("Duration")).toHaveTextContent("1.0 s (400 ms queued, 600 ms processing)");
     expect(meta("Model")).toHaveTextContent("Adapter guard-clauses-lora");

@@ -17,7 +17,8 @@ import {
   isRunRecord,
   normalizeReferenceCases,
 } from "../api/client";
-import type { RunRecord } from "../api/contracts";
+import type { HealthResponse, RunRecord } from "../api/contracts";
+import { AppHeader } from "../components/AppHeader";
 import { RunPanel } from "../components/RunPanel";
 import { describeSubmissionError, syntaxLocation } from "../components/SubmissionError";
 import { buildSplitRows, parseUnifiedDiff } from "../lib/diff";
@@ -150,6 +151,7 @@ const EXPECTED_TEXT: Record<string, RegExp> = {
   "run_record_rejected.json": /Proposal rejected by verification/,
   "run_record_failed.json": /The run failed/,
   "run_record_interrupted.json": /The run failed/,
+  "run_record_adapter_unavailable.json": /The fine-tuned adapter was requested for the refactoring role/,
 };
 
 describe("run record examples render", () => {
@@ -186,5 +188,38 @@ describe("run record examples render", () => {
       expect(screen.getAllByText(record.error!.code).length).toBeGreaterThan(0);
       expect(screen.queryByRole("button", { name: "Download proposal" })).toBeNull();
     }
+  });
+});
+
+const HEALTH_EXPECTED: Record<string, { weights: string; state: string; notice: RegExp | null }> = {
+  "health_fake.json": { weights: "Fixed rules (fake provider)", state: "Ready", notice: null },
+  "health_local.json": { weights: "Fine-tuned LoRA adapter", state: "Ready", notice: null },
+  "health_local_loading.json": {
+    weights: "Fine-tuned LoRA adapter",
+    state: "Loading",
+    notice: /^The model is loading\. The model is loading in the background/,
+  },
+  "health_local_adapter_missing.json": {
+    weights: "Adapter requested, none configured",
+    state: "Adapter missing",
+    notice: /^The fine-tuned adapter is missing\. REFACTOR_AI_REFACTOR_USE_ADAPTER=true/,
+  },
+};
+
+describe("health examples render in the header", () => {
+  it("has an expectation for every health example", () => {
+    expect(files.filter((file) => file.startsWith("health_")).sort()).toEqual(Object.keys(HEALTH_EXPECTED).sort());
+  });
+
+  it.each(Object.keys(HEALTH_EXPECTED))("%s", (file) => {
+    const health = load(file) as HealthResponse;
+    const expected = HEALTH_EXPECTED[file]!;
+    render(<AppHeader health={health} error={null} loading={false} onRetry={() => undefined} />);
+    const status = screen.getByRole("region", { name: "Service status" });
+    expect(status).toHaveTextContent(expected.weights);
+    expect(status).toHaveTextContent(expected.state);
+    const notice = status.querySelector(".service__notice");
+    if (expected.notice) expect(notice?.textContent).toMatch(expected.notice);
+    else expect(notice).toBeNull();
   });
 });

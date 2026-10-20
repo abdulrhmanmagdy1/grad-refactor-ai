@@ -41,12 +41,13 @@ class RunErrorCode(StrEnum):
     """Codes the run service itself writes into RunRecord.error.
 
     The workflow reports its own failures (provider errors, timeouts, parse failures)
-    with its own codes; these three cover what happens around it.
+    with its own codes; these cover what happens around it.
     """
 
     INTERNAL_ERROR = "internal_error"
     INTERRUPTED = "interrupted"
     WORKFLOW_UNAVAILABLE = "workflow_unavailable"
+    ADAPTER_UNAVAILABLE = "adapter_unavailable"
 
 
 class ApiError(Exception):

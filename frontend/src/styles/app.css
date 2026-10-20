@@ -102,6 +102,44 @@
   color: var(--tone-neutral-fg);
 }
 
+.service__value[data-tone="fail"] {
+  color: var(--tone-fail-fg);
+}
+
+.service__value[data-tone="info"] {
+  color: var(--tone-info-fg);
+}
+
+.service__value[data-tone="progress"] {
+  color: var(--tone-progress-fg);
+}
+
+.service__item--weights {
+  max-width: 20rem;
+}
+
+/* Why the model cannot serve runs yet: loading, a missing adapter or another problem. */
+.service__notice {
+  max-width: 62rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--tone-warn-line);
+  border-left-width: 4px;
+  border-radius: var(--radius-control);
+  background: var(--tone-warn-bg);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere;
+}
+
+.service__notice[data-tone="progress"] {
+  border-color: var(--tone-progress-line);
+  background: var(--tone-progress-bg);
+}
+
+.service__notice[data-tone="fail"] {
+  border-color: var(--tone-fail-line);
+  background: var(--tone-fail-bg);
+}
+
 .service__mono {
   font-family: var(--font-code);
   font-size: var(--text-sm);
@@ -1573,7 +1611,13 @@ td[data-kind="empty"] {
 
   .service__item--model {
     grid-column: 1 / -1;
+    order: -2;
+  }
+
+  .service__item--weights {
+    grid-column: 1 / -1;
     order: -1;
+    max-width: none;
   }
 
   .disposition {

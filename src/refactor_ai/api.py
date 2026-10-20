@@ -57,13 +57,16 @@ from refactor_ai.runs.components import (
     CaseRegistry,
     CasesUnavailableError,
     DisabledRunner,
+    ProviderWarmup,
     RunnerMonitor,
     Workflow,
+    adapter_problem,
     as_registry,
     build_provider,
     build_registry,
     build_runner,
     build_workflow,
+    provider_health_info,
     redact_host_paths,
 )
 from refactor_ai.runs.records import (
@@ -118,6 +121,7 @@ class Runtime:
     service: RunService
     registry: CaseRegistry
     runner_monitor: RunnerMonitor
+    warmup: ProviderWarmup
     frontend: StaticFiles | None
     frontend_dir: Path | None
 
@@ -147,6 +151,9 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
     except BaseException:
         _close_provider(provider)
         raise
+    # The local provider loads its model in the background at startup; runs wait for it.
+    warmup = ProviderWarmup(provider)
+    warm_up = settings.provider == "local" and warmup.supported
     try:
         service = RunService(
             store=store,
@@ -155,15 +162,23 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
             runner=runner,
             max_pending=settings.max_pending,
             refactor_use_adapter=settings.refactor_use_adapter,
+            adapter_problem=(
+                (lambda: adapter_problem(provider)) if settings.refactor_use_adapter else None
+            ),
+            wait_ready=warmup.wait if warm_up else None,
         )
         service.start()
     except BaseException:
         store.close()
         _close_provider(provider)
         raise
+    if warm_up:
+        warmup.start()
     runner_monitor = RunnerMonitor(runner)
     runner_monitor.start()
     runner_monitor.wait(RUNNER_STARTUP_WAIT_S)
+    if settings.refactor_use_adapter and (problem := adapter_problem(provider)) is not None:
+        logger.warning(problem)
     frontend_dir = settings.frontend_dist.resolve() if settings.frontend_dist else None
     frontend = (
         StaticFiles(directory=frontend_dir, html=True, check_dir=False) if frontend_dir else None
@@ -175,7 +190,7 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
         settings.max_pending,
         settings.retention,
     )
-    return Runtime(settings, service, registry, runner_monitor, frontend, frontend_dir)
+    return Runtime(settings, service, registry, runner_monitor, warmup, frontend, frontend_dir)
 
 
 def _shutdown(runtime: Runtime) -> None:
@@ -196,6 +211,8 @@ def _shutdown(runtime: Runtime) -> None:
                 logger.error("The run worker is still busy; its run is marked interrupted later")
         finally:
             service.store.close()
+            # Closing the provider ends a model load in progress; both threads are daemons.
+            runtime.warmup.join(timeout=grace)
             # A self-check still running ends on its own (daemon thread, bounded probes).
             runtime.runner_monitor.join(timeout=1.0)
 
@@ -268,14 +285,21 @@ def _route(method: str, path: str, **options: Any) -> Callable[[_Endpoint], _End
 
 @_route("GET", "/health", response_model=HealthResponse, responses=_documented_errors(503))
 def health(runtime: RuntimeDep) -> HealthResponse:
-    """Actual provider mode and identity, reference runner status and queue usage."""
+    """Actual provider mode and identity, reference runner status, queue usage and whether
+    runs use the LoRA adapter."""
     service = runtime.service
+    use_adapter = runtime.settings.refactor_use_adapter
     return HealthResponse(
         version=__version__,
         mode=service.provider.mode,
-        provider=_provider_info(service.provider),
+        provider=provider_health_info(
+            _provider_info(service.provider),
+            use_adapter=use_adapter,
+            warming_up=runtime.warmup.in_progress,
+        ),
         runner=runtime.runner_monitor.info(),
         queue=service.queue_info(),
+        refactor_use_adapter=use_adapter,
     )
 
 

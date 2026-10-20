@@ -1,4 +1,4 @@
-"""Refactoring-role prompt and output format, version refactor-v1.
+"""Refactoring-role prompt and output format, version refactor-v2.
 
 Training data, the training script, the local provider and the workflow all build the
 refactoring prompt and parse its output here, so the fine-tuned format and the
@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-PROMPT_VERSION = "refactor-v1"
+PROMPT_VERSION = "refactor-v2"
 TASK_TYPE = "guard_clauses"
 MAX_EXPLANATION_CHARS = 600
 
@@ -32,12 +32,15 @@ _INSTRUCTIONS = (
     "Keep the function name, parameters, docstring, return values and raised exceptions "
     "exactly the same. Do not add imports, printing, comments or new behavior.",
 )
+# refactor-v2 asks for the code block first. With the explanation first (refactor-v1) the
+# base model stopped after the explanation in 22 of 24 validation records; see
+# experiments/models/2026-10-20-prompt-format-selection.md.
 _FORMAT = (
     "Respond in exactly this format:",
-    "Explanation: <one or two sentences>",
     "```python",
     "<the complete refactored function>",
     "```",
+    "Explanation: <one or two sentences>",
 )
 
 _FENCE = re.compile(r"```[ \t]*([A-Za-z0-9_+.-]*)[ \t]*\n(.*?)```", re.DOTALL)
@@ -73,7 +76,7 @@ def messages_from_prompt(prompt: str) -> list[dict]:
 def render_refactor_completion(explanation: str, code: str) -> str:
     """Reference completion used as the training target."""
     explanation = " ".join(explanation.split())
-    return f"Explanation: {explanation}\n```python\n{code.rstrip()}\n```"
+    return f"```python\n{code.rstrip()}\n```\nExplanation: {explanation}"
 
 
 def extract_submitted_code(prompt: str) -> str | None:

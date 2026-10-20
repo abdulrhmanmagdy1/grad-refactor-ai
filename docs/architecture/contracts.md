@@ -11,9 +11,9 @@ One refactoring type is supported: `guard_clauses`, Fowler's "Replace Nested Con
 - **Reference transformation.** `to_guard_clauses()` is a deterministic AST rewrite used to produce curated targets and the fake provider's output. It normalizes formatting through `ast.unparse` (comments are not preserved). It inverts an ordering comparison only when one side is a numeric literal; NaN operands are out of scope.
 - **Rubric.** `rubric(original, candidate)` checks: parses as a single function, same name, same signature, same docstring, still inside the task constraints, nesting depth reduced, at least one guard clause, no newly introduced calls. Passing the rubric is not evidence of equal behavior; reference tests are reported separately.
 
-## Refactoring prompt and output format (refactor-v1)
+## Refactoring prompt and output format (refactor-v2)
 
-[src/refactor_ai/task_format.py](../../src/refactor_ai/task_format.py) builds the refactoring-role messages and parses its output. Training records store the user message in `prompt` and `render_refactor_completion()` output in `completion`, so the fine-tuned format equals the inference format. The model answers with `Explanation: ...` followed by one fenced Python block. The parser applies at most one deterministic repair (unfenced code starting at `def`, or multiple blocks) and reports `empty_output`, `no_code_block` or `unterminated_code_block`; it never calls the model again. Every role prompt places the submitted code under a `Code:` line followed by a fenced Python block.
+[src/refactor_ai/task_format.py](../../src/refactor_ai/task_format.py) builds the refactoring-role messages and parses its output. Training records store the user message in `prompt` and `render_refactor_completion()` output in `completion`, so the fine-tuned format equals the inference format. The model answers with one fenced Python block followed by an `Explanation: ...` line. Version refactor-v2 replaced the explanation-first refactor-v1 after a validation-only comparison in which the base model stopped before writing code in 22 of 24 records with refactor-v1 and produced code in 24 of 24 with refactor-v2 ([selection record](../../experiments/models/2026-10-20-prompt-format-selection.md)). The parser applies at most one deterministic repair (unfenced code starting at `def`, or multiple blocks) and reports `empty_output`, `no_code_block` or `unterminated_code_block`; it never calls the model again. Every role prompt places the submitted code under a `Code:` line followed by a fenced Python block.
 
 ## Model provider
 
@@ -63,7 +63,7 @@ All endpoints are local. Errors use `ErrorResponse`: `{"error": {"code": ..., "m
 
 | Method and path | Result |
 |---|---|
-| GET /health | `HealthResponse`: actual provider mode and identity, runner status, queue size |
+| GET /health | `HealthResponse`: actual provider mode and identity, runner status, queue size, and whether the refactoring role uses the adapter |
 | POST /api/v1/analyze | Existing static heuristics (unchanged; no model) |
 | GET /api/v1/reference-cases | Demonstration allowlist as `ReferenceCaseSummary` items |
 | POST /api/v1/runs | 202 `RunAccepted`; 422 `validation_error`, `invalid_syntax`, `unknown_reference_case` or `reference_case_mismatch`; 503 `busy` when the bounded queue is full |
@@ -87,8 +87,35 @@ Runs are processed by one worker thread through a bounded queue, so model infere
 | REFACTOR_AI_RUNNER | `auto` | `auto` enables execution only when isolation checks pass; `disabled` forces `not_run` |
 | REFACTOR_AI_MAX_PENDING | `4` | Bounded queue size |
 | REFACTOR_AI_RETENTION | `200` | Maximum stored runs |
+| REFACTOR_AI_REFACTOR_USE_ADAPTER | `false` | `true` runs the refactoring role with the configured LoRA adapter (arms C/D behavior); analysis and review always use the base model |
 
 The local web interface is served from the same FastAPI process when `frontend/dist` exists. During frontend development, CORS allows only `http://127.0.0.1:5173` and `http://localhost:5173`.
+
+## Implementation details fixed in wave 1
+
+These rules were settled while implementing the components and are covered by their tests.
+
+**Workflow** ([workflow design](workflow.md)):
+
+- Stop reasons for completed runs: `unsupported_input`, `single_role_complete`, `no_correction_needed`, `correction_used`, `correction_disabled`, `call_budget_exhausted`, `correction_input_too_long` (the provider refused the corrected generation as too long; the first proposal is reported with a warning). For failed runs: `provider_error`, `run_timeout`, `unparseable_output`, `invalid_settings`, `reference_case_mismatch`, `internal_error`.
+- A correction starts only when two calls remain (the corrected generation and its review). If the correction produces no code, the first proposal is reported with a warning. Unparseable refactoring output in multi-role uses the correction; if no attempt produced code, the run fails with `unparseable_output`.
+- A provider that reports a different adapter state than the one requested fails the run with `model_load_error`.
+- Multi-role runs with `max_calls` below 3 fail with `invalid_settings`. A multi-role run whose review did not run is `uncertain`, and a reference-test `pass` with zero tests counts as `uncertain`.
+- `disposition_reasons` entries have the form `code: sentence`.
+- Reference tests run only for proposals that stay inside the task constraints. The runner also refuses aliases of denied builtins (for example `f = eval`) and `getattr` with a computed name.
+- The correction prompt shows failing reference tests to the model, so only multi-role arms receive that feedback; the evaluation protocol states this.
+- Prompt versions: `refactor-v2`, `analysis-v1`, `review-v1`, `correction-v2` (the correction prompt embeds the refactoring prompt). `run_workflow_traced` also returns a per-call trace (role, prompt version, requested adapter state, reported model identity, raw output and parse outcome) for evaluation.
+
+**Run API** ([backend notes](../report/notes/backend.md)):
+
+- Additional error codes: `service_unavailable` (503 from /health), `payload_too_large` (413, request bodies over 1 MiB), `reference_cases_unavailable` (500, invalid case file), `not_found` (404 for unknown routes), `method_not_allowed` (405 with an `Allow` header), `cors_rejected` (400 for rejected preflight requests) and `internal_error` (500).
+- Codes stored on failed runs come from the coordinator (the provider codes plus `run_timeout`, `unparseable_output`, `invalid_settings`, `reference_case_mismatch`, `internal_error`) or from the service: `interrupted`, `workflow_unavailable` and `adapter_unavailable` (the adapter was requested but the provider has none; the run fails before any model call). `RunError.stage` holds a workflow stage, or the run status at the time of an interruption.
+- POST /api/v1/runs returns a `Location` header. GET /api/v1/reference-cases returns a plain JSON list. The decision endpoint returns the updated `RunRecord`; the latest decision wins. Any completed run with proposed code can be downloaded or decided, and DELETE works at any status.
+- `REFACTOR_AI_MAX_PENDING` counts waiting plus running runs; a full queue returns 503 `busy` with `Retry-After: 10`. Retention removes the oldest finished runs when a run is created and at startup; unfinished runs are never removed.
+- Submitted code is stored with LF line endings. A submission matches a reference case when it equals the case's code after normalizing line endings and ignoring trailing whitespace at the end.
+- SQLite uses write-ahead logging with `synchronous=NORMAL`: the last commits before a power cut can be lost. Run one service process per database file.
+- The runner's isolation self-checks run in a background thread at startup; /health reports them as pending until they finish.
+- With `REFACTOR_AI_REFACTOR_USE_ADAPTER=true` and no adapter configured, /health reports `provider.ready: false` with the plain reason. In local mode the model warms up in a background thread at startup; /health answers during the load and submitted runs stay `queued` until it finishes.
 
 ## Dataset record
 

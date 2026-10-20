@@ -7,7 +7,7 @@ Workstream: agent workflow and verification (owner Abdullah Tarek). Tasks: T06 t
 | File | Responsibility |
 |---|---|
 | `src/refactor_ai/agents/coordinator.py` | `run_workflow` and `run_workflow_traced`: sequence, budgets, deadline, statuses, error mapping, outcome |
-| `src/refactor_ai/agents/prompts.py` | Prompts `analysis-v1`, `review-v1`, `correction-v1`; reuse of `refactor-v1` from `task_format` |
+| `src/refactor_ai/agents/prompts.py` | Prompts `analysis-v1`, `review-v1`, `correction-v2`; reuse of the refactoring prompt from `task_format` (`refactor-v2`) |
 | `src/refactor_ai/agents/parsing.py` | Strict JSON parsing of analysis and review output with one deterministic repair; finding validation |
 | `src/refactor_ai/verification/checks.py` | Syntax (`ast.parse` only), rubric, gated reference tests, summaries for prompts |
 | `src/refactor_ai/verification/disposition.py` | Disposition order and `<code>: <sentence>` reasons |
@@ -24,6 +24,7 @@ Specifications: [task scope](../../requirements/task-scope.md), [workflow](../..
 
 - **Deterministic validation decides the scope.** The analysis model cannot turn a supported input into `no_change`; unusable analysis output falls back to the static findings with a warning, as the contract requires.
 - **One parse repair, never a second model call.** Analysis and review JSON is parsed strictly, then repaired once (code fence, first JSON object, verdict case). Findings are validated individually so one bad finding does not discard the others.
+- **An oversized correction is skipped, not failed.** The correction prompt holds the code twice. When the provider refuses it as `input_too_long` (counted exactly with the model's tokenizer, before generation), the run completes as `correction_input_too_long` with the first proposal and a warning; the coordinator does not estimate tokens itself.
 - **A correction is atomic.** It starts only if two calls remain (corrected generation and its review), so the corrected proposal is never left without a review because of the budget.
 - **A failed correction keeps the first proposal.** If the corrected answer has no parseable code, the first proposal and its verification are reported with a warning instead of failing the run.
 - **Every provider failure fails the run**, in any role, with the provider's error code and the stage; the attempt records keep the evidence gathered so far.
@@ -58,7 +59,7 @@ The runner's isolation self-checks passed on the laptop (all 19 checks) and exec
 ## Limitations to report
 
 - No model has been run through the workflow; analysis, refactoring and review quality are unmeasured.
-- Token limits are not measured; the correction prompt contains the code twice and may exceed 2,048 input tokens for the largest inputs.
+- Token budgets (measured with the pinned tokenizer on the CPU, 2026-10-20): realistic inputs at the 3,000-character limit fit every prompt; the review's worst reachable case measured 3,965 of 4,096 tokens; dense code above roughly 2,100 characters skips the correction; digit-dense functions can fail their first prompt with `input_too_long`. Numbers: [workflow token budgets](../../architecture/workflow.md#token-budgets).
 - The correction prompt shows failing reference tests to the model (oracle feedback); only multi-role runs get it.
 - The runner is not a security boundary for hostile code: no operating-system network, file system or privilege boundary (see [runner safety](../../development/runner-safety.md)).
 - Code containing a Markdown fence makes the prompts ambiguous; such runs carry a warning.

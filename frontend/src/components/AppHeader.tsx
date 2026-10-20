@@ -1,5 +1,5 @@
 import type { ApiError } from "../api/client";
-import type { HealthResponse, ProviderInfo } from "../api/contracts";
+import type { HealthResponse } from "../api/contracts";
 import { shortHash } from "../lib/format";
 import { PROVIDER_LABELS } from "../lib/labels";
 
@@ -18,14 +18,60 @@ function BrandMark() {
   );
 }
 
-function modelIdentity(provider: ProviderInfo): { model: string; revision: string | null; adapter: string } {
-  const model = provider.model_id ?? "Not reported";
-  const revision = provider.model_revision ? shortHash(provider.model_revision) : null;
-  const adapter = provider.adapter_id
-    ? `Adapter ${provider.adapter_id}${provider.adapter_sha256 ? ` (sha256 ${shortHash(provider.adapter_sha256)})` : ""}`
-    : "Base model, no adapter";
-  return { model, revision, adapter };
+export type ModelState = "ready" | "loading" | "adapter_missing" | "not_ready";
+
+/** How far the model is from serving runs, from GET /health. */
+export function modelState(health: HealthResponse): ModelState {
+  const { provider } = health;
+  if (health.refactor_use_adapter && provider.provider_mode === "local_model" && !provider.adapter_id) {
+    return "adapter_missing";
+  }
+  if (provider.ready) return "ready";
+  return /\bloading\b/i.test(provider.detail ?? "") ? "loading" : "not_ready";
 }
+
+export interface RefactorWeights {
+  value: string;
+  note: string;
+  tone: "info" | "warn" | "fail" | "neutral";
+}
+
+/** Which weights the refactoring role uses. Analysis and review always use the base model. */
+export function refactorWeights(health: HealthResponse): RefactorWeights {
+  const { provider } = health;
+  if (health.mode === "fake" || provider.provider_mode === "fake") {
+    return { value: "Fixed rules (fake provider)", note: "No model is used.", tone: "warn" };
+  }
+  if (health.refactor_use_adapter) {
+    if (!provider.adapter_id) {
+      return {
+        value: "Adapter requested, none configured",
+        note: "Runs fail instead of using the base model.",
+        tone: "fail",
+      };
+    }
+    const hash = provider.adapter_sha256 ? ` (sha256 ${shortHash(provider.adapter_sha256)})` : "";
+    return {
+      value: "Fine-tuned LoRA adapter",
+      note: `${provider.adapter_id}${hash}. Analysis and review use the base model.`,
+      tone: "info",
+    };
+  }
+  return {
+    value: "Base model",
+    note: provider.adapter_id
+      ? `Adapter ${provider.adapter_id} is configured but not used.`
+      : "No adapter is used by any role.",
+    tone: "neutral",
+  };
+}
+
+const MODEL_STATE_TEXT: Record<ModelState, { label: string; tone: string; notice: string }> = {
+  ready: { label: "Ready", tone: "pass", notice: "" },
+  loading: { label: "Loading", tone: "progress", notice: "The model is loading" },
+  adapter_missing: { label: "Adapter missing", tone: "fail", notice: "The fine-tuned adapter is missing" },
+  not_ready: { label: "Not ready", tone: "warn", notice: "The model is not ready" },
+};
 
 interface AppHeaderProps {
   health: HealthResponse | null;
@@ -70,58 +116,73 @@ export function AppHeader({ health, error, loading, onRetry }: AppHeaderProps) {
 function HealthDetails({ health, stale }: { health: HealthResponse; stale: boolean }) {
   const { provider, runner, queue } = health;
   const fake = health.mode === "fake" || provider.provider_mode === "fake";
-  const identity = modelIdentity(provider);
+  const revision = provider.model_revision ? shortHash(provider.model_revision) : null;
+  const weights = refactorWeights(health);
+  const state = modelState(health);
+  const stateText = MODEL_STATE_TEXT[state];
   return (
-    <dl className="service__list" data-stale={stale ? "true" : undefined}>
-      <div className="service__item">
-        <dt>Provider</dt>
-        <dd>
-          <span className="service__value" data-tone={fake ? "warn" : "info"}>
-            {PROVIDER_LABELS[fake ? "fake" : health.mode]}
-          </span>
-        </dd>
-      </div>
-      <div className="service__item service__item--model">
-        <dt>Model</dt>
-        <dd>
-          <span className="service__value service__mono" title={provider.model_revision ?? undefined}>
-            {identity.model}
-            {identity.revision ? <span className="service__sub"> at revision {identity.revision}</span> : null}
-          </span>
-          <span className="service__note">
-            {identity.adapter}
-            {provider.device ? `, device ${provider.device}` : ""}
-          </span>
-        </dd>
-      </div>
-      <div className="service__item">
-        <dt>Model status</dt>
-        <dd>
-          <span className="service__value" data-tone={provider.ready ? "pass" : "warn"}>
-            {provider.ready ? "Ready" : "Not ready"}
-          </span>
-          {!provider.ready && provider.detail ? <span className="service__note">{provider.detail}</span> : null}
-        </dd>
-      </div>
-      <div className="service__item">
-        <dt>Reference tests</dt>
-        <dd>
-          <span className="service__value" data-tone={runner.enabled ? "pass" : "neutral"}>
-            {runner.enabled ? "Runner enabled" : "Runner disabled"}
-          </span>
-          {!runner.enabled && runner.reason ? <span className="service__note">{runner.reason}</span> : null}
-        </dd>
-      </div>
-      <div className="service__item">
-        <dt>Queue</dt>
-        <dd>
-          <span className="service__value">
-            {queue.pending} of {queue.max_pending} waiting
-          </span>
-          <span className="service__note">API {health.version}</span>
-        </dd>
-      </div>
-    </dl>
+    <>
+      <dl className="service__list" data-stale={stale ? "true" : undefined}>
+        <div className="service__item">
+          <dt>Provider</dt>
+          <dd>
+            <span className="service__value" data-tone={fake ? "warn" : "info"}>
+              {PROVIDER_LABELS[fake ? "fake" : health.mode]}
+            </span>
+          </dd>
+        </div>
+        <div className="service__item service__item--model">
+          <dt>Model</dt>
+          <dd>
+            <span className="service__value service__mono" title={provider.model_revision ?? undefined}>
+              {provider.model_id ?? "Not reported"}
+              {revision ? <span className="service__sub"> at revision {revision}</span> : null}
+            </span>
+            <span className="service__note">{provider.device ? `Device ${provider.device}` : "Device not reported"}</span>
+          </dd>
+        </div>
+        <div className="service__item service__item--weights">
+          <dt>Refactoring role</dt>
+          <dd>
+            <span className="service__value" data-tone={weights.tone}>
+              {weights.value}
+            </span>
+            <span className="service__note">{weights.note}</span>
+          </dd>
+        </div>
+        <div className="service__item">
+          <dt>Model status</dt>
+          <dd>
+            <span className="service__value" data-tone={stateText.tone}>
+              {stateText.label}
+            </span>
+          </dd>
+        </div>
+        <div className="service__item">
+          <dt>Reference tests</dt>
+          <dd>
+            <span className="service__value" data-tone={runner.enabled ? "pass" : "neutral"}>
+              {runner.enabled ? "Runner enabled" : "Runner disabled"}
+            </span>
+            {!runner.enabled && runner.reason ? <span className="service__note">{runner.reason}</span> : null}
+          </dd>
+        </div>
+        <div className="service__item">
+          <dt>Queue</dt>
+          <dd>
+            <span className="service__value">
+              {queue.pending} of {queue.max_pending} waiting
+            </span>
+            <span className="service__note">API {health.version}</span>
+          </dd>
+        </div>
+      </dl>
+      {state !== "ready" ? (
+        <p className="service__notice" data-tone={stateText.tone} role="status">
+          <strong>{stateText.notice}.</strong> {provider.detail ?? "The service gave no reason."}
+        </p>
+      ) : null}
+    </>
   );
 }
 

@@ -1,4 +1,6 @@
 {
+  "prompt_version": "refactor-v2",
+  "task_version": 1,
   "generation": {
     "duplicates_skipped": 8,
     "families": {

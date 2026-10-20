@@ -8,7 +8,9 @@ from pathlib import Path
 import pytest
 from pydantic import TypeAdapter
 
-from refactor_ai.contracts import Disposition, RunList, RunRecord, RunStatus
+from refactor_ai.agents.coordinator import COMPLETED_STOP_REASONS, FAILED_STOP_REASONS
+from refactor_ai.contracts import Disposition, HealthResponse, RunList, RunRecord, RunStatus
+from refactor_ai.runs.components import ADAPTER_MISSING_REASON, MODEL_LOADING_DETAIL
 from refactor_ai.runs.errors import ErrorCode
 from refactor_ai.runs.records import summarize
 
@@ -80,6 +82,9 @@ def test_required_examples_exist():
         "run_list.json",
         "health_fake.json",
         "health_local.json",
+        "health_local_loading.json",
+        "health_local_adapter_missing.json",
+        "run_record_adapter_unavailable.json",
         "reference_cases.json",
         "analysis_report.json",
         "review_result.json",
@@ -115,11 +120,15 @@ def test_run_record_examples_cover_the_states():
         "run_record_no_change.json": (RunStatus.COMPLETED, Disposition.NO_CHANGE),
         "run_record_rejected.json": (RunStatus.COMPLETED, Disposition.REJECTED),
         "run_record_failed.json": (RunStatus.FAILED, Disposition.FAILED),
+        "run_record_adapter_unavailable.json": (RunStatus.FAILED, Disposition.FAILED),
         "run_record_interrupted.json": (RunStatus.FAILED, Disposition.FAILED),
     }
     assert {name: (s.status, s.disposition) for name, s in states.items()} == expected
     assert record("run_record_interrupted.json").error.code == "interrupted"
     assert record("run_record_failed.json").error.code == "timeout"
+    adapter = record("run_record_adapter_unavailable.json")
+    assert adapter.error.code == "adapter_unavailable"
+    assert adapter.settings.refactor_use_adapter is True and adapter.call_count == 0
 
 
 def test_run_record_examples_are_labelled_fake():
@@ -141,3 +150,45 @@ def test_run_list_is_newest_first_and_summarizes_the_records():
     ]
     for run in runs:
         assert summarize(by_id[run.run_id]) == run
+
+
+COORDINATED = (
+    "run_record_proposal_ready.json",
+    "run_record_uncertain.json",
+    "run_record_no_change.json",
+    "run_record_rejected.json",
+    "run_record_failed.json",
+)
+
+
+@pytest.mark.parametrize("name", COORDINATED)
+def test_coordinator_records_use_documented_stop_reasons_and_reason_codes(name):
+    item = record(name)
+    allowed = COMPLETED_STOP_REASONS if item.status == RunStatus.COMPLETED else FAILED_STOP_REASONS
+    assert item.stop_reason in allowed
+    for reason in item.verification.disposition_reasons:
+        code, _, sentence = reason.partition(": ")
+        assert code and code.replace("_", "").isalnum() and sentence, reason
+    assert item.warnings, "the coordinator labels fake-provider output in warnings"
+    assert all(t.elapsed_s >= 0 for t in item.stage_timings)
+    assert item.finished_at >= item.started_at >= item.created_at
+
+
+def test_health_examples_cover_adapter_and_loading_states():
+    adapter_missing = HealthResponse.model_validate_json(read("health_local_adapter_missing.json"))
+    assert adapter_missing.refactor_use_adapter is True
+    assert adapter_missing.provider.ready is False
+    assert adapter_missing.provider.detail.startswith(ADAPTER_MISSING_REASON)
+    loading = HealthResponse.model_validate_json(read("health_local_loading.json"))
+    assert loading.provider.detail == MODEL_LOADING_DETAIL
+    fake = HealthResponse.model_validate_json(read("health_fake.json"))
+    assert fake.refactor_use_adapter is False and fake.mode == "fake"
+
+
+def test_replayed_runner_results_are_used_for_reference_tests():
+    proposal = record("run_record_proposal_ready.json").verification.reference_tests
+    rejected = record("run_record_rejected.json").verification.reference_tests
+    assert (proposal.status, proposal.passed, proposal.total) == ("pass", 4, 4)
+    assert rejected.status == "fail" and rejected.failures[0].kind == "missing_exception"
+    expected = [replay.result for replay in exporter.captured_results()]
+    assert proposal == expected[0] and rejected == expected[1]

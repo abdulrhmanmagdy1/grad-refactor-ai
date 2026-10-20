@@ -196,16 +196,16 @@ The rubric does not judge behavior. Syntax (`ast.parse`), the rubric, the truste
 |---|---|---|
 | Request size accepted by the API | 20,000 characters | `MAX_CODE_CHARS`; larger requests are rejected with 422 |
 | Task input size | 3,000 characters and 60 lines | preliminary; larger inputs complete as `no_change` with `too_long` |
-| Input tokens per call | 2,048 by default (`GenerationConfig.max_input_tokens`) | to be replaced by the models workstream's measured limit |
-| Generated tokens | analysis 384, refactoring 768, review 384 | `WorkflowSettings.generation` |
+| Input tokens per call | analysis 2,048, refactoring 2,048, review 4,096 | `WorkflowSettings.generation`; measured fit in the [workflow's token budgets](../architecture/workflow.md#token-budgets) |
+| Generated tokens | analysis 384, refactoring 1,024, review 768 | `WorkflowSettings.generation` |
 | Model calls, single-role | exactly 1 | refactoring only, no correction |
 | Model calls, multi-role | at most 5 | analysis, generation, review, one correction, its review |
 | Corrections | at most 1 (multi-role only) | `max_corrections` |
-| Time per call | 120 s, lowered to the time left in the run | `GenerationConfig.timeout_s` |
+| Time per call | analysis 60 s, refactoring 120 s, review 90 s, each lowered to the time left in the run | `GenerationConfig.timeout_s` |
 | Time per run | 600 s | `WorkflowSettings.run_timeout_s` |
 | Reference test process | 10 s wall clock, 5 s CPU, 256 MB memory, one process | `RunnerLimits`; see [runner safety](../development/runner-safety.md) |
 
-The token limits are not measured yet. The correction prompt contains the original code and the previous proposal, so at the 3,000-character limit it can approach roughly 2,000 to 2,300 tokens (an estimate, not a measurement). The models workstream must confirm the refactoring role's `max_input_tokens` on the real tokenizer or the input limit must be lowered; an input that exceeds the provider's limit fails the run with `input_too_long` and is never silently truncated. Changing any budget requires a new evaluation protocol version.
+Token counts were measured with the pinned model's tokenizer (see the [workflow's token budgets](../architecture/workflow.md#token-budgets)). The three longest train and validation records and the six demonstration cases use at most 773 tokens in any prompt. Synthetic functions with ordinary names at the 3,000-character limit used 544 to 792 code tokens, and all their prompts fit. Dense code (short names and many digits) uses more: above roughly 2,100 characters its correction prompt, which holds the code twice, exceeds the refactoring role's 2,048 tokens, and the run completes without the correction (stop reason `correction_input_too_long`). Digits are tokenized one by one, so a function made mostly of long numeric literals can exceed 2,048 tokens already in its first prompt; that run fails with `input_too_long`. An input that exceeds a provider limit is never silently truncated. Changing any budget requires a new evaluation protocol version.
 
 ## Outside the three-week release
 

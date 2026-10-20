@@ -10,7 +10,8 @@ import { readFileSync } from "node:fs";
 import { URL as NodeURL, fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import * as C from "../api/contracts";
-import { RUBRIC_CHECK_LABELS, TASK_REASON_TEXT } from "../lib/labels";
+import { RUBRIC_CHECK_LABELS, STOP_REASON_LABELS, TASK_REASON_TEXT, runErrorHint } from "../lib/labels";
+import { settings } from "./fixtures";
 import { CONTRACT_FIELDS, INTERNAL_MODELS } from "./contractFields";
 
 function readRepoFile(relative: string): string {
@@ -21,6 +22,8 @@ function readRepoFile(relative: string): string {
 const contracts = readRepoFile("src/refactor_ai/contracts.py");
 const task = readRepoFile("src/refactor_ai/tasks/guard_clauses.py");
 const api = readRepoFile("src/refactor_ai/api.py");
+const coordinator = readRepoFile("src/refactor_ai/agents/coordinator.py");
+const runErrors = readRepoFile("src/refactor_ai/runs/errors.py");
 
 interface PyClass {
   base: string;
@@ -141,5 +144,35 @@ describe("task and API constants", () => {
   it("uses the history limits of the API", () => {
     expect(Number(pyConstant(api, "RUN_LIST_DEFAULT"))).toBe(C.RUN_LIST_DEFAULT_LIMIT);
     expect(Number(pyConstant(api, "RUN_LIST_MAX"))).toBe(C.RUN_LIST_MAX_LIMIT);
+  });
+});
+
+describe("workflow defaults and run vocabulary", () => {
+  it("test fixtures use the default generation limits of WorkflowSettings", () => {
+    const body = classes.get("WorkflowSettings")?.body ?? "";
+    const parsed: Record<string, Record<string, number>> = {};
+    for (const match of body.matchAll(/Role\.(\w+): GenerationConfig\(([^)]*)\)/g)) {
+      const values: Record<string, number> = {};
+      for (const pair of match[2]!.matchAll(/(\w+)=([\d.]+)/g)) values[pair[1]!] = Number(pair[2]);
+      parsed[match[1]!.toLowerCase()] = values;
+    }
+    expect(Object.keys(parsed).sort()).toEqual(["analysis", "refactor", "review"]);
+    const fixture = settings().generation;
+    for (const [role, values] of Object.entries(parsed)) {
+      expect(fixture[role as C.Role]).toMatchObject(values);
+    }
+  });
+
+  it("labels every stop reason the coordinator writes", () => {
+    const reasons = [...coordinator.matchAll(/^STOP_\w+ = "(\w+)"/gm)].map((match) => match[1]!);
+    expect(reasons).toContain("correction_input_too_long");
+    expect(reasons.filter((reason) => !(reason in STOP_REASON_LABELS))).toEqual([]);
+  });
+
+  it("explains every run error code the service writes", () => {
+    const block = /class RunErrorCode\(StrEnum\):\n([\s\S]*?)\n\n\n/.exec(runErrors)?.[1] ?? "";
+    const codes = [...block.matchAll(/^ {4}\w+ = "(\w+)"$/gm)].map((match) => match[1]!);
+    expect(codes).toContain("adapter_unavailable");
+    expect(codes.filter((code) => runErrorHint(code) === null)).toEqual([]);
   });
 });

@@ -176,5 +176,11 @@ def authorize_split(
         raise TestSplitRefused(
             f"The test split hash {actual} differs from the frozen {freeze['split_sha256']}."
         )
+    if "content_sha256" in freeze:
+        from refactor_ai.data import content
+
+        rows = content.records_from_text(records_path.read_text(encoding="utf-8"))
+        if content.content_sha256(rows, "test") != freeze["content_sha256"]:
+            raise TestSplitRefused("The test split case content differs from the frozen content.")
     protocol_freeze = json.loads((root / PROTOCOL_FREEZE_PATH).read_text(encoding="utf-8"))
     return {"test_freeze": freeze, "protocol_freeze": protocol_freeze}

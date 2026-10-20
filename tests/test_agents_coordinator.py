@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 
 import pytest
 
+from refactor_ai import task_format
 from refactor_ai.agents import coordinator
 from refactor_ai.agents.coordinator import run_workflow, run_workflow_traced
 from refactor_ai.contracts import (
@@ -345,9 +346,10 @@ def test_multi_role_happy_path():
     assert result.runner.calls == [GOOD]
     assert [call.prompt_version for call in result.trace.calls] == [
         "analysis-v1",
-        "refactor-v1",
+        task_format.PROMPT_VERSION,
         "review-v1",
     ]
+    assert result.trace.prompt_versions["refactor"] == task_format.PROMPT_VERSION
     assert all(call.model == FAKE_MODEL for call in result.trace.calls)
     assert outcome.verification.disposition_reasons[0].startswith("ready: ")
 
@@ -599,7 +601,7 @@ def test_multi_role_corrects_an_unparseable_first_answer():
     correction = result.provider.calls[2].messages[-1].content
     assert "no fenced Python code block was found" in correction
     assert "Previous answer:" not in correction
-    assert result.trace.calls[2].prompt_version == "correction-v1"
+    assert result.trace.calls[2].prompt_version == "correction-v2"
 
 
 def test_multi_role_fails_when_both_answers_are_unparseable():
@@ -829,6 +831,78 @@ def test_correction_needs_two_remaining_calls(max_calls):
     assert result.roles == [Role.ANALYSIS, Role.REFACTOR, Role.REVIEW]
     assert result.outcome.stop_reason == coordinator.STOP_CALL_BUDGET_EXHAUSTED
     assert result.outcome.verification.disposition == Disposition.REJECTED
+
+
+def too_long(tokens: int = 2391) -> ProviderError:
+    return ProviderError(
+        code=ProviderErrorCode.INPUT_TOO_LONG,
+        message=f"The prompt has {tokens} tokens; max_input_tokens is 2048.",
+    )
+
+
+def test_oversized_correction_prompt_skips_the_correction():
+    result = run(
+        script={Role.REFACTOR: [completion(WRONG), too_long()], Role.REVIEW: [REJECT]},
+    )
+    outcome = result.outcome
+    assert result.roles == [Role.ANALYSIS, Role.REFACTOR, Role.REVIEW, Role.REFACTOR]
+    assert result.statuses == [
+        RunStatus.ANALYZING,
+        RunStatus.GENERATING,
+        RunStatus.VERIFYING,
+        RunStatus.GENERATING,
+        RunStatus.VERIFYING,
+        RunStatus.COMPLETED,
+    ]
+    assert outcome.status == RunStatus.COMPLETED and outcome.error is None
+    assert outcome.stop_reason == coordinator.STOP_CORRECTION_INPUT_TOO_LONG
+    assert outcome.proposed_code == WRONG
+    assert outcome.verification == outcome.attempts[0].verification
+    assert outcome.verification.disposition == Disposition.REJECTED
+    assert outcome.attempt_count == 2 and outcome.attempts[1].proposed_code is None
+    assert result.trace.calls[3].error.code == ProviderErrorCode.INPUT_TOO_LONG
+    skipped = [item for item in outcome.warnings if "correction was skipped" in item]
+    assert len(skipped) == 1 and "2391 tokens" in skipped[0]
+    assert not any("produced no parseable code" in item for item in outcome.warnings)
+
+
+def test_oversized_correction_after_an_unparseable_answer_fails_as_unparseable():
+    result = run(script={Role.REFACTOR: ["I cannot help.", too_long()]})
+    outcome = result.outcome
+    assert result.roles == [Role.ANALYSIS, Role.REFACTOR, Role.REFACTOR]
+    assert outcome.status == RunStatus.FAILED
+    assert outcome.error.code == "unparseable_output"
+    assert "no fenced Python code block was found" in outcome.error.message
+    assert any("correction was skipped" in item for item in outcome.warnings)
+
+
+@pytest.mark.parametrize(
+    ("script", "stage"),
+    [
+        ({Role.ANALYSIS: [too_long()]}, "analysis"),
+        ({Role.REFACTOR: [too_long()]}, "generation"),
+        ({Role.REVIEW: [too_long(4200)]}, "review"),
+        (
+            {
+                Role.REFACTOR: [completion(WRONG), completion(GOOD)],
+                Role.REVIEW: [REJECT, too_long()],
+            },
+            "review",
+        ),
+    ],
+)
+def test_input_too_long_outside_the_correction_fails_the_run(script, stage):
+    result = run(script=script)
+    outcome = result.outcome
+    assert outcome.status == RunStatus.FAILED
+    assert outcome.error.code == "input_too_long" and outcome.error.stage == stage
+    assert outcome.stop_reason == coordinator.STOP_PROVIDER_ERROR
+
+
+def test_single_role_input_too_long_fails_the_run():
+    result = run(mode="single_role", script={Role.REFACTOR: [too_long()]})
+    assert result.outcome.error.code == "input_too_long"
+    assert result.outcome.stop_reason == coordinator.STOP_PROVIDER_ERROR
 
 
 def test_unparseable_first_answer_without_correction_budget_fails():

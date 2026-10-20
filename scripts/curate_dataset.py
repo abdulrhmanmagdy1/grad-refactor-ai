@@ -9,8 +9,10 @@ Usage (from the repository root):
 The licensed sources are downloaded into the Git-ignored data/raw/ directory from URLs
 pinned to a commit and verified by SHA-256. Rerunning with the same seed and inputs
 reproduces every output except experiments/data/curation-run.json byte for byte.
---freeze-test records the test-split freeze; once frozen, a run that would change the
-test split fails before writing.
+--freeze-test records the test-split freeze. Once frozen, a run that would change the
+test cases fails before writing; a run that changes only their rendering (a new prompt
+version) needs --refreeze-rendering "<reason>", which keeps the previous freeze in the
+record's history.
 """
 
 from __future__ import annotations
@@ -44,8 +46,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="rebuild in memory and compare with the files on disk; writes nothing",
     )
+    parser.add_argument(
+        "--refreeze-rendering",
+        metavar="REASON",
+        help="accept a changed rendering (prompt format) of unchanged frozen test cases",
+    )
+    parser.add_argument(
+        "--previous-records",
+        type=Path,
+        help="the frozen records file, needed once when the freeze record has no content hash",
+    )
     parser.add_argument("--workers", type=int, default=4)
     args = parser.parse_args(argv)
+    previous = args.previous_records.read_text(encoding="utf-8") if args.previous_records else None
 
     config = CurationConfig(
         root=ROOT, seed=args.seed, allow_download=args.download, workers=args.workers
@@ -60,9 +73,12 @@ def main(argv: list[str] | None = None) -> int:
         outputs = render_outputs(result, ROOT)
         outputs[DEMO_PATH.as_posix()] = demo_text
         try:
-            check_freeze(outputs, ROOT)
+            status = check_freeze(outputs, ROOT, previous_records_text=previous)
         except FrozenSplitChanged as exc:
             print(f"FROZEN TEST SPLIT CHANGED: {exc}")
+            return 2
+        if status.rendering_changed:
+            print("FROZEN TEST SPLIT RENDERING CHANGED: cases unchanged, re-freeze needed")
             return 2
         differences = []
         for relative, text in outputs.items():
@@ -75,7 +91,13 @@ def main(argv: list[str] | None = None) -> int:
         print("reproducible" if not differences else f"{len(differences)} file(s) differ")
         return 1 if differences else 0
     try:
-        written = write_outputs(result, config, freeze_test=args.freeze_test)
+        written = write_outputs(
+            result,
+            config,
+            freeze_test=args.freeze_test,
+            refreeze_reason=args.refreeze_rendering,
+            previous_records_text=previous,
+        )
     except FrozenSplitChanged as exc:
         print(f"Refusing to write: {exc}")
         return 2

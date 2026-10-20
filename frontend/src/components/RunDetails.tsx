@@ -1,7 +1,15 @@
 import { type ReactNode, useId } from "react";
-import type { ModelReference, RunRecord } from "../api/contracts";
+import { type ModelReference, ROLES, type RunRecord } from "../api/contracts";
 import { formatDateTime, formatDuration, formatTime, secondsBetween, shortHash } from "../lib/format";
-import { DISPOSITION_META, PROVIDER_LABELS, STAGE_LABELS, TASK_LABEL, WORKFLOW_META, humanize } from "../lib/labels";
+import {
+  DISPOSITION_META,
+  PROVIDER_LABELS,
+  ROLE_LABELS,
+  STAGE_LABELS,
+  TASK_LABEL,
+  WORKFLOW_META,
+  stopReasonLabel,
+} from "../lib/labels";
 
 function ModelText({ model }: { model: ModelReference | null }) {
   if (!model) return <>Not recorded (no model call was made)</>;
@@ -70,6 +78,10 @@ export function RunDetails({ record }: { record: RunRecord }) {
         <Item label="Model">
           <ModelText model={record.model} />
         </Item>
+        <Item label="Refactoring weights">
+          {settings.refactor_use_adapter ? "Fine-tuned LoRA adapter requested" : "Base model"}
+          <span className="muted"> (analysis and review use the base model)</span>
+        </Item>
         <Item label="Attempts">
           {record.attempt_count} (at most {settings.max_corrections + 1})
         </Item>
@@ -92,7 +104,7 @@ export function RunDetails({ record }: { record: RunRecord }) {
         <Item label="Stop reason">
           {record.stop_reason ? (
             <>
-              {humanize(record.stop_reason)} <span className="mono muted">({record.stop_reason})</span>
+              {stopReasonLabel(record.stop_reason)} <span className="mono muted">({record.stop_reason})</span>
             </>
           ) : (
             "Not recorded"
@@ -107,6 +119,35 @@ export function RunDetails({ record }: { record: RunRecord }) {
         </Item>
         <Item label="Schema version">{record.schema_version}</Item>
       </dl>
+
+      <div className="code-scroll" role="region" aria-label="Generation limits" tabIndex={0}>
+        <table className="mini-table">
+          <caption>Generation limits per role</caption>
+          <thead>
+            <tr>
+              <th scope="col">Role</th>
+              <th scope="col">Max new tokens</th>
+              <th scope="col">Max input tokens</th>
+              <th scope="col">Time limit</th>
+              <th scope="col">Temperature</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ROLES.map((role) => {
+              const config = settings.generation[role];
+              return config ? (
+                <tr key={role}>
+                  <td>{ROLE_LABELS[role]}</td>
+                  <td>{config.max_new_tokens}</td>
+                  <td>{config.max_input_tokens}</td>
+                  <td>{formatDuration(config.timeout_s)}</td>
+                  <td>{config.temperature}</td>
+                </tr>
+              ) : null;
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {record.stage_timings.length > 0 ? (
         <div className="code-scroll" role="region" aria-label="Stage timings" tabIndex={0}>

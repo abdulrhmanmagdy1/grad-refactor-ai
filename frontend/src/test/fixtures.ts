@@ -79,21 +79,19 @@ export const FAKE_MODEL: ModelReference = {
 };
 
 export function settings(mode: WorkflowMode = "multi_role"): WorkflowSettings {
-  const generation = {
-    max_new_tokens: 384,
-    temperature: 0,
-    top_p: 1,
-    seed: 42,
-    max_input_tokens: 2048,
-    timeout_s: 120,
-  };
+  // The per-role defaults of WorkflowSettings in contracts.py.
+  const base = { temperature: 0, top_p: 1, seed: 42 };
   return {
     mode,
     refactor_use_adapter: false,
     max_calls: 5,
     max_corrections: 1,
     run_timeout_s: 600,
-    generation: { analysis: generation, refactor: { ...generation, max_new_tokens: 768 }, review: generation },
+    generation: {
+      analysis: { ...base, max_new_tokens: 384, max_input_tokens: 2048, timeout_s: 60 },
+      refactor: { ...base, max_new_tokens: 1024, max_input_tokens: 2048, timeout_s: 120 },
+      review: { ...base, max_new_tokens: 768, max_input_tokens: 4096, timeout_s: 90 },
+    },
   };
 }
 
@@ -206,7 +204,7 @@ export function runRecord(overrides: Partial<RunRecord> = {}): RunRecord {
         elapsed_s: 0.01,
       },
     ],
-    stop_reason: "completed",
+    stop_reason: "no_correction_needed",
     error: null,
     warnings: [],
     human_decision: null,
@@ -279,6 +277,7 @@ export function health(mode: "fake" | "local_model" = "local_model", overrides: 
         }
       : { enabled: true, reason: null, isolation: { separate_process: true, no_network: true } },
     queue: { max_pending: 4, pending: 0 },
+    refactor_use_adapter: !fake,
     ...overrides,
   };
 }

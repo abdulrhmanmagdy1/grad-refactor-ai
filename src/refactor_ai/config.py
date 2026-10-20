@@ -20,6 +20,7 @@ ENV_DB = "REFACTOR_AI_DB"
 ENV_RUNNER = "REFACTOR_AI_RUNNER"
 ENV_MAX_PENDING = "REFACTOR_AI_MAX_PENDING"
 ENV_RETENTION = "REFACTOR_AI_RETENTION"
+ENV_REFACTOR_USE_ADAPTER = "REFACTOR_AI_REFACTOR_USE_ADAPTER"
 
 PROVIDERS = ("fake", "local")
 RUNNER_MODES = ("auto", "disabled")
@@ -27,6 +28,8 @@ MAX_PENDING_RANGE = (1, 100)
 RETENTION_RANGE = (1, 100_000)
 
 _INTEGER = re.compile(r"[+-]?[0-9]+")
+_TRUE = frozenset({"true", "1", "yes", "on"})
+_FALSE = frozenset({"false", "0", "no", "off"})
 
 
 class ConfigError(ValueError):
@@ -41,8 +44,10 @@ class Settings:
     local model through refactor_ai.providers.local). runner: "auto" lets the reference
     runner execute trusted tests only when its isolation checks pass; "disabled" forces
     not_run. max_pending bounds unfinished runs (waiting plus the one running).
-    retention caps stored runs. frontend_dist, refactor_use_adapter and
-    shutdown_grace_s are code-level settings without environment variables.
+    retention caps stored runs. refactor_use_adapter runs the refactoring role with the
+    provider's LoRA adapter (arms C/D); without a configured adapter runs fail instead of
+    using the base model. frontend_dist and shutdown_grace_s have no environment
+    variables.
     """
 
     provider: str = "fake"
@@ -70,7 +75,7 @@ class Settings:
         if self.frontend_dist is not None:
             object.__setattr__(self, "frontend_dist", Path(self.frontend_dist))
         if not isinstance(self.refactor_use_adapter, bool):
-            raise ConfigError("refactor_use_adapter must be a boolean")
+            raise ConfigError(f"{ENV_REFACTOR_USE_ADAPTER} must be true or false")
         if not 0 <= float(self.shutdown_grace_s) <= 600:
             raise ConfigError("shutdown_grace_s must be between 0 and 600 seconds")
 
@@ -91,6 +96,8 @@ class Settings:
             values["max_pending"] = _parse_int(ENV_MAX_PENDING, value)
         if (value := _get(env, ENV_RETENTION)) is not None:
             values["retention"] = _parse_int(ENV_RETENTION, value)
+        if (value := _get(env, ENV_REFACTOR_USE_ADAPTER)) is not None:
+            values["refactor_use_adapter"] = _parse_bool(ENV_REFACTOR_USE_ADAPTER, value)
         return cls(**values)
 
 
@@ -105,6 +112,15 @@ def _parse_int(name: str, value: str) -> int:
     if not _INTEGER.fullmatch(value):
         raise ConfigError(f"{name} must be a whole number, got {value!r}")
     return int(value)
+
+
+def _parse_bool(name: str, value: str) -> bool:
+    lowered = value.lower()
+    if lowered in _TRUE:
+        return True
+    if lowered in _FALSE:
+        return False
+    raise ConfigError(f"{name} must be true or false, got {value!r}")
 
 
 def _check_int(name: str, value: object, low: int, high: int) -> None:

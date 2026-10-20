@@ -37,9 +37,21 @@
       "human_decision": null
     },
     {
+      "run_id": "a7d0c3e1b2f44a5c9e8d7b6a5f4e3d21",
+      "created_at": "2026-10-20T09:08:20Z",
+      "finished_at": "2026-10-20T09:08:20.100000Z",
+      "status": "failed",
+      "disposition": "failed",
+      "task_type": "guard_clauses",
+      "workflow_mode": "multi_role",
+      "provider_mode": "fake",
+      "reference_case_id": null,
+      "human_decision": null
+    },
+    {
       "run_id": "e1d2c3b4a5f64e7d8c9b0a1f2e3d4c5b",
       "created_at": "2026-10-20T09:06:00Z",
-      "finished_at": "2026-10-20T09:08:00.300000Z",
+      "finished_at": "2026-10-20T09:08:00.212000Z",
       "status": "failed",
       "disposition": "failed",
       "task_type": "guard_clauses",
@@ -51,7 +63,7 @@
     {
       "run_id": "c0ffee00d15ea5e0a1b2c3d4e5f60718",
       "created_at": "2026-10-20T09:05:00Z",
-      "finished_at": "2026-10-20T09:05:01.300000Z",
+      "finished_at": "2026-10-20T09:05:00.492000Z",
       "status": "completed",
       "disposition": "rejected",
       "task_type": "guard_clauses",
@@ -63,7 +75,7 @@
     {
       "run_id": "5f4e3d2c1b0a49f8a7e6d5c4b3a29180",
       "created_at": "2026-10-20T09:04:00Z",
-      "finished_at": "2026-10-20T09:04:00.210000Z",
+      "finished_at": "2026-10-20T09:04:00.202000Z",
       "status": "completed",
       "disposition": "no_change",
       "task_type": "guard_clauses",
@@ -75,7 +87,7 @@
     {
       "run_id": "9e8d7c6b5a4f4e3d8c2b1a0f9e8d7c6b",
       "created_at": "2026-10-20T09:03:00Z",
-      "finished_at": "2026-10-20T09:03:00.400000Z",
+      "finished_at": "2026-10-20T09:03:00.332000Z",
       "status": "completed",
       "disposition": "uncertain",
       "task_type": "guard_clauses",
@@ -87,7 +99,7 @@
     {
       "run_id": "2a6d8f0b1c3e4a5b9d7f6e5d4c3b2a10",
       "created_at": "2026-10-20T09:02:00Z",
-      "finished_at": "2026-10-20T09:02:01Z",
+      "finished_at": "2026-10-20T09:02:00.352000Z",
       "status": "completed",
       "disposition": "proposal_ready",
       "task_type": "guard_clauses",

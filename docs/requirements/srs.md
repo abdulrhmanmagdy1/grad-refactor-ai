@@ -1,6 +1,6 @@
 # Software requirements
 
-This is the first-release specification. The current implementation provides static analysis only. P0 requirements are essential to the agreed release; P1 requirements are included only if time permits.
+This is the first-release specification. Implementation status for each requirement is traced in the acceptance matrix produced at feature freeze (T23); this table states what the release must do. P0 requirements are essential to the agreed release; P1 requirements are included only if time permits.
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|

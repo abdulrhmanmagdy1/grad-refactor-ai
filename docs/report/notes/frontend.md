@@ -1,10 +1,10 @@
 # Frontend notes
 
-Workstream: frontend and delivery (owner Dania El-Walily). Tasks: T16, the code-input and result interface, and the interface half of T21, verification and failure results. Written on 2026-10-20 from the implementation and its tests. Every run shown in the interface during development came from the deterministic fake provider, so nothing here is evidence of model behavior. Setup and commands are in the [frontend development guide](../../development/frontend.md).
+Workstream: frontend and delivery (owner Dania El-Walily). Tasks: T16, the code-input and result interface, and the interface half of T21, verification and failure results. Written on 2026-10-20 from the implementation and its tests, and updated the same day for the second wave of contract changes (the refactoring role's weights in `/health`, new per-role generation limits, the `adapter_unavailable` run error and the `correction_input_too_long` stop reason). Every run shown in the interface during development came from the deterministic fake provider, so nothing here is evidence of model behavior. Setup and commands are in the [frontend development guide](../../development/frontend.md).
 
 ## What the interface does
 
-A local single-page application lets a person paste one Python function, or load a demonstration case, and ask the service for a guard-clause refactoring. It follows the run while it is queued, analyzed, generated and verified, then shows the outcome, a diff, the four verification results, the explanation and findings, and the run record. The person can copy or download the proposal and record an accept or reject decision. Earlier runs can be reopened or deleted from the history. The service's API and records are described in the [contracts](../../architecture/contracts.md) and the [backend notes](backend.md).
+A local single-page application lets a person paste one Python function, or load a demonstration case, and ask the service for a guard-clause refactoring. It follows the run while it is queued, analyzed, generated and verified, then shows the outcome, a diff, the four verification results, the explanation and findings, and the run record. The person can copy or download the proposal and record an accept or reject decision. The header shows the provider, the exact model identity, which weights the refactoring role uses (the fine-tuned LoRA adapter or the base model; analysis and review always use the base model) and, when the model cannot serve runs, why: still loading, a requested adapter that is missing, or another reason given by the service. Earlier runs can be reopened or deleted from the history. The service's API and records are described in the [contracts](../../architecture/contracts.md) and the [backend notes](backend.md).
 
 | Requirement | How the interface meets it |
 |---|---|
@@ -12,7 +12,8 @@ A local single-page application lets a person paste one Python function, or load
 | FR04 verification | Syntax, task rubric, reference tests and model review in four separate cards, never merged into one verdict |
 | FR05 diff | Unified diff parsed from the service's `diff`, and a side-by-side view of the full original and proposed code |
 | FR06 user control | Accept and reject record a decision only; copy and download are explicit; the editor content is never changed by a run, a decision or an error |
-| FR07 traceability | Run record: identifier, workflow, provider, exact model and adapter identity, calls and attempts against their limits, stage timings, per-attempt outcomes and raw output, stop reason, warnings |
+| FR07 traceability | Run record: identifier, workflow, provider, exact model and adapter identity, the refactoring weights requested, calls and attempts against their limits, stage timings, per-attempt outcomes and raw output, stop reason in words and as its code, warnings |
+| FR08 bounded execution | The run record lists each role's generation limits (new tokens, input tokens, time limit, temperature) and the run's time limit as stored with the run |
 | FR10 history | Bounded history (20, or up to 50) with status, outcome, provider and decision; reopen and delete with confirmation |
 | NFR06 | Every result shows that passing tests cover the trusted inputs only and do not prove equivalence for every input |
 
@@ -30,6 +31,8 @@ A local single-page application lets a person paste one Python function, or load
 | Decisions never edit files or the input | An "apply" button | FR06 and the API contract: the service writes nothing to host files and the download happens after inspection |
 | Production build with a Content Security Policy | No policy | The page may load scripts, styles and data from its own origin only, so it works offline and cannot fetch from the internet |
 | Fixed English formats; UTC for zone-less timestamps | The browser locale | The laptop's regional settings must not change the page language or date order |
+| Model output shown verbatim, never parsed | Parsing the refactoring output in the browser | The service parses the model output (now the code-first refactor-v2 format) and stores the result; the interface only shows the stored raw output per attempt, so a prompt-format change needs no interface change |
+| Not-ready reasons shown from the service's own text | A fixed message | The service knows whether the model is loading or an adapter is missing; the header labels the state (loading, adapter missing, not ready) and shows the service's detail in full |
 
 The visual design is a quiet set of white panels on a cool grey page, with an indigo accent kept for actions and progress so that green, red and amber mean only results. Headings use Bahnschrift where it exists (Windows) and code uses Cascadia Mono or Consolas, with system fallbacks and no downloaded fonts. Light and dark themes follow the operating system. WCAG AA contrast is checked by a test for every text and background pair the stylesheet uses in both themes (4.5:1 for text, 3:1 for borders, focus rings and status bars). Focus is always visible, every control has a label, status changes are announced through a polite live region, and the layout works from 380 px wide (one column) to wide screens (input and history beside the result).
 
@@ -53,6 +56,8 @@ Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, 
 | S12 | Decision recorded and download started | Accept on S5, then Download proposal |
 | S13 | History with several outcomes and delete confirmation | After S5 to S11, choose Delete on one run |
 | S14 | Dark theme and phone width | Switch the operating system to dark mode; narrow the window to about 390 px |
+| S15 | Header while the local model loads, and with a requested adapter missing | Start in local mode and open the page at once; or set `REFACTOR_AI_REFACTOR_USE_ADAPTER=true` with no adapter configured |
+| S16 | Run failed with `adapter_unavailable` | Submit a run in the configuration of S15 with the adapter missing |
 
 ## Evidence
 
@@ -62,8 +67,8 @@ Commands run in `frontend/` on 2026-10-20 on the demonstration laptop (Windows 1
 |---|---|
 | `npm ci` equivalent (`npm install` from the pinned manifest) | 106 packages, 0 vulnerabilities reported by npm audit, `node_modules` about 110 MB |
 | `npm run typecheck` (`tsc -b`) | Passed; a deliberately wrong type in an application file and in a test file each made it fail |
-| `npm test` | 404 passed, 5 skipped (the optional end-to-end file), 0 failed, in 12 test files |
-| `npm run build` | Passed: one 307 kB script (93 kB compressed) and one 32 kB stylesheet in `frontend/dist` |
+| `npm test` | 419 passed, 5 skipped (the optional end-to-end file), 0 failed, in 12 test files |
+| `npm run build` | Passed: one 310 kB script (94 kB compressed) and one 33 kB stylesheet in `frontend/dist` |
 
 | Test file | Tests | Subject |
 |---|---|---|
@@ -74,9 +79,9 @@ Commands run in `frontend/` on 2026-10-20 on the demonstration laptop (Windows 1
 | `src/state/state.test.ts` | 14 | Run and editor reducers |
 | `src/components/results.test.tsx` | 40 | Every disposition and verification status, diff views, progress steps |
 | `src/components/editor.test.tsx` | 6 | Tab, Escape and Shift+Tab, line numbers |
-| `src/App.test.tsx` | 36 | The whole page against a fake service |
-| `src/test/contractMirror.test.ts` | 53 | TypeScript contract against `contracts.py`, task limits and API limits |
-| `src/test/contractExamples.test.tsx` | 44 | Every file in `docs/architecture/examples/` |
+| `src/App.test.tsx` | 39 | The whole page against a fake service, including the model-loading and missing-adapter header states |
+| `src/test/contractMirror.test.ts` | 56 | TypeScript contract against `contracts.py`, task limits, API limits, the default generation limits, every coordinator stop reason and every service run-error code |
+| `src/test/contractExamples.test.tsx` | 53 | Every file in `docs/architecture/examples/`, each run record rendered and each health example rendered in the header |
 | `src/styles/contrast.test.ts` | 127 | WCAG contrast of the color pairs in both themes |
 | `src/test/e2e.test.ts` | 5 | Optional, against a running service |
 

@@ -158,6 +158,98 @@ def build_provider(settings: Settings) -> Provider:
         )
 
 
+ADAPTER_MISSING_REASON = (
+    "REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter "
+    "configured. Runs fail instead of using the base model."
+)
+MODEL_LOADING_DETAIL = (
+    "The model is loading in the background since startup; runs wait until it is ready."
+)
+WARMUP_THREAD_NAME = "refactor-ai-model-warmup"
+
+
+def adapter_problem(provider: Provider) -> str | None:
+    """Why runs cannot use the LoRA adapter, or None when the provider has one.
+
+    The provider reports a configured adapter through ProviderInfo.adapter_id. When its
+    information cannot be read, None is returned and the workflow's own adapter-state
+    check (model_load_error) still prevents a silent fallback to the base model.
+    """
+    try:
+        info = provider.info()
+        adapter_id = info.adapter_id if isinstance(info, ProviderInfo) else info["adapter_id"]
+    except Exception:
+        logger.exception("Reading the provider information for the adapter check failed")
+        return None
+    return None if adapter_id else ADAPTER_MISSING_REASON
+
+
+def provider_health_info(
+    info: ProviderInfo, *, use_adapter: bool, warming_up: bool
+) -> ProviderInfo:
+    """The provider information /health shows, stating plainly what blocks runs."""
+    detail = info.detail
+    ready = info.ready
+    if warming_up and not ready:
+        detail = MODEL_LOADING_DETAIL
+    if use_adapter and not info.adapter_id:
+        ready = False
+        detail = f"{ADAPTER_MISSING_REASON} {detail}" if detail else ADAPTER_MISSING_REASON
+    if detail:
+        detail = redact_host_paths(detail)
+    return info.model_copy(update={"ready": ready, "detail": detail})
+
+
+class ProviderWarmup:
+    """Calls provider.warm_up() once in a background thread at startup.
+
+    The local provider loads the model there instead of on the first request. The call
+    holds the provider's call lock, so the run worker waits for wait() before starting
+    a run; /health never waits (the provider's info() does not take that lock).
+    """
+
+    def __init__(self, provider: Provider) -> None:
+        self._provider = provider
+        self._done = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    @property
+    def supported(self) -> bool:
+        return callable(getattr(self._provider, "warm_up", None))
+
+    def start(self) -> bool:
+        """Start the warm-up; False (and nothing to wait for) when the provider has none."""
+        if not self.supported:
+            self._done.set()
+            return False
+        self._thread = threading.Thread(target=self._warm, name=WARMUP_THREAD_NAME, daemon=True)
+        self._thread.start()
+        return True
+
+    def _warm(self) -> None:
+        try:
+            self._provider.warm_up()  # type: ignore[attr-defined]
+            logger.info("Model warm-up finished")
+        except Exception:
+            logger.exception("The model warm-up failed; runs report the provider's error")
+        finally:
+            self._done.set()
+
+    @property
+    def in_progress(self) -> bool:
+        return self._thread is not None and not self._done.is_set()
+
+    def wait(self, timeout: float) -> bool:
+        return self._done.wait(timeout)
+
+    def join(self, timeout: float | None = None) -> bool:
+        thread = self._thread
+        if thread is not None:
+            thread.join(timeout)
+            return not thread.is_alive()
+        return True
+
+
 # --- Reference runner ----------------------------------------------------------------
 
 

@@ -3,7 +3,7 @@
   "run_id": "c0ffee00d15ea5e0a1b2c3d4e5f60718",
   "created_at": "2026-10-20T09:05:00Z",
   "started_at": "2026-10-20T09:05:00.200000Z",
-  "finished_at": "2026-10-20T09:05:01.300000Z",
+  "finished_at": "2026-10-20T09:05:00.492000Z",
   "status": "completed",
   "task_type": "guard_clauses",
   "workflow_mode": "multi_role",
@@ -31,10 +31,10 @@
         "top_p": 1.0,
         "seed": 42,
         "max_input_tokens": 2048,
-        "timeout_s": 120.0
+        "timeout_s": 60.0
       },
       "refactor": {
-        "max_new_tokens": 768,
+        "max_new_tokens": 1024,
         "temperature": 0.0,
         "top_p": 1.0,
         "seed": 42,
@@ -42,12 +42,12 @@
         "timeout_s": 120.0
       },
       "review": {
-        "max_new_tokens": 384,
+        "max_new_tokens": 768,
         "temperature": 0.0,
         "top_p": 1.0,
         "seed": 42,
-        "max_input_tokens": 2048,
-        "timeout_s": 120.0
+        "max_input_tokens": 4096,
+        "timeout_s": 90.0
       }
     }
   },
@@ -64,49 +64,49 @@
     {
       "stage": "analysis",
       "attempt": 0,
-      "started_at": "2026-10-20T09:05:00.210000Z",
+      "started_at": "2026-10-20T09:05:00.202000Z",
       "elapsed_s": 0.01,
       "calls": 1
     },
     {
       "stage": "generation",
       "attempt": 0,
-      "started_at": "2026-10-20T09:05:00.220000Z",
+      "started_at": "2026-10-20T09:05:00.212000Z",
       "elapsed_s": 0.01,
       "calls": 1
     },
     {
       "stage": "verification",
       "attempt": 0,
-      "started_at": "2026-10-20T09:05:00.230000Z",
-      "elapsed_s": 0.46,
+      "started_at": "2026-10-20T09:05:00.222000Z",
+      "elapsed_s": 0.12,
       "calls": 0
     },
     {
       "stage": "review",
       "attempt": 0,
-      "started_at": "2026-10-20T09:05:00.690000Z",
+      "started_at": "2026-10-20T09:05:00.342000Z",
       "elapsed_s": 0.01,
       "calls": 1
     },
     {
       "stage": "generation",
       "attempt": 1,
-      "started_at": "2026-10-20T09:05:00.750000Z",
+      "started_at": "2026-10-20T09:05:00.352000Z",
       "elapsed_s": 0.01,
       "calls": 1
     },
     {
       "stage": "verification",
       "attempt": 1,
-      "started_at": "2026-10-20T09:05:00.760000Z",
-      "elapsed_s": 0.46,
+      "started_at": "2026-10-20T09:05:00.362000Z",
+      "elapsed_s": 0.12,
       "calls": 0
     },
     {
       "stage": "review",
       "attempt": 1,
-      "started_at": "2026-10-20T09:05:01.220000Z",
+      "started_at": "2026-10-20T09:05:00.482000Z",
       "elapsed_s": 0.01,
       "calls": 1
     }
@@ -176,13 +176,13 @@
       "passed": 3,
       "failed": 1,
       "errored": 0,
-      "reason": null,
-      "duration_s": 0.44,
+      "reason": "1 of 4 reference tests failed.",
+      "duration_s": 0.109,
       "failures": [
         {
           "index": 2,
           "kind": "missing_exception",
-          "detail": "Expected ValueError, but the call returned 0."
+          "detail": "shipping_cost(0, True) returned 0 (int); expected ValueError to be raised."
         }
       ]
     },
@@ -195,14 +195,14 @@
     },
     "disposition": "rejected",
     "disposition_reasons": [
-      "1 of 4 reference tests failed.",
-      "The model review rejected the proposal."
+      "tests_fail: 1 of 4 reference tests failed.",
+      "review_reject: The model review rejected the proposal."
     ]
   },
   "attempts": [
     {
       "attempt": 0,
-      "raw_output": "Explanation: FAKE PROVIDER (not a model): scripted faulty proposal used to illustrate a rejection.\n```python\ndef shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n```",
+      "raw_output": "```python\ndef shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n```\nExplanation: FAKE PROVIDER (not a model): scripted faulty proposal used to illustrate a rejection.",
       "parse_error": null,
       "parse_repaired": false,
       "proposed_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n",
@@ -233,13 +233,13 @@
           "passed": 3,
           "failed": 1,
           "errored": 0,
-          "reason": null,
-          "duration_s": 0.44,
+          "reason": "1 of 4 reference tests failed.",
+          "duration_s": 0.109,
           "failures": [
             {
               "index": 2,
               "kind": "missing_exception",
-              "detail": "Expected ValueError, but the call returned 0."
+              "detail": "shipping_cost(0, True) returned 0 (int); expected ValueError to be raised."
             }
           ]
         },
@@ -252,8 +252,8 @@
         },
         "disposition": "rejected",
         "disposition_reasons": [
-          "1 of 4 reference tests failed.",
-          "The model review rejected the proposal."
+          "tests_fail: 1 of 4 reference tests failed.",
+          "review_reject: The model review rejected the proposal."
         ]
       },
       "review": {
@@ -271,13 +271,13 @@
         "adapter_sha256": null,
         "use_adapter": false
       },
-      "prompt_tokens": 120,
+      "prompt_tokens": 156,
       "completion_tokens": 42,
       "elapsed_s": 0.01
     },
     {
       "attempt": 1,
-      "raw_output": "Explanation: FAKE PROVIDER (not a model): scripted faulty proposal used to illustrate a rejection.\n```python\ndef shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n```",
+      "raw_output": "```python\ndef shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n```\nExplanation: FAKE PROVIDER (not a model): scripted faulty proposal used to illustrate a rejection.",
       "parse_error": null,
       "parse_repaired": false,
       "proposed_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight < 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n",
@@ -308,13 +308,13 @@
           "passed": 3,
           "failed": 1,
           "errored": 0,
-          "reason": null,
-          "duration_s": 0.44,
+          "reason": "1 of 4 reference tests failed.",
+          "duration_s": 0.109,
           "failures": [
             {
               "index": 2,
               "kind": "missing_exception",
-              "detail": "Expected ValueError, but the call returned 0."
+              "detail": "shipping_cost(0, True) returned 0 (int); expected ValueError to be raised."
             }
           ]
         },
@@ -327,8 +327,8 @@
         },
         "disposition": "rejected",
         "disposition_reasons": [
-          "1 of 4 reference tests failed.",
-          "The model review rejected the proposal."
+          "tests_fail: 1 of 4 reference tests failed.",
+          "review_reject: The model review rejected the proposal."
         ]
       },
       "review": {
@@ -346,13 +346,15 @@
         "adapter_sha256": null,
         "use_adapter": false
       },
-      "prompt_tokens": 160,
+      "prompt_tokens": 269,
       "completion_tokens": 42,
       "elapsed_s": 0.01
     }
   ],
-  "stop_reason": "correction_limit_reached",
+  "stop_reason": "correction_used",
   "error": null,
-  "warnings": [],
+  "warnings": [
+    "The fake provider produced these outputs; they are deterministic test fixtures, not language-model inference."
+  ],
   "human_decision": null
 }

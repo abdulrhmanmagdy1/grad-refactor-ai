@@ -1,0 +1,428 @@
+{
+  "record": "Curated train/validation record lengths under refactoring prompt formats",
+  "recorded_at": "2026-10-20T12:26:45+00:00",
+  "dataset": "datasets/guard_clauses/v1/records.jsonl (train and validation only)",
+  "max_length": 1024,
+  "variants": {
+    "v1": {
+      "train": {
+        "records": 627,
+        "mean_tokens": 480.9,
+        "median_tokens": 475,
+        "max_tokens": 694,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-hex-color-03",
+            "tokens": 694,
+            "prompt_tokens": 432,
+            "target_tokens": 262
+          },
+          {
+            "id": "gc1-seat-upgrade-07",
+            "tokens": 688,
+            "prompt_tokens": 453,
+            "target_tokens": 235
+          },
+          {
+            "id": "gc1-letter-grade-02",
+            "tokens": 683,
+            "prompt_tokens": 471,
+            "target_tokens": 212
+          },
+          {
+            "id": "gc1-hex-color-10",
+            "tokens": 682,
+            "prompt_tokens": 427,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-hex-color-09",
+            "tokens": 680,
+            "prompt_tokens": 425,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-hex-color-07",
+            "tokens": 680,
+            "prompt_tokens": 425,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-letter-grade-09",
+            "tokens": 669,
+            "prompt_tokens": 465,
+            "target_tokens": 204
+          },
+          {
+            "id": "gc1-letter-grade-07",
+            "tokens": 665,
+            "prompt_tokens": 462,
+            "target_tokens": 203
+          },
+          {
+            "id": "gc1-password-strength-07",
+            "tokens": 664,
+            "prompt_tokens": 425,
+            "target_tokens": 239
+          },
+          {
+            "id": "gc1-seat-upgrade-06",
+            "tokens": 663,
+            "prompt_tokens": 438,
+            "target_tokens": 225
+          }
+        ]
+      },
+      "validation": {
+        "records": 84,
+        "mean_tokens": 482.1,
+        "median_tokens": 488.0,
+        "max_tokens": 579,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-parcel-shipping-04",
+            "tokens": 579,
+            "prompt_tokens": 325,
+            "target_tokens": 254
+          },
+          {
+            "id": "gc1-parcel-shipping-03",
+            "tokens": 562,
+            "prompt_tokens": 316,
+            "target_tokens": 246
+          },
+          {
+            "id": "gc1-income-tax-02",
+            "tokens": 560,
+            "prompt_tokens": 306,
+            "target_tokens": 254
+          },
+          {
+            "id": "gc1-blood-pressure-04",
+            "tokens": 560,
+            "prompt_tokens": 319,
+            "target_tokens": 241
+          },
+          {
+            "id": "gc1-scholarship-04",
+            "tokens": 551,
+            "prompt_tokens": 314,
+            "target_tokens": 237
+          },
+          {
+            "id": "gc1-scholarship-03",
+            "tokens": 547,
+            "prompt_tokens": 312,
+            "target_tokens": 235
+          },
+          {
+            "id": "gc1-parcel-shipping-07",
+            "tokens": 544,
+            "prompt_tokens": 309,
+            "target_tokens": 235
+          },
+          {
+            "id": "gc1-parcel-shipping-05",
+            "tokens": 544,
+            "prompt_tokens": 309,
+            "target_tokens": 235
+          },
+          {
+            "id": "gc1-scholarship-01",
+            "tokens": 543,
+            "prompt_tokens": 310,
+            "target_tokens": 233
+          },
+          {
+            "id": "gc1-parcel-shipping-01",
+            "tokens": 543,
+            "prompt_tokens": 306,
+            "target_tokens": 237
+          }
+        ]
+      }
+    },
+    "v2": {
+      "train": {
+        "records": 627,
+        "mean_tokens": 481.9,
+        "median_tokens": 476,
+        "max_tokens": 695,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-hex-color-03",
+            "tokens": 695,
+            "prompt_tokens": 432,
+            "target_tokens": 263
+          },
+          {
+            "id": "gc1-seat-upgrade-07",
+            "tokens": 689,
+            "prompt_tokens": 453,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-letter-grade-02",
+            "tokens": 684,
+            "prompt_tokens": 471,
+            "target_tokens": 213
+          },
+          {
+            "id": "gc1-hex-color-10",
+            "tokens": 683,
+            "prompt_tokens": 427,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-hex-color-09",
+            "tokens": 681,
+            "prompt_tokens": 425,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-hex-color-07",
+            "tokens": 681,
+            "prompt_tokens": 425,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-letter-grade-09",
+            "tokens": 670,
+            "prompt_tokens": 465,
+            "target_tokens": 205
+          },
+          {
+            "id": "gc1-letter-grade-07",
+            "tokens": 666,
+            "prompt_tokens": 462,
+            "target_tokens": 204
+          },
+          {
+            "id": "gc1-password-strength-07",
+            "tokens": 665,
+            "prompt_tokens": 425,
+            "target_tokens": 240
+          },
+          {
+            "id": "gc1-seat-upgrade-06",
+            "tokens": 664,
+            "prompt_tokens": 438,
+            "target_tokens": 226
+          }
+        ]
+      },
+      "validation": {
+        "records": 84,
+        "mean_tokens": 483.1,
+        "median_tokens": 489.0,
+        "max_tokens": 580,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-parcel-shipping-04",
+            "tokens": 580,
+            "prompt_tokens": 325,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-parcel-shipping-03",
+            "tokens": 563,
+            "prompt_tokens": 316,
+            "target_tokens": 247
+          },
+          {
+            "id": "gc1-income-tax-02",
+            "tokens": 561,
+            "prompt_tokens": 306,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-blood-pressure-04",
+            "tokens": 561,
+            "prompt_tokens": 319,
+            "target_tokens": 242
+          },
+          {
+            "id": "gc1-scholarship-04",
+            "tokens": 552,
+            "prompt_tokens": 314,
+            "target_tokens": 238
+          },
+          {
+            "id": "gc1-scholarship-03",
+            "tokens": 548,
+            "prompt_tokens": 312,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-parcel-shipping-07",
+            "tokens": 545,
+            "prompt_tokens": 309,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-parcel-shipping-05",
+            "tokens": 545,
+            "prompt_tokens": 309,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-scholarship-01",
+            "tokens": 544,
+            "prompt_tokens": 310,
+            "target_tokens": 234
+          },
+          {
+            "id": "gc1-parcel-shipping-01",
+            "tokens": 544,
+            "prompt_tokens": 306,
+            "target_tokens": 238
+          }
+        ]
+      }
+    },
+    "v3": {
+      "train": {
+        "records": 627,
+        "mean_tokens": 488.9,
+        "median_tokens": 483,
+        "max_tokens": 702,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-hex-color-03",
+            "tokens": 702,
+            "prompt_tokens": 439,
+            "target_tokens": 263
+          },
+          {
+            "id": "gc1-seat-upgrade-07",
+            "tokens": 696,
+            "prompt_tokens": 460,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-letter-grade-02",
+            "tokens": 691,
+            "prompt_tokens": 478,
+            "target_tokens": 213
+          },
+          {
+            "id": "gc1-hex-color-10",
+            "tokens": 690,
+            "prompt_tokens": 434,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-hex-color-09",
+            "tokens": 688,
+            "prompt_tokens": 432,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-hex-color-07",
+            "tokens": 688,
+            "prompt_tokens": 432,
+            "target_tokens": 256
+          },
+          {
+            "id": "gc1-letter-grade-09",
+            "tokens": 677,
+            "prompt_tokens": 472,
+            "target_tokens": 205
+          },
+          {
+            "id": "gc1-letter-grade-07",
+            "tokens": 673,
+            "prompt_tokens": 469,
+            "target_tokens": 204
+          },
+          {
+            "id": "gc1-password-strength-07",
+            "tokens": 672,
+            "prompt_tokens": 432,
+            "target_tokens": 240
+          },
+          {
+            "id": "gc1-seat-upgrade-06",
+            "tokens": 671,
+            "prompt_tokens": 445,
+            "target_tokens": 226
+          }
+        ]
+      },
+      "validation": {
+        "records": 84,
+        "mean_tokens": 490.1,
+        "median_tokens": 496.0,
+        "max_tokens": 587,
+        "over_max_length": 0,
+        "worst": [
+          {
+            "id": "gc1-parcel-shipping-04",
+            "tokens": 587,
+            "prompt_tokens": 332,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-parcel-shipping-03",
+            "tokens": 570,
+            "prompt_tokens": 323,
+            "target_tokens": 247
+          },
+          {
+            "id": "gc1-income-tax-02",
+            "tokens": 568,
+            "prompt_tokens": 313,
+            "target_tokens": 255
+          },
+          {
+            "id": "gc1-blood-pressure-04",
+            "tokens": 568,
+            "prompt_tokens": 326,
+            "target_tokens": 242
+          },
+          {
+            "id": "gc1-scholarship-04",
+            "tokens": 559,
+            "prompt_tokens": 321,
+            "target_tokens": 238
+          },
+          {
+            "id": "gc1-scholarship-03",
+            "tokens": 555,
+            "prompt_tokens": 319,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-parcel-shipping-07",
+            "tokens": 552,
+            "prompt_tokens": 316,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-parcel-shipping-05",
+            "tokens": 552,
+            "prompt_tokens": 316,
+            "target_tokens": 236
+          },
+          {
+            "id": "gc1-scholarship-01",
+            "tokens": 551,
+            "prompt_tokens": 317,
+            "target_tokens": 234
+          },
+          {
+            "id": "gc1-parcel-shipping-01",
+            "tokens": 551,
+            "prompt_tokens": 313,
+            "target_tokens": 238
+          }
+        ]
+      }
+    }
+  }
+}

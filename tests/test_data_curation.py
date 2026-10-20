@@ -22,6 +22,7 @@ from refactor_ai.data.manifest import (
     freeze_record,
     pretty_json,
     render_outputs,
+    write_outputs,
 )
 from refactor_ai.data.mutation import mutants
 from refactor_ai.data.splits import assign_family_splits
@@ -412,27 +413,127 @@ def test_manifest_hashes_and_freeze_protection(small_run, tmp_path):
     assert validator.file_sha256(path) == manifest["files"]["records"]["sha256"]
     for split in ("train", "validation", "test"):
         assert validator.split_sha256(path, split) == manifest["splits"][split]["sha256"]
+        assert validator.content_sha256(path, split) == manifest["splits"][split]["content_sha256"]
     manifest_path = tmp_path / "manifest.json"
     manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
     assert validator.verify_manifest(path, manifest_path) == []
 
     root = tmp_path / "repo"
     (root / "experiments" / "data").mkdir(parents=True)
-    assert check_freeze(outputs, root) is None
+    assert check_freeze(outputs, root).frozen is None
     frozen = freeze_record(manifest, git_head=None)
-    (root / "experiments" / "data" / "test-split-freeze.json").write_text(
-        pretty_json(frozen), encoding="utf-8"
-    )
-    assert check_freeze(outputs, root)["split_sha256"] == manifest["splits"]["test"]["sha256"]
     freeze_path = root / "experiments" / "data" / "test-split-freeze.json"
+    freeze_path.write_text(pretty_json(frozen), encoding="utf-8")
+    status = check_freeze(outputs, root)
+    assert status.frozen["split_sha256"] == manifest["splits"]["test"]["sha256"]
+    assert not status.rendering_changed
     assert validator.verify_freeze(path, freeze_path) == []
+    # A different rendered hash with the same content is a rendering change, not an error.
     frozen["split_sha256"] = "0" * 64
     freeze_path.write_text(pretty_json(frozen), encoding="utf-8")
-    with pytest.raises(FrozenSplitChanged):
-        check_freeze(outputs, root)
+    assert check_freeze(outputs, root).rendering_changed
     assert validator.verify_freeze(path, freeze_path) == [
         "test split hash differs from the frozen hash"
     ]
+    # Different case content or ids are always refused.
+    frozen["content_sha256"] = "1" * 64
+    freeze_path.write_text(pretty_json(frozen), encoding="utf-8")
+    with pytest.raises(FrozenSplitChanged, match="case content"):
+        check_freeze(outputs, root)
+    assert "test split case content differs from the frozen content" in validator.verify_freeze(
+        path, freeze_path
+    )
+    frozen = freeze_record(manifest, git_head=None)
+    frozen["ids"] = frozen["ids"][1:]
+    freeze_path.write_text(pretty_json(frozen), encoding="utf-8")
+    with pytest.raises(FrozenSplitChanged, match="case ids"):
+        check_freeze(outputs, root)
+
+
+def _rerendered(records: list[dict]) -> list[dict]:
+    """The same cases with the explanation moved before the code block (refactor-v1 layout)."""
+    out = []
+    for record in records:
+        lines = record["completion"].split("\n")
+        explanation = [line for line in lines if line.startswith("Explanation: ")]
+        code = [line for line in lines if not line.startswith("Explanation: ")]
+        out.append(
+            dict(record, completion="\n".join(explanation + code), prompt_version="refactor-v1")
+        )
+    return out
+
+
+def test_content_hash_ignores_rendering_but_not_cases(small_run):
+    from refactor_ai.data import content
+
+    _config, result = small_run
+    records = result.records
+    old = _rerendered(records)
+    assert [r["completion"] for r in old] != [r["completion"] for r in records]
+    for split in ("train", "validation", "test", None):
+        assert content.content_sha256(old, split) == content.content_sha256(records, split)
+    changed_test = json.loads(json.dumps(records))
+    changed_test[0]["tests"][0]["args"] = "[12345]"
+    assert content.content_sha256(changed_test) != content.content_sha256(records)
+    with_notes = next(r for r in records if "Analysis notes:" in r["prompt"])
+    without = dict(with_notes, prompt=with_notes["prompt"].replace("- lines ", "* lines "))
+    assert content.case_content(without)["analysis_notes"] == []
+    assert content.case_content(with_notes)["analysis_notes"]
+    swapped = dict(records[0], completion=records[0]["completion"] + "\nExplanation: again")
+    with pytest.raises(ValueError, match="exactly one explanation"):
+        content.case_content(swapped)
+
+
+def test_rendering_refreeze_needs_a_reason_and_keeps_history(small_run, tmp_path):
+    _config, result = small_run
+    root = tmp_path / "repo"
+    (root / "experiments" / "data").mkdir(parents=True)
+    config = CurationConfig(root=root)
+    write_outputs(result, config, freeze_test=True)
+    freeze_path = root / "experiments" / "data" / "test-split-freeze.json"
+    first = json.loads(freeze_path.read_text(encoding="utf-8"))
+    assert first["history"] == [] and first["content_sha256"]
+    # Simulate the earlier rendering: the freeze holds another rendered hash, same content.
+    previous = dict(first, split_sha256="f" * 64, prompt_version="refactor-v1")
+    freeze_path.write_text(pretty_json(previous), encoding="utf-8")
+    with pytest.raises(FrozenSplitChanged, match="refreeze-rendering"):
+        write_outputs(result, config, freeze_test=False)
+    write_outputs(result, config, freeze_test=False, refreeze_reason="new prompt version")
+    record = json.loads(freeze_path.read_text(encoding="utf-8"))
+    assert record["content_sha256"] == first["content_sha256"]
+    assert record["split_sha256"] == first["split_sha256"]
+    assert record["refreeze_reason"] == "new prompt version"
+    entry = record["history"][-1]
+    assert entry["split_sha256"] == "f" * 64 and entry["superseded_because"] == "new prompt version"
+    assert entry["content_sha256"] == first["content_sha256"]
+
+
+def test_legacy_freeze_without_content_hash_needs_the_frozen_records(small_run, tmp_path):
+    _config, result = small_run
+    outputs = render_outputs(result, ROOT)
+    records_text = outputs["datasets/guard_clauses/v1/records.jsonl"]
+    manifest = json.loads(outputs["datasets/guard_clauses/v1/manifest.json"])
+    old_text = "".join(json.dumps(r) + "\n" for r in _rerendered(result.records))
+    from refactor_ai.data.manifest import split_sha256
+
+    legacy = {
+        key: value
+        for key, value in freeze_record(manifest, None).items()
+        if key not in ("content_sha256", "content_hash_method", "prompt_version", "history")
+    }
+    legacy["split_sha256"] = split_sha256(old_text, "test")
+    root = tmp_path / "repo"
+    (root / "experiments" / "data").mkdir(parents=True)
+    (root / "experiments" / "data" / "test-split-freeze.json").write_text(
+        pretty_json(legacy), encoding="utf-8"
+    )
+    with pytest.raises(FrozenSplitChanged, match="previous-records"):
+        check_freeze(outputs, root)
+    with pytest.raises(FrozenSplitChanged, match="not the frozen records file"):
+        check_freeze(outputs, root, previous_records_text=records_text)
+    status = check_freeze(outputs, root, previous_records_text=old_text)
+    assert status.rendering_changed
+    assert status.frozen_content == manifest["splits"]["test"]["content_sha256"]
 
 
 def test_family_registry_keys_are_stable_group_names():

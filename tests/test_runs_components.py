@@ -14,6 +14,7 @@ from refactor_ai.contracts import (
     ChatMessage,
     GenerationRequest,
     ProviderErrorCode,
+    ProviderInfo,
     ProviderMode,
     ReferenceCase,
     Role,
@@ -25,20 +26,25 @@ from refactor_ai.contracts import (
 from refactor_ai.providers.fake import FakeProvider
 from refactor_ai.runs import components
 from refactor_ai.runs.components import (
+    ADAPTER_MISSING_REASON,
+    MODEL_LOADING_DETAIL,
     RUNNER_CHECKS_RUNNING,
     RUNNER_DISABLED_REASON,
     CasesUnavailableError,
     DisabledRunner,
+    ProviderWarmup,
     RunnerMonitor,
     StaticCaseRegistry,
     UnavailableCaseRegistry,
     UnavailableProvider,
+    adapter_problem,
     as_registry,
     build_provider,
     build_registry,
     build_runner,
     build_workflow,
     describe_exception,
+    provider_health_info,
     redact_host_paths,
     runner_info,
 )
@@ -402,3 +408,109 @@ def test_describe_exception_is_bounded():
     assert describe_exception(ValueError("a\n  b")) == "ValueError: a b"
     long = describe_exception(RuntimeError("x" * 1000))
     assert len(long) == components.MAX_REASON_CHARS and long.endswith("...")
+
+
+# --- adapter requests and model warm-up ----------------------------------------------
+
+
+class InfoProvider:
+    def __init__(self, info=None, error=None):
+        self._info = info
+        self._error = error
+
+    @property
+    def mode(self):
+        return ProviderMode.LOCAL_MODEL
+
+    def info(self):
+        if self._error is not None:
+            raise self._error
+        return self._info
+
+
+LOCAL = ProviderInfo(
+    provider_mode=ProviderMode.LOCAL_MODEL, model_id="m", model_revision="r", ready=True
+)
+
+
+def test_adapter_problem_reads_the_configured_adapter():
+    with_adapter = LOCAL.model_copy(update={"adapter_id": "lora-1"})
+    assert adapter_problem(InfoProvider(with_adapter)) is None
+    assert adapter_problem(InfoProvider(LOCAL)) == ADAPTER_MISSING_REASON
+    assert adapter_problem(FakeProvider()) == ADAPTER_MISSING_REASON
+    assert adapter_problem(InfoProvider({"adapter_id": "lora-1"})) is None
+    # Unknown state: the workflow's own adapter check still prevents a silent fallback.
+    assert adapter_problem(InfoProvider(error=RuntimeError("down"))) is None
+
+
+def test_health_info_states_a_missing_adapter_plainly():
+    shown = provider_health_info(LOCAL, use_adapter=True, warming_up=False)
+    assert shown.ready is False
+    assert shown.detail == ADAPTER_MISSING_REASON
+    assert provider_health_info(LOCAL, use_adapter=False, warming_up=False) == LOCAL
+    with_detail = LOCAL.model_copy(update={"detail": "Model loaded."})
+    shown = provider_health_info(with_detail, use_adapter=True, warming_up=False)
+    assert shown.detail == f"{ADAPTER_MISSING_REASON} Model loaded."
+    with_adapter = with_detail.model_copy(update={"adapter_id": "lora-1"})
+    assert provider_health_info(with_adapter, use_adapter=True, warming_up=False) == with_adapter
+
+
+def test_health_info_reports_a_model_loading_in_the_background():
+    loading = LOCAL.model_copy(update={"ready": False, "detail": "Worker not started."})
+    shown = provider_health_info(loading, use_adapter=False, warming_up=True)
+    assert (shown.ready, shown.detail) == (False, MODEL_LOADING_DETAIL)
+    # Once the model reports ready, the provider's own detail is shown again.
+    loaded = LOCAL.model_copy(update={"detail": "Model loaded in 3.0 s."})
+    assert provider_health_info(loaded, use_adapter=False, warming_up=True) == loaded
+
+
+class WarmingProvider(InfoProvider):
+    def __init__(self, error=None):
+        super().__init__(LOCAL)
+        self.release = threading.Event()
+        self.calls = 0
+        self.error = error
+
+    def warm_up(self):
+        self.calls += 1
+        assert self.release.wait(5)
+        if self.error is not None:
+            raise self.error
+        return LOCAL
+
+
+def test_warm_up_runs_once_in_the_background():
+    provider = WarmingProvider()
+    warmup = ProviderWarmup(provider)
+    assert warmup.supported
+    started = time.monotonic()
+    assert warmup.start() is True
+    try:
+        assert time.monotonic() - started < 0.5
+        assert warmup.in_progress and not warmup.wait(0.05)
+    finally:
+        provider.release.set()
+    assert warmup.wait(5) and warmup.join(5)
+    assert not warmup.in_progress
+    assert provider.calls == 1
+
+
+def test_warm_up_failure_is_logged_not_raised(caplog):
+    provider = WarmingProvider(error=RuntimeError("load failed"))
+    provider.release.set()
+    warmup = ProviderWarmup(provider)
+    warmup.start()
+    assert warmup.wait(5) and warmup.join(5)
+    assert "warm-up failed" in caplog.text
+
+
+def test_providers_without_warm_up_are_ready_at_once():
+    warmup = ProviderWarmup(FakeProvider())
+    assert warmup.supported is False
+    assert warmup.start() is False
+    assert warmup.wait(0) and not warmup.in_progress and warmup.join(0)
+
+
+def test_real_local_provider_has_warm_up():
+    local = pytest.importorskip("refactor_ai.providers.local")
+    assert callable(getattr(local.LocalProvider, "warm_up", None))

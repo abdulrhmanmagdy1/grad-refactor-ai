@@ -30,6 +30,7 @@ def test_every_variable_is_read():
             "REFACTOR_AI_RUNNER": "disabled",
             "REFACTOR_AI_MAX_PENDING": "9",
             "REFACTOR_AI_RETENTION": "50",
+            "REFACTOR_AI_REFACTOR_USE_ADAPTER": "true",
         }
     )
     assert settings.provider == "local"
@@ -37,6 +38,7 @@ def test_every_variable_is_read():
     assert settings.db_path == Path("data/history.sqlite3")
     assert settings.runner == "disabled"
     assert (settings.max_pending, settings.retention) == (9, 50)
+    assert settings.refactor_use_adapter is True
 
 
 def test_values_are_trimmed_and_case_insensitive():
@@ -58,6 +60,7 @@ def test_empty_values_keep_defaults():
         "REFACTOR_AI_RUNNER",
         "REFACTOR_AI_MAX_PENDING",
         "REFACTOR_AI_RETENTION",
+        "REFACTOR_AI_REFACTOR_USE_ADAPTER",
     )
     assert Settings.from_env(dict.fromkeys(names, "  ")) == Settings()
 
@@ -77,6 +80,9 @@ def test_empty_values_keep_defaults():
         ("REFACTOR_AI_RETENTION", "0"),
         ("REFACTOR_AI_RETENTION", "100001"),
         ("REFACTOR_AI_RETENTION", "1e3"),
+        ("REFACTOR_AI_REFACTOR_USE_ADAPTER", "maybe"),
+        ("REFACTOR_AI_REFACTOR_USE_ADAPTER", "2"),
+        ("REFACTOR_AI_REFACTOR_USE_ADAPTER", "enabled"),
     ],
 )
 def test_invalid_values_name_the_variable(name, value):
@@ -109,3 +115,27 @@ def test_direct_construction_is_validated_and_frozen(tmp_path):
 def test_reads_the_process_environment(monkeypatch):
     monkeypatch.setenv("REFACTOR_AI_RETENTION", "17")
     assert Settings.from_env().retention == 17
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        ("true", True),
+        ("TRUE", True),
+        ("1", True),
+        ("yes", True),
+        ("On", True),
+        ("false", False),
+        ("0", False),
+        ("no", False),
+        ("OFF", False),
+    ],
+)
+def test_adapter_flag_accepts_common_spellings(value, expected):
+    settings = Settings.from_env({"REFACTOR_AI_REFACTOR_USE_ADAPTER": value})
+    assert settings.refactor_use_adapter is expected
+
+
+def test_adapter_flag_must_be_a_boolean_in_code():
+    with pytest.raises(ConfigError, match="REFACTOR_AI_REFACTOR_USE_ADAPTER"):
+        Settings(refactor_use_adapter="true")

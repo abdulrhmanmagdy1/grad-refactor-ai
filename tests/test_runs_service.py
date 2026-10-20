@@ -484,3 +484,84 @@ def test_worker_survives_a_failing_store_write(store, running, monkeypatch):
     assert wait_terminal(store, run.run_id).status == RunStatus.COMPLETED
     second = submit(service)
     assert wait_terminal(store, second.run_id).status == RunStatus.COMPLETED
+
+
+# --- LoRA adapter requests and provider warm-up --------------------------------------
+
+
+def test_adapter_request_without_an_adapter_fails_before_any_model_call(store, running):
+    workflow = ScriptedWorkflow()
+    reason = "no adapter configured"
+    service = running(workflow, refactor_use_adapter=True, adapter_problem=lambda: reason)
+    run = submit(service)
+    failed = wait_terminal(store, run.run_id)
+    assert failed.status == RunStatus.FAILED
+    assert failed.error.code == "adapter_unavailable"
+    assert failed.error.message == reason
+    assert failed.error.stage is None
+    assert (failed.call_count, failed.attempts, failed.proposed_code) == (0, [], None)
+    assert failed.settings.refactor_use_adapter is True
+    assert workflow.calls == []
+
+
+def test_adapter_request_with_an_adapter_reaches_the_workflow(store, running):
+    workflow = ScriptedWorkflow()
+    checks = []
+
+    def problem():
+        checks.append(1)
+        return None
+
+    service = running(workflow, refactor_use_adapter=True, adapter_problem=problem)
+    run = submit(service)
+    assert wait_terminal(store, run.run_id).status == RunStatus.COMPLETED
+    assert workflow.settings_seen[0].refactor_use_adapter is True
+    assert checks == [1]
+
+
+def test_adapter_check_is_skipped_when_the_adapter_is_not_requested(store, running):
+    workflow = ScriptedWorkflow()
+    service = running(workflow, adapter_problem=lambda: "must not be consulted")
+    run = submit(service)
+    assert wait_terminal(store, run.run_id).status == RunStatus.COMPLETED
+    assert workflow.settings_seen[0].refactor_use_adapter is False
+
+
+def test_runs_wait_for_the_provider_warm_up(store, running):
+    ready = threading.Event()
+    workflow = ScriptedWorkflow()
+    service = running(workflow, wait_ready=ready.wait)
+    try:
+        run = submit(service)
+        time.sleep(0.3)
+        waiting = store.get(run.run_id)
+        assert (waiting.status, waiting.started_at) == (RunStatus.QUEUED, None)
+        assert workflow.calls == []
+        assert service.queue_info().pending == 1
+        ready.set()
+        assert wait_terminal(store, run.run_id).status == RunStatus.COMPLETED
+    finally:
+        ready.set()
+
+
+def test_stopping_ends_the_warm_up_wait(store):
+    ready = threading.Event()
+    workflow = ScriptedWorkflow()
+    service = make_service(store, workflow, wait_ready=ready.wait)
+    service.start()
+    run = submit(service)
+    started = time.monotonic()
+    assert service.stop(timeout=5) is True
+    assert time.monotonic() - started < 2.0
+    stopped = store.get(run.run_id)
+    assert stopped.status == RunStatus.FAILED
+    assert stopped.error.code == "interrupted" and stopped.error.stage == "queued"
+    assert workflow.calls == []
+
+
+def test_warm_up_wait_is_bounded(store, running):
+    workflow = ScriptedWorkflow()
+    service = running(workflow, wait_ready=lambda timeout: False, ready_wait_limit_s=0.2)
+    run = submit(service)
+    assert wait_terminal(store, run.run_id).status == RunStatus.COMPLETED
+    assert len(workflow.calls) == 1

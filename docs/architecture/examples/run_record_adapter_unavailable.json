@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "run_id": "a7d0c3e1b2f44a5c9e8d7b6a5f4e3d21",
+  "created_at": "2026-10-20T09:08:20Z",
+  "started_at": "2026-10-20T09:08:20.100000Z",
+  "finished_at": "2026-10-20T09:08:20.100000Z",
+  "status": "failed",
+  "task_type": "guard_clauses",
+  "workflow_mode": "multi_role",
+  "reference_case_id": null,
+  "original_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight > 0:\n        if express:\n            return weight * 3\n        else:\n            return weight * 2\n    else:\n        raise ValueError(\"weight must be positive\")\n",
+  "proposed_code": null,
+  "provider_mode": "fake",
+  "model": null,
+  "settings": {
+    "mode": "multi_role",
+    "refactor_use_adapter": true,
+    "max_calls": 5,
+    "max_corrections": 1,
+    "run_timeout_s": 600.0,
+    "generation": {
+      "analysis": {
+        "max_new_tokens": 384,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 2048,
+        "timeout_s": 60.0
+      },
+      "refactor": {
+        "max_new_tokens": 1024,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 2048,
+        "timeout_s": 120.0
+      },
+      "review": {
+        "max_new_tokens": 768,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 4096,
+        "timeout_s": 90.0
+      }
+    }
+  },
+  "attempt_count": 0,
+  "call_count": 0,
+  "stage_timings": [],
+  "analysis": null,
+  "findings": [],
+  "explanation": null,
+  "diff": null,
+  "changed_lines": [],
+  "review": null,
+  "verification": null,
+  "attempts": [],
+  "stop_reason": null,
+  "error": {
+    "code": "adapter_unavailable",
+    "message": "REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter configured. Runs fail instead of using the base model.",
+    "stage": null
+  },
+  "warnings": [],
+  "human_decision": null
+}

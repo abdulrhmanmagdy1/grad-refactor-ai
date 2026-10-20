@@ -147,7 +147,15 @@ export const CONTRACT_FIELDS = {
   DecisionRequest: fieldsOf<C.DecisionRequest>()(["decision"]),
   ReferenceCaseSummary: fieldsOf<C.ReferenceCaseSummary>()(["case_id", "title", "function_name", "code", "test_count"]),
   QueueInfo: fieldsOf<C.QueueInfo>()(["max_pending", "pending"]),
-  HealthResponse: fieldsOf<C.HealthResponse>()(["status", "version", "mode", "provider", "runner", "queue"]),
+  HealthResponse: fieldsOf<C.HealthResponse>()([
+    "status",
+    "version",
+    "mode",
+    "provider",
+    "runner",
+    "queue",
+    "refactor_use_adapter",
+  ]),
   ErrorDetail: fieldsOf<C.ErrorDetail>()(["code", "message", "details"]),
   ErrorResponse: fieldsOf<C.ErrorResponse>()(["error"]),
 } as const;

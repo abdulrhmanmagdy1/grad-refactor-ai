@@ -1,0 +1,55 @@
+{
+  "record": "refactor-v1 to refactor-v2 regeneration of datasets/guard_clauses/v1",
+  "date": "2026-10-20",
+  "reason": "The coordinator adopted prompt format refactor-v2 (code block first, then one Explanation line), selected on 24 validation records only (experiments/models/2026-10-20-prompt-format-selection.md). No model or person had been evaluated on the test split.",
+  "old_records": "datasets/guard_clauses/v1/records.jsonl at commit 446db35",
+  "records_compared": 799,
+  "fields_that_changed": {
+    "completion": 799,
+    "prompt": 799,
+    "prompt_version": 799
+  },
+  "checks": [
+    "same ids in the same order and the same field order in every record",
+    "every field other than prompt, completion and prompt_version is byte-identical",
+    "case content (refactor_ai.data.content: ids, split and source fields, original and target code, tests, provenance, explanation text, analysis notes) is identical for every record",
+    "each new prompt and completion contains exactly the same lines as the old one (only their order differs)",
+    "prompt_version is refactor-v1 in every old and refactor-v2 in every new record"
+  ],
+  "records_sha256": {
+    "refactor-v1": "6c586c7117ec991fb0a18ca7cf8927c48843cd64e6685980d7688685b354c860",
+    "refactor-v2": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3"
+  },
+  "split_sha256": {
+    "train": {
+      "refactor-v1": "dc4ac5348ac13613155f933098f0d9d53da64b063076a01ccf6f7fe65454d9be",
+      "refactor-v2": "b6a7fc0240c33aba0e06c984f073a94f2056d1e1721c52dd0dd0d29c05e236da"
+    },
+    "validation": {
+      "refactor-v1": "4b8c76255b6e88669715990bb4c1b83a829b5add41d1b63691929352885fe848",
+      "refactor-v2": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5"
+    },
+    "test": {
+      "refactor-v1": "b765dbb8ba3c3f76771ed6aa4a05e645372de19751f720805ccfc511d5535b72",
+      "refactor-v2": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633"
+    }
+  },
+  "content_sha256": {
+    "train": {
+      "refactor-v1": "e4f075dc28a84bd64b49e2a204cc1e6ea1838ce18c50a0c23e1e8cbcdd6491b0",
+      "refactor-v2": "e4f075dc28a84bd64b49e2a204cc1e6ea1838ce18c50a0c23e1e8cbcdd6491b0"
+    },
+    "validation": {
+      "refactor-v1": "b3b44b8f20c7cedd78e11086a7b838677dae19e84e7cbd7c9fc39724c2282601",
+      "refactor-v2": "b3b44b8f20c7cedd78e11086a7b838677dae19e84e7cbd7c9fc39724c2282601"
+    },
+    "test": {
+      "refactor-v1": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12",
+      "refactor-v2": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12"
+    }
+  },
+  "all_records_content_sha256": {
+    "refactor-v1": "a2fb80e5aca335331271e07b0a4abfd0e95a5ed54f029b5262dbe82302c71d95",
+    "refactor-v2": "a2fb80e5aca335331271e07b0a4abfd0e95a5ed54f029b5262dbe82302c71d95"
+  }
+}

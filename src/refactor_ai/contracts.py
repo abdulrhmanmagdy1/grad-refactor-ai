@@ -299,11 +299,19 @@ class WorkflowSettings(Contract):
     max_calls: int = Field(default=5, ge=1, le=5)
     max_corrections: int = Field(default=1, ge=0, le=1)
     run_timeout_s: float = Field(default=600.0, gt=0.0, le=3600.0)
+    # Limits measured on the demonstration laptop (experiments/models/): a maximal input is
+    # about 910 prompt tokens and a full proposal at most about 600 completion tokens.
     generation: dict[Role, GenerationConfig] = Field(
         default_factory=lambda: {
-            Role.ANALYSIS: GenerationConfig(max_new_tokens=384),
-            Role.REFACTOR: GenerationConfig(max_new_tokens=768),
-            Role.REVIEW: GenerationConfig(max_new_tokens=384),
+            Role.ANALYSIS: GenerationConfig(
+                max_new_tokens=384, max_input_tokens=2048, timeout_s=60.0
+            ),
+            Role.REFACTOR: GenerationConfig(
+                max_new_tokens=1024, max_input_tokens=2048, timeout_s=120.0
+            ),
+            Role.REVIEW: GenerationConfig(
+                max_new_tokens=768, max_input_tokens=4096, timeout_s=90.0
+            ),
         }
     )
 
@@ -468,6 +476,7 @@ class HealthResponse(Contract):
     provider: ProviderInfo
     runner: RunnerInfo
     queue: QueueInfo
+    refactor_use_adapter: bool = False
 
 
 class ErrorDetail(Contract):

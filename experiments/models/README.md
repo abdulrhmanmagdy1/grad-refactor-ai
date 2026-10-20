@@ -9,6 +9,8 @@ Pilot measurements on the demonstration laptop (RTX 2050 4 GB, 7.8 GB RAM). They
 | [2026-10-20-base-format-sampling-exploration.json](2026-10-20-base-format-sampling-exploration.json) | Exploratory sampling of the base model on the same prompts (`training/explore_base_format.py`), not the evaluation protocol |
 | [2026-10-20-second-candidate-not-measured.json](2026-10-20-second-candidate-not-measured.json) | Why Qwen2.5-Coder-1.5B-Instruct (and its quantized variants) was not downloaded or measured |
 | [2026-10-20-local-provider-gpu-tests.json](2026-10-20-local-provider-gpu-tests.json) | Results of the real-model LocalProvider tests |
+| [2026-10-20-prompt-format-selection.md](2026-10-20-prompt-format-selection.md) | Validation-only selection of the refactoring prompt format (v1 to v4) on 24 validation records, with raw outputs in the matching JSON |
+| [2026-10-20-prompt-format-token-lengths.json](2026-10-20-prompt-format-token-lengths.json) | Curated train and validation record lengths under the formats |
 
 ## Candidate
 

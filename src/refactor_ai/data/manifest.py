@@ -7,8 +7,11 @@ check text files out with CRLF on Windows; verification normalizes CRLF to LF fi
 
 Every output except the run record is a pure function of the curation code, the seed
 and the pinned inputs, so rerunning the command reproduces them byte for byte. The test
-split is frozen explicitly (--freeze-test); afterwards any run that would change the
-frozen test split fails before writing anything.
+split is frozen explicitly (--freeze-test). The freeze carries two hashes: the rendered
+split hash (records as written, including the prompt format) and the case-content hash
+(refactor_ai.data.content, independent of prompt rendering). A run that changes the
+test cases is always refused. A run that changes only the rendering is refused unless
+--refreeze-rendering gives a reason; it then keeps the previous freeze in the history.
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+from refactor_ai.data import content
 from refactor_ai.data.curate import DATASET_VERSION, CurationConfig, CurationResult
 from refactor_ai.data.sources import SOURCES
 from refactor_ai.data.splits import SPLITS
@@ -48,6 +52,7 @@ CURATION_SOURCES = (
     "src/refactor_ai/data/__init__.py",
     "src/refactor_ai/data/_harness.py",
     "src/refactor_ai/data/codegen.py",
+    "src/refactor_ai/data/content.py",
     "src/refactor_ai/data/curate.py",
     "src/refactor_ai/data/demo.py",
     "src/refactor_ai/data/executor.py",
@@ -194,6 +199,7 @@ def build_manifest(
         splits[split] = {
             "count": len(rows),
             "sha256": split_sha256(records_text, split),
+            "content_sha256": content.content_sha256(records, split),
             "source_groups": sorted({r["source_group"] for r in rows}),
             "ids": [r["id"] for r in rows],
         }
@@ -230,10 +236,12 @@ def build_manifest(
         "command": COMMAND,
         "seed": result.config_summary["seed"],
         "hash_method": HASH_METHOD,
+        "content_hash_method": content.CONTENT_HASH_METHOD,
         "files": {
             "records": {
                 "path": (DATASET_DIR / RECORDS_NAME).as_posix(),
                 "sha256": sha256_text(records_text),
+                "content_sha256": content.content_sha256(records),
                 "lines": len(records),
                 "bytes_lf": len(records_text.encode("utf-8")),
             },
@@ -265,10 +273,13 @@ def freeze_record(manifest: dict, git_head: str | None) -> dict:
         "split": "test",
         "frozen_on": FREEZE_DATE,
         "count": test["count"],
-        "split_sha256": test["sha256"],
-        "hash_method": HASH_METHOD,
         "ids": test["ids"],
         "source_groups": test["source_groups"],
+        "content_sha256": test["content_sha256"],
+        "content_hash_method": content.CONTENT_HASH_METHOD,
+        "split_sha256": test["sha256"],
+        "hash_method": HASH_METHOD,
+        "prompt_version": manifest["task"]["prompt_version"],
         "rule": FREEZE_RULE,
         "frozen_by": (
             "data and evaluation workstream (coding agent working for Shahd Abdelhay); "
@@ -278,6 +289,7 @@ def freeze_record(manifest: dict, git_head: str | None) -> dict:
         "curation_seed": manifest["seed"],
         "git_head_at_freeze": git_head,
         "code_sha256_at_freeze": manifest["code_sha256"],
+        "history": [],
     }
 
 
@@ -325,30 +337,96 @@ def render_outputs(result: CurationResult, root: Path) -> dict[str, str]:
     }
 
 
-def check_freeze(outputs: dict[str, str], root: Path) -> dict | None:
-    """Return the existing freeze record, raising if the new test split differs from it."""
+class FreezeStatus:
+    """Outcome of comparing a curation run with the frozen test split."""
+
+    def __init__(self, frozen: dict | None, frozen_content: str | None, rendering_changed: bool):
+        self.frozen = frozen
+        self.frozen_content = frozen_content
+        self.rendering_changed = rendering_changed
+
+
+def check_freeze(
+    outputs: dict[str, str], root: Path, *, previous_records_text: str | None = None
+) -> FreezeStatus:
+    """Compare the new test split with the freeze; raise if its cases would change.
+
+    The ids and the case-content hash must equal the frozen ones. A changed rendered hash
+    (for example a new prompt version) is reported in the status; the caller refuses it
+    unless a re-freeze with a reason was requested. A freeze record written before
+    content hashes existed is checked against previous_records_text, the records file
+    that was frozen (its rendered test hash must equal the freeze record's).
+    """
     path = root / LOG_DIR / FREEZE_NAME
     if not path.exists():
-        return None
+        return FreezeStatus(None, None, False)
     frozen = json.loads(path.read_text(encoding="utf-8"))
     manifest = json.loads(outputs[(DATASET_DIR / MANIFEST_NAME).as_posix()])
     test = manifest["splits"]["test"]
-    if test["sha256"] != frozen["split_sha256"] or test["ids"] != frozen["ids"]:
+    if test["ids"] != frozen["ids"]:
         raise FrozenSplitChanged(
-            "The curated test split differs from the frozen split "
-            f"({test['sha256']} != {frozen['split_sha256']}). A frozen test split may only "
+            "The curated test split has different case ids than the frozen split. A frozen "
+            "test split may only change with a new dataset version and a new evaluation "
+            "protocol version."
+        )
+    frozen_content = frozen.get("content_sha256")
+    if frozen_content is None and test["sha256"] != frozen["split_sha256"]:
+        if previous_records_text is None:
+            raise FrozenSplitChanged(
+                "The freeze record predates content hashes and the rendered test split "
+                "changed; pass --previous-records with the frozen records file so the case "
+                "content can be compared."
+            )
+        if split_sha256(previous_records_text, "test") != frozen["split_sha256"]:
+            raise FrozenSplitChanged(
+                "The --previous-records file is not the frozen records file (its test split "
+                "hash differs from the freeze record)."
+            )
+        previous = content.records_from_text(previous_records_text)
+        frozen_content = content.content_sha256(previous, "test")
+    if frozen_content is not None and test["content_sha256"] != frozen_content:
+        raise FrozenSplitChanged(
+            "The case content of the test split differs from the frozen content "
+            f"({test['content_sha256']} != {frozen_content}). A frozen test split may only "
             "change with a new dataset version and a new evaluation protocol version."
         )
-    return frozen
+    return FreezeStatus(frozen, frozen_content, test["sha256"] != frozen["split_sha256"])
+
+
+def refrozen_record(
+    previous: dict, previous_content: str, manifest: dict, git_head: str | None, reason: str
+) -> dict:
+    """New freeze record after a rendering-only change; the previous one goes to history."""
+    entry = {key: value for key, value in previous.items() if key != "history"}
+    entry.setdefault("content_sha256", previous_content)
+    entry.setdefault("prompt_version", "refactor-v1")
+    entry["superseded_on"] = FREEZE_DATE
+    entry["superseded_because"] = reason
+    record = freeze_record(manifest, git_head)
+    record["frozen_on"] = previous.get("frozen_on", FREEZE_DATE)
+    record["rendering_refrozen_on"] = FREEZE_DATE
+    record["refreeze_reason"] = reason
+    record["history"] = [*previous.get("history", []), entry]
+    return record
 
 
 def write_outputs(
-    result: CurationResult, config: CurationConfig, *, freeze_test: bool
+    result: CurationResult,
+    config: CurationConfig,
+    *,
+    freeze_test: bool,
+    refreeze_reason: str | None = None,
+    previous_records_text: str | None = None,
 ) -> dict[str, str]:
-    """Write all outputs; returns path -> sha256. Refuses to change a frozen test split."""
+    """Write all outputs; returns path -> sha256. Refuses to change frozen test cases."""
     root = config.root
     outputs = render_outputs(result, root)
-    frozen = check_freeze(outputs, root)
+    status = check_freeze(outputs, root, previous_records_text=previous_records_text)
+    if status.rendering_changed and not refreeze_reason:
+        raise FrozenSplitChanged(
+            "The test cases are unchanged but their rendering (prompt or completion format) "
+            "changed. Re-freeze explicitly with --refreeze-rendering and a reason."
+        )
     manifest = json.loads(outputs[(DATASET_DIR / MANIFEST_NAME).as_posix()])
     head = git_head(root)
     written = {}
@@ -358,8 +436,12 @@ def write_outputs(
         path.write_text(text, encoding="utf-8", newline="\n")
         written[relative] = sha256_text(text)
     freeze_path = root / LOG_DIR / FREEZE_NAME
+    frozen = status.frozen
     if frozen is None and freeze_test:
         frozen = freeze_record(manifest, head)
+        freeze_path.write_text(pretty_json(frozen), encoding="utf-8", newline="\n")
+    elif frozen is not None and status.rendering_changed:
+        frozen = refrozen_record(frozen, status.frozen_content, manifest, head, refreeze_reason)
         freeze_path.write_text(pretty_json(frozen), encoding="utf-8", newline="\n")
     if freeze_path.exists():
         written[(LOG_DIR / FREEZE_NAME).as_posix()] = sha256_text(
@@ -374,6 +456,7 @@ def write_outputs(
         "implementation": sys.implementation.name,
         "platform": platform.system(),
         "test_split_frozen": frozen is not None,
+        "rendering_refrozen_in_this_run": bool(status.rendering_changed),
         "outputs_sha256": dict(sorted(written.items())),
         "note": (
             "Run record. Every output listed above is reproduced byte for byte by rerunning "

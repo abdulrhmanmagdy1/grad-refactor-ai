@@ -20,5 +20,6 @@
   "queue": {
     "max_pending": 4,
     "pending": 0
-  }
+  },
+  "refactor_use_adapter": false
 }

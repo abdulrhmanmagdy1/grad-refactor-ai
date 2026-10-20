@@ -1,43 +1,25 @@
 {
   "command": "python -m uv run python scripts/curate_dataset.py",
   "seed": 20261020,
-  "git_head": "5549a77c6c966e35e1d3b6307086f23ba0cab27b",
+  "git_head": "23c384b7bf3052f0710db567526523ec9c8f5ac5",
   "uncommitted_curation_sources": [
     "scripts/curate_dataset.py",
-    "src/refactor_ai/data/__init__.py",
-    "src/refactor_ai/data/_harness.py",
-    "src/refactor_ai/data/codegen.py",
+    "src/refactor_ai/data/content.py",
     "src/refactor_ai/data/curate.py",
-    "src/refactor_ai/data/demo.py",
-    "src/refactor_ai/data/executor.py",
-    "src/refactor_ai/data/explain.py",
-    "src/refactor_ai/data/families/__init__.py",
-    "src/refactor_ai/data/families/access.py",
-    "src/refactor_ai/data/families/base.py",
-    "src/refactor_ai/data/families/commerce.py",
-    "src/refactor_ai/data/families/finance.py",
-    "src/refactor_ai/data/families/helpers.py",
-    "src/refactor_ai/data/families/logistics.py",
-    "src/refactor_ai/data/families/people.py",
-    "src/refactor_ai/data/families/systems.py",
-    "src/refactor_ai/data/families/text.py",
-    "src/refactor_ai/data/leakage.py",
     "src/refactor_ai/data/manifest.py",
-    "src/refactor_ai/data/mutation.py",
-    "src/refactor_ai/data/refgen.py",
-    "src/refactor_ai/data/sources.py",
-    "src/refactor_ai/data/splits.py"
+    "src/refactor_ai/task_format.py"
   ],
   "python": "3.11.9",
   "implementation": "cpython",
   "platform": "Windows",
   "test_split_frozen": true,
+  "rendering_refrozen_in_this_run": true,
   "outputs_sha256": {
-    "datasets/guard_clauses/v1/manifest.json": "3bc4524892b843e14ffe1efc09b38653cc948d38b8718075df374d1e8d030b76",
+    "datasets/guard_clauses/v1/manifest.json": "48496fb9dcfc8dc87ba3113739bd252e2607ce79e1a2125e5fe13ac1d625425e",
     "datasets/guard_clauses/v1/metadata.jsonl": "87c57b634f3cd25b566cec1c43346065f71d6b4901d0ff3511ea9bb6fb0f38a9",
-    "datasets/guard_clauses/v1/records.jsonl": "6c586c7117ec991fb0a18ca7cf8927c48843cd64e6685980d7688685b354c860",
-    "experiments/data/curation-log.json": "5a5eeb142f2c72e8fa194ae836a048d7e9239043b0c2d77ae029329cf8310e67",
-    "experiments/data/test-split-freeze.json": "ed2f940c5318a5db715db550d4a47911552b9f84dfe99885c1fa08c03537e43b"
+    "datasets/guard_clauses/v1/records.jsonl": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+    "experiments/data/curation-log.json": "ffbd87385f8356f3f6dce7da8369082447da039ea509645349f46a554cd64eec",
+    "experiments/data/test-split-freeze.json": "adb1001436b0a84f23878f462472cc531c40e14a624525fe070e5ef1fd40ac56"
   },
   "note": "Run record. Every output listed above is reproduced byte for byte by rerunning the command with the same inputs; this run record is not."
 }

@@ -93,7 +93,8 @@ Tests replace `fetch` with an in-memory fake of the service (`src/test/mockServe
 - every disposition and every status of the four verification dimensions, including that `not_available`, `not_run` and `error` never use the pass color or a check mark;
 - the whole page: health and the fake-provider banner, input limits, submission, progress, results, 422 and 503 errors with the input kept, demonstration cases and the reference-case link, failed and interrupted runs with "Try again", history with reopening and deletion, copy, download and accept or reject;
 - that the TypeScript contract mirror has exactly the fields, enums and literals of `src/refactor_ai/contracts.py`, plus the task limits and rubric checks of `src/refactor_ai/tasks/guard_clauses.py` (`src/test/contractMirror.test.ts`);
-- that every file in `docs/architecture/examples/` matches the mirrored contract field by field and renders correctly (`src/test/contractExamples.test.tsx`);
+- that every file in `docs/architecture/examples/` matches the mirrored contract field by field and renders correctly, including every health state in the header (`src/test/contractExamples.test.tsx`);
+- that every stop reason the coordinator writes and every run error code the service writes has a readable explanation, and that the test fixtures use the default generation limits of `WorkflowSettings`;
 - WCAG AA contrast of the color pairs used in both themes (`src/styles/contrast.test.ts`).
 
 An optional end-to-end test drives the real client and poller against a running service. It is skipped unless `REFACTOR_AI_E2E_URL` is set, and it creates and deletes its own runs:

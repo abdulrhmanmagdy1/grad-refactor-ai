@@ -231,6 +231,23 @@ def file_sha256(path: Path) -> str:
     ).hexdigest()
 
 
+def _content_module():
+    """refactor_ai.data.content (standard library only), imported on demand."""
+    src = Path(__file__).resolve().parents[1] / "src"
+    if str(src) not in sys.path:
+        sys.path.insert(0, str(src))
+    from refactor_ai.data import content
+
+    return content
+
+
+def content_sha256(path: Path, split: str | None = None) -> str:
+    """Case-content hash (independent of prompt rendering), see refactor_ai.data.content."""
+    content = _content_module()
+    rows = content.records_from_text(path.read_text(encoding="utf-8"))
+    return content.content_sha256(rows, split)
+
+
 def verify_manifest(path: Path, manifest_path: Path) -> list[str]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     problems = []
@@ -243,6 +260,8 @@ def verify_manifest(path: Path, manifest_path: Path) -> list[str]:
             problems.append(f"{split} split hash differs from the manifest")
         if [r["id"] for r in rows if r["split"] == split] != entry["ids"]:
             problems.append(f"{split} split ids differ from the manifest")
+        if "content_sha256" in entry and content_sha256(path, split) != entry["content_sha256"]:
+            problems.append(f"{split} split case content differs from the manifest")
     return problems
 
 
@@ -254,6 +273,8 @@ def verify_freeze(path: Path, freeze_path: Path) -> list[str]:
         problems.append("test split hash differs from the frozen hash")
     if [r["id"] for r in rows if r["split"] == "test"] != frozen["ids"]:
         problems.append("test split ids differ from the frozen ids")
+    if "content_sha256" in frozen and content_sha256(path, "test") != frozen["content_sha256"]:
+        problems.append("test split case content differs from the frozen content")
     return problems
 
 

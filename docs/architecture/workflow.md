@@ -15,12 +15,14 @@ run_workflow_traced(...) -> tuple[WorkflowOutcome, WorkflowTrace]
 
 1. **Validate** (no model call). Multi-role settings with `max_calls < 3` fail as `invalid_settings`. A `reference_case` whose task type differs or whose `original_code` differs from the submitted code (after newline normalization and ignoring trailing whitespace, the API's rule) fails as `reference_case_mismatch`. Then `guard_clauses.check_input`: unsupported input completes as `no_change`.
 2. **Analyze** (multi-role only): one call with prompt `analysis-v1`. The output is parsed strictly; findings are validated one by one. When the result is unusable (unparseable after the one repair, `supported_task: false`, or no valid finding), the deterministic opportunities from `check_input` are used with `source=static` and a warning. Validation decides the scope; the analysis model cannot turn a supported input into `no_change`.
-3. **Generate**: one refactoring call with the shared `refactor-v1` prompt from `task_format`; multi-role runs add the findings as analysis notes, single-role runs never do. The output is parsed with `task_format.parse_refactor_output` (at most one deterministic repair).
+3. **Generate**: one refactoring call with the shared refactoring prompt from `task_format` (version `task_format.PROMPT_VERSION`, currently `refactor-v2`: the code block first, then one `Explanation:` line); multi-role runs add the findings as analysis notes, single-role runs never do. The output is parsed with `task_format.parse_refactor_output` (at most one deterministic repair).
 4. **Verify**: syntax with `ast.parse` only, the task rubric, and the trusted reference tests through the runner, each recorded separately. Nothing is executed in the calling process.
 5. **Review** (multi-role only): one call with prompt `review-v1`, which shows the original under `Code:`, the deterministic results and the proposal.
-6. **Correct once** (multi-role only): when no code was produced, a deterministic check failed (syntax, rubric, reference tests `fail` or `error`) or the review rejected, one corrected generation with prompt `correction-v1` follows, then its verification and one more review. A review that is `uncertain` or unparseable, and tests that are `not_available` or `not_run`, do not trigger a correction.
+6. **Correct once** (multi-role only): when no code was produced, a deterministic check failed (syntax, rubric, reference tests `fail` or `error`) or the review rejected, one corrected generation with prompt `correction-v2` follows, then its verification and one more review. A review that is `uncertain` or unparseable, and tests that are `not_available` or `not_run`, do not trigger a correction.
 
 The correction is started only when `max_corrections >= 1` and at least two calls remain (the corrected generation and its review). The final proposal is the corrected one; if the correction produced no parseable code, the first proposal and its verification are reported with a warning. There is never a second correction.
+
+The correction prompt holds the code twice (the original and the previous answer), so it is the one prompt that can exceed the refactoring role's `max_input_tokens` when the first prompt fit. The coordinator has no tokenizer, so it does not guess: the provider counts the rendered prompt exactly and refuses it with `input_too_long` before generating. A refusal of the **corrected generation** skips the correction: the run completes with stop reason `correction_input_too_long`, a warning that quotes the provider's token count, and the first proposal with its full verification (the refused call is counted in `call_count` and recorded as attempt 1 without code). `input_too_long` anywhere else (analysis, first generation, either review) fails the run like any provider error. See [token budgets](#token-budgets).
 
 ## Budgets and time
 
@@ -31,7 +33,7 @@ The correction is started only when `max_corrections >= 1` and at least two call
 
 The refactoring calls request `use_adapter = settings.refactor_use_adapter`; analysis and review always request the base model. If a provider reports a different `use_adapter` than requested, the run fails with `model_load_error`: a silent adapter fallback would invalidate the comparison.
 
-Each call uses its role's `GenerationConfig` from `settings.generation`. `settings.run_timeout_s` bounds the whole run: the time left is checked before every model call and before every verification step, and each call's `timeout_s` is the smaller of the role's timeout and the time left. When the time is used up, the run fails with `run_timeout` at the step that could not start; a provider timeout on a call whose timeout was shortened to the time left is also reported as `run_timeout`. The runner receives the time left as its wall-clock limit when it supports it.
+Each call uses its role's `GenerationConfig` from `settings.generation`; the defaults are analysis 384 new tokens, 2,048 input tokens, 60 s; refactoring 1,024, 2,048, 120 s; review 768, 4,096, 90 s. `settings.run_timeout_s` bounds the whole run: the time left is checked before every model call and before every verification step, and each call's `timeout_s` is the smaller of the role's timeout and the time left. When the time is used up, the run fails with `run_timeout` at the step that could not start; a provider timeout on a call whose timeout was shortened to the time left is also reported as `run_timeout`. The runner receives the time left as its wall-clock limit when it supports it.
 
 ## Status transitions
 
@@ -40,13 +42,13 @@ Reported through `on_status`; the coordinator never reports `queued` (the API se
 | Path | Statuses |
 |---|---|
 | Multi-role | analyzing, generating, verifying, completed |
-| Multi-role with correction | analyzing, generating, verifying, generating, verifying, completed |
+| Multi-role with correction (also when the correction prompt is refused as too long) | analyzing, generating, verifying, generating, verifying, completed |
 | Single-role | generating, verifying, completed |
 | Unsupported input | completed |
 | Invalid settings or reference case | failed |
 | Failure in a step | the statuses so far, then failed |
 
-The model review runs while the status is `verifying`. Every generation is followed by `verifying`, also when its output could not be parsed, so the only backward transition is the single `verifying -> generating` of the correction. A status callback that raises is logged and recorded as a warning; the run continues.
+The model review runs while the status is `verifying`. Every generation is followed by `verifying`, also when its output could not be parsed or the provider refused the correction prompt as too long, so the only backward transition is the single `verifying -> generating` of the correction. A status callback that raises is logged and recorded as a warning; the run continues.
 
 ## Stop reasons
 
@@ -58,6 +60,7 @@ The model review runs while the status is `verifying`. Every generation is follo
 | `correction_used` | completed | Multi-role: the one correction was generated and verified |
 | `correction_disabled` | completed | A correction was needed but `max_corrections` is 0 |
 | `call_budget_exhausted` | completed | A correction was needed but fewer than two calls were left |
+| `correction_input_too_long` | completed | The provider refused the correction prompt as too long; the first proposal is reported |
 | `provider_error` | failed | A provider call failed; `error.code` is the `ProviderErrorCode` |
 | `run_timeout` | failed | `run_timeout_s` was used up |
 | `unparseable_output` | failed | No attempt produced parseable code |
@@ -108,11 +111,31 @@ The refactoring output uses `task_format.parse_refactor_output` unchanged (error
 | Version | Role | Content |
 |---|---|---|
 | `analysis-v1` | analysis | JSON shape of `AnalysisReport`, then the code under `Code:` |
-| `refactor-v1` | refactor | `task_format` prompt; multi-role adds `Analysis notes:` |
-| `correction-v1` | refactor | the unchanged `refactor-v1` prompt, then the previous answer and the concrete problems |
+| `refactor-v2` | refactor | `task_format` prompt (`prompts.REFACTOR_PROMPT_VERSION` is `task_format.PROMPT_VERSION`); multi-role adds `Analysis notes:` |
+| `correction-v2` | refactor | the unchanged `refactor-v2` prompt, then the previous answer and the concrete problems; it asks for "the required format" and never restates it, so the only format description is the embedded code-first one |
 | `review-v1` | review | the deterministic results, the JSON shape of `ReviewResult`, the original under `Code:` and the proposal |
 
-In every prompt the first `Code:` block holds the submitted code and comes before any model-written text, so `extract_submitted_code` (used by `FakeProvider`) always finds the original. The correction feedback lists syntax errors, rubric reasons, reference-test counts and up to three failure details (call, expected and actual values), and the reviewer's reasons and suggestion. Showing failing test cases to the model is oracle feedback that only multi-role runs receive; the evaluation must report it. Changing any prompt requires a new prompt version and a new protocol version.
+In every prompt the first `Code:` block holds the submitted code and comes before any model-written text, so `extract_submitted_code` (used by `FakeProvider`) always finds the original. The correction feedback lists syntax errors, rubric reasons, reference-test counts and up to three failure details (call, expected and actual values), and the reviewer's reasons and suggestion. Showing failing test cases to the model is oracle feedback that only multi-role runs receive; the evaluation must report it. Changing any prompt requires a new prompt version and a new protocol version. `prompts.CORRECTION_EMBEDS` names the refactoring version the correction embeds, and a test fails when `task_format.PROMPT_VERSION` moves on without a new correction version.
+
+## Token budgets
+
+Measured on 2026-10-20 with the pinned Qwen2.5-Coder-0.5B-Instruct tokenizer (loaded on the CPU from `models/`, no model weights), counting the chat template with the assistant turn opened exactly as the model worker does. Limits are the default `max_input_tokens`.
+
+| Input | Code chars / tokens | Analysis (2,048) | Refactor multi-role (2,048) | Review (4,096) | Correction (2,048) |
+|---|---|---|---|---|---|
+| Largest train and validation records (842 chars) | 842 / 184 | 384 | 440 | 600 | 723 |
+| Demonstration cases (355 to 802 chars) | up to 190 tokens | 390 | 486 | 610 | 773 |
+| Synthetic 2,945-char function, long names | 2,945 / 627 | 827 | 809 | 1,489 | 1,538 |
+| Synthetic 2,999-char function, 46 lines | 2,999 / 544 | 744 | 764 | 1,321 | 1,408 |
+| Synthetic 2,981-char function, string building | 2,981 / 792 | 992 | 1,012 | 1,817 | 1,904 |
+| Synthetic 60-line function, short arithmetic | 2,537 / 1,034 | 1,234 | 1,254 | 2,301 | **2,388** |
+| Digit-dense 2,935-char function | 2,935 / 1,999 | **2,199** | **2,181** | (5,105) | (7,250) |
+
+The synthetic and digit-dense inputs are constructed to probe the limits; they are not dataset records, and the frozen test split was not read. Reading the table:
+
+- **Review.** Realistic inputs leave at least 1,795 tokens spare. The worst case that can reach the review is bounded by the earlier prompts: the largest digit-dense original whose analysis prompt still fits (2,028 tokens) plus a candidate at the refactoring role's 1,024 output tokens plus maximal digit-filled check lines measured 3,965 tokens (131 spare); with realistic check lines the same case measured 3,093. A review prompt that still exceeds 4,096 (possible only with adversarial content, for example check lines full of multi-token characters) fails the run cleanly with `input_too_long` at stage `review`.
+- **Correction.** It is about twice the code tokens plus 300, so it fits up to roughly 870 code tokens: realistic code up to the 3,000-character limit fits, but dense code (short names and digits, about 2.5 characters per token) above roughly 2,100 characters does not. Those runs complete as `correction_input_too_long`.
+- **Digit-dense input.** Qwen tokenizes digits one by one (about 1.5 characters per token), so a 3,000-character function full of numbers exceeds 2,048 already in the analysis and first refactoring prompts; such runs fail cleanly with `input_too_long` before any review or correction (the bracketed numbers are never sent).
 
 ## Known limits
 

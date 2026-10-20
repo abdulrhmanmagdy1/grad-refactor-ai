@@ -3,7 +3,7 @@
   "run_id": "e1d2c3b4a5f64e7d8c9b0a1f2e3d4c5b",
   "created_at": "2026-10-20T09:06:00Z",
   "started_at": "2026-10-20T09:06:00.200000Z",
-  "finished_at": "2026-10-20T09:08:00.300000Z",
+  "finished_at": "2026-10-20T09:08:00.212000Z",
   "status": "failed",
   "task_type": "guard_clauses",
   "workflow_mode": "multi_role",
@@ -31,10 +31,10 @@
         "top_p": 1.0,
         "seed": 42,
         "max_input_tokens": 2048,
-        "timeout_s": 120.0
+        "timeout_s": 60.0
       },
       "refactor": {
-        "max_new_tokens": 768,
+        "max_new_tokens": 1024,
         "temperature": 0.0,
         "top_p": 1.0,
         "seed": 42,
@@ -42,12 +42,12 @@
         "timeout_s": 120.0
       },
       "review": {
-        "max_new_tokens": 384,
+        "max_new_tokens": 768,
         "temperature": 0.0,
         "top_p": 1.0,
         "seed": 42,
-        "max_input_tokens": 2048,
-        "timeout_s": 120.0
+        "max_input_tokens": 4096,
+        "timeout_s": 90.0
       }
     }
   },
@@ -64,14 +64,14 @@
     {
       "stage": "analysis",
       "attempt": 0,
-      "started_at": "2026-10-20T09:06:00.210000Z",
+      "started_at": "2026-10-20T09:06:00.202000Z",
       "elapsed_s": 0.01,
       "calls": 1
     },
     {
       "stage": "generation",
       "attempt": 0,
-      "started_at": "2026-10-20T09:06:00.220000Z",
+      "started_at": "2026-10-20T09:06:00.212000Z",
       "elapsed_s": 120.0,
       "calls": 1
     }
@@ -143,13 +143,7 @@
       "explanation": null,
       "verification": null,
       "review": null,
-      "model": {
-        "model_id": "fake-provider",
-        "model_revision": "fake-v1",
-        "adapter_id": null,
-        "adapter_sha256": null,
-        "use_adapter": false
-      },
+      "model": null,
       "prompt_tokens": null,
       "completion_tokens": null,
       "elapsed_s": 120.0
@@ -161,6 +155,8 @@
     "message": "Generation exceeded 120.0 s",
     "stage": "generation"
   },
-  "warnings": [],
+  "warnings": [
+    "The fake provider produced these outputs; they are deterministic test fixtures, not language-model inference."
+  ],
   "human_decision": null
 }

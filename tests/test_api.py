@@ -102,9 +102,16 @@ def test_local_mode_is_reported_without_loading_a_model(clean_env, tmp_path):
     clean_env.setenv("REFACTOR_AI_RUNNER", "disabled")
     with TestClient(app) as test:
         body = test.get("/health").json()
-    assert body["mode"] == "local_model"
-    assert body["provider"]["provider_mode"] == "local_model"
-    assert body["provider"]["ready"] is False
+        assert body["mode"] == "local_model"
+        assert body["provider"]["provider_mode"] == "local_model"
+        assert body["provider"]["ready"] is False
+        assert body["refactor_use_adapter"] is False
+        # The warm-up runs at startup; with no interpreter it stops before any process.
+        runtime = app.state.runtime
+        assert runtime.warmup.wait(10)
+        detail = test.get("/health").json()["provider"]["detail"]
+        assert detail.startswith("Model not loaded"), detail
+        assert runtime.service.provider.worker_pid is None
     assert str(tmp_path) not in json.dumps(body)
 
 

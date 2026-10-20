@@ -8,7 +8,7 @@
     "model_revision": "0000000000000000000000000000000000000000",
     "adapter_id": "example-guard-clauses-lora",
     "adapter_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
-    "device": "cuda:0",
+    "device": "cuda",
     "ready": true,
     "detail": "Illustrative placeholder identity; real values come from configs/model.local.json."
   },
@@ -16,17 +16,30 @@
     "enabled": true,
     "reason": null,
     "isolation": {
-      "separate_process": true,
-      "time_limit": true,
-      "memory_limit": true,
-      "process_limit": true,
-      "no_network": true,
-      "empty_environment": true,
-      "temporary_directory": true
+      "platform_supported": true,
+      "interpreter_found": true,
+      "basic_execution": true,
+      "os_limits_applied": true,
+      "audit_hook_installed": true,
+      "environment_scrubbed": true,
+      "working_directory_isolated": true,
+      "workdir_removed": true,
+      "network_blocked": true,
+      "file_write_blocked": true,
+      "host_read_blocked": true,
+      "subprocess_blocked": true,
+      "native_code_blocked": true,
+      "introspection_blocked": true,
+      "process_limit_enforced": true,
+      "memory_limit_enforced": true,
+      "timeout_enforced": true,
+      "process_cleanup": true,
+      "cpu_limit_enforced": true
     }
   },
   "queue": {
     "max_pending": 4,
     "pending": 1
-  }
+  },
+  "refactor_use_adapter": true
 }

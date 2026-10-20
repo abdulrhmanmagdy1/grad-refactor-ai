@@ -1,23 +1,30 @@
-"""Role prompts: analysis-v1, review-v1 and correction-v1.
+"""Role prompts: analysis-v1, review-v1 and correction-v2.
 
-The refactoring prompt and its parser are refactor-v1 in refactor_ai.task_format, shared
-with training; this module reuses that prompt unchanged, including for the correction,
-which appends feedback after it. Every prompt puts the submitted code under a "Code:"
-line followed by a fenced Python block, and that block comes before any model-written or
-candidate text, so the first "Code:" block is always the original code (FakeProvider
-relies on this). Changing any text here requires a new prompt version and a new
-evaluation protocol version.
+The refactoring prompt and its parser live in refactor_ai.task_format (its
+PROMPT_VERSION, currently refactor-v2), shared with training; this module reuses that
+prompt unchanged, including for the correction, which appends feedback after it. The
+correction text never restates the output format: it asks for "the required format",
+which is the format block of the embedded refactoring prompt. Every prompt puts the
+submitted code under a "Code:" line followed by a fenced Python block, and that block
+comes before any model-written or candidate text, so the first "Code:" block is always
+the original code (FakeProvider relies on this). Changing any text here, or the
+embedded refactoring prompt, requires a new prompt version and a new evaluation
+protocol version.
 """
 
 from __future__ import annotations
 
+from refactor_ai import task_format
 from refactor_ai.contracts import ChatMessage, RoleFinding
 from refactor_ai.task_format import build_refactor_messages, build_refactor_user_prompt
 
 ANALYSIS_PROMPT_VERSION = "analysis-v1"
 REVIEW_PROMPT_VERSION = "review-v1"
-CORRECTION_PROMPT_VERSION = "correction-v1"
-REFACTOR_PROMPT_VERSION = "refactor-v1"
+REFACTOR_PROMPT_VERSION = task_format.PROMPT_VERSION
+CORRECTION_PROMPT_VERSION = "correction-v2"
+# The refactoring prompt version that correction-v2 embeds. A new refactoring prompt
+# version needs a new correction version; tests/test_agents_prompts.py checks this.
+CORRECTION_EMBEDS = "refactor-v2"
 
 MAX_PREVIOUS_CODE_CHARS = 6000
 MAX_FEEDBACK_ITEMS = 10
@@ -92,7 +99,7 @@ def build_analysis_messages(code: str) -> list[ChatMessage]:
 
 
 def build_refactor_request(code: str, findings: list[RoleFinding] | None) -> list[ChatMessage]:
-    """refactor-v1 messages; multi-role runs pass the analysis findings as notes."""
+    """Refactoring messages from task_format; multi-role runs pass findings as notes."""
     notes = findings_as_notes(findings) if findings else None
     return to_messages(build_refactor_messages(code, notes))
 
@@ -125,8 +132,8 @@ def build_correction_messages(
     previous_code: str | None,
     problems: list[str],
 ) -> list[ChatMessage]:
-    """The unchanged refactor-v1 prompt for the original code, then concrete feedback on
-    the previous attempt and the previous code itself."""
+    """The unchanged refactoring prompt for the original code, then the previous code
+    and concrete feedback on it. The output format is not restated."""
     notes = findings_as_notes(findings) if findings else None
     feedback = ["", "Correction:", "Your previous answer was not accepted."]
     if previous_code:

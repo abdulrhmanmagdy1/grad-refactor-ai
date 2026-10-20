@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -50,6 +51,9 @@ OUTCOME_NOT_STORED = (
     "The run finished but its outcome could not be stored. Details are in the server log."
 )
 INVALID_OUTCOME = "The workflow returned an invalid outcome. Details are in the server log."
+# Upper bound for holding runs while the provider warms up; the local provider bounds its
+# own model load (load_timeout_s, at most 3600 s) and stopping the service ends the wait.
+READY_WAIT_LIMIT_S = 3600.0
 
 
 class QueueFullError(RuntimeError):
@@ -92,9 +96,16 @@ class RunService:
         runner: ReferenceRunner | None,
         max_pending: int,
         refactor_use_adapter: bool = False,
+        adapter_problem: Callable[[], str | None] | None = None,
+        wait_ready: Callable[[float], bool] | None = None,
+        ready_wait_limit_s: float = READY_WAIT_LIMIT_S,
         clock: Callable[[], datetime] = utc_now,
         new_id: Callable[[], str] = new_run_id,
     ) -> None:
+        """adapter_problem (checked before each run when refactor_use_adapter is set)
+        returns why the adapter cannot be used; such runs fail with adapter_unavailable
+        before any model call. wait_ready(timeout) reports whether the provider finished
+        warming up; the worker holds runs as queued until it does."""
         if max_pending < 1:
             raise ValueError("max_pending must be at least 1")
         self._store = store
@@ -103,6 +114,9 @@ class RunService:
         self._runner = runner
         self._max_pending = max_pending
         self._use_adapter = refactor_use_adapter
+        self._adapter_problem = adapter_problem
+        self._wait_ready = wait_ready
+        self._ready_wait_limit_s = ready_wait_limit_s
         self._clock = clock
         self._new_id = new_id
         self._queue: queue.SimpleQueue[object] = queue.SimpleQueue()
@@ -219,6 +233,7 @@ class RunService:
             if not isinstance(job, _Job):  # nothing else is ever queued
                 continue
             try:
+                self._wait_until_ready()
                 with self._lock:
                     stopping = self._stopping
                 if stopping:
@@ -230,6 +245,19 @@ class RunService:
             finally:
                 with self._lock:
                     self._pending -= 1
+
+    def _wait_until_ready(self) -> None:
+        """Hold the next run while the provider warms up; stopping ends the wait."""
+        if self._wait_ready is None:
+            return
+        deadline = time.monotonic() + self._ready_wait_limit_s
+        while not self._wait_ready(0.1):
+            with self._lock:
+                if self._stopping:
+                    return
+            if time.monotonic() >= deadline:
+                logger.warning("The provider warm-up did not finish; starting the run anyway")
+                return
 
     def _mark_not_started(self, run_id: str) -> None:
         now = self._clock()
@@ -259,6 +287,11 @@ class RunService:
         if record.status in TERMINAL_STATUSES:
             return
         progress = _Progress(record.status)
+        if record.settings.refactor_use_adapter and self._adapter_problem is not None:
+            problem = self._adapter_problem()
+            if problem is not None:
+                self._finish_failed(run_id, problem, None, code=RunErrorCode.ADAPTER_UNAVAILABLE)
+                return
         try:
             request = WorkflowRequest(
                 code=record.original_code,
@@ -327,17 +360,22 @@ class RunService:
 
         return on_status
 
-    def _finish_failed(self, run_id: str, message: str, status: RunStatus) -> None:
+    def _finish_failed(
+        self,
+        run_id: str,
+        message: str,
+        status: RunStatus | None,
+        code: str = RunErrorCode.INTERNAL_ERROR,
+    ) -> None:
         now = self._clock()
+        stage = None if status is None else status.value
         try:
             self._store.update(
                 run_id,
                 lambda current: (
                     None
                     if current.status in TERMINAL_STATUSES
-                    else failed_record(
-                        current, now, RunErrorCode.INTERNAL_ERROR, message, status.value
-                    )
+                    else failed_record(current, now, code, message, stage)
                 ),
             )
         except Exception:

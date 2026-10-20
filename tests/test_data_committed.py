@@ -54,6 +54,24 @@ def test_test_split_is_frozen():
     assert frozen["ids"] == manifest["splits"]["test"]["ids"]
 
 
+# The case content of the frozen test split; it must never change (any prompt version).
+FROZEN_TEST_CONTENT = "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12"
+
+
+def test_frozen_test_case_content_never_changes():
+    frozen = json.loads(FREEZE.read_text(encoding="utf-8"))
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    assert validator.content_sha256(RECORDS, "test") == FROZEN_TEST_CONTENT
+    assert frozen["content_sha256"] == FROZEN_TEST_CONTENT
+    assert manifest["splits"]["test"]["content_sha256"] == FROZEN_TEST_CONTENT
+    assert frozen["prompt_version"] == manifest["task"]["prompt_version"]
+    # Every earlier freeze of the same cases stays in the history.
+    previous = [entry for entry in frozen["history"] if entry.get("content_sha256")]
+    assert previous and all(e["content_sha256"] == FROZEN_TEST_CONTENT for e in previous)
+    assert all(e["split_sha256"] != frozen["split_sha256"] for e in previous)
+    assert all(e.get("superseded_because") for e in previous)
+
+
 def test_reference_tests_hold_for_original_and_target(rows):
     jobs = []
     for row in rows:

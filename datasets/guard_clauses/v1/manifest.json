@@ -3,15 +3,17 @@
   "task": {
     "type": "guard_clauses",
     "task_version": 1,
-    "prompt_version": "refactor-v1"
+    "prompt_version": "refactor-v2"
   },
   "command": "python -m uv run python scripts/curate_dataset.py",
   "seed": 20261020,
   "hash_method": "SHA-256 of UTF-8 bytes with LF line endings (normalize CRLF to LF before hashing). A split hash covers that split's JSON lines from records.jsonl in file order, each followed by LF.",
+  "content_hash_method": "SHA-256 over one canonical JSON line per record (sorted keys, ensure_ascii, separators ',' and ':') in file order, each followed by LF. The line holds the fields id, split, source_group, source, source_url, license, refactoring_type, function_name, original_code, target_code, tests, provenance, task_version, the explanation text (the completion line after 'Explanation: ') and the analysis notes (the prompt lines after 'Analysis notes:'); prompt and completion layout is excluded.",
   "files": {
     "records": {
       "path": "datasets/guard_clauses/v1/records.jsonl",
-      "sha256": "6c586c7117ec991fb0a18ca7cf8927c48843cd64e6685980d7688685b354c860",
+      "sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+      "content_sha256": "a2fb80e5aca335331271e07b0a4abfd0e95a5ed54f029b5262dbe82302c71d95",
       "lines": 799,
       "bytes_lf": 3545385
     },
@@ -21,7 +23,7 @@
     },
     "curation_log": {
       "path": "experiments/data/curation-log.json",
-      "sha256": "5a5eeb142f2c72e8fa194ae836a048d7e9239043b0c2d77ae029329cf8310e67"
+      "sha256": "ffbd87385f8356f3f6dce7da8369082447da039ea509645349f46a554cd64eec"
     },
     "demo_cases": {
       "path": "src/refactor_ai/fixtures/demo_cases.json",
@@ -70,7 +72,8 @@
   "splits": {
     "train": {
       "count": 627,
-      "sha256": "dc4ac5348ac13613155f933098f0d9d53da64b063076a01ccf6f7fe65454d9be",
+      "sha256": "b6a7fc0240c33aba0e06c984f073a94f2056d1e1721c52dd0dd0d29c05e236da",
+      "content_sha256": "e4f075dc28a84bd64b49e2a204cc1e6ea1838ce18c50a0c23e1e8cbcdd6491b0",
       "source_groups": [
         "tpl-admin-authorization",
         "tpl-age-field",
@@ -762,7 +765,8 @@
     },
     "validation": {
       "count": 84,
-      "sha256": "4b8c76255b6e88669715990bb4c1b83a829b5add41d1b63691929352885fe848",
+      "sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
+      "content_sha256": "b3b44b8f20c7cedd78e11086a7b838677dae19e84e7cbd7c9fc39724c2282601",
       "source_groups": [
         "tpl-blood-pressure",
         "tpl-card-checksum",
@@ -866,7 +870,8 @@
     },
     "test": {
       "count": 88,
-      "sha256": "b765dbb8ba3c3f76771ed6aa4a05e645372de19751f720805ccfc511d5535b72",
+      "sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633",
+      "content_sha256": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12",
       "source_groups": [
         "humaneval-95",
         "mbpp-task-113",
@@ -1142,16 +1147,17 @@
     "near_duplicate_rule": "Allamanis (2019) identifier/literal token Jaccard: set >= 0.8 and multiset >= 0.7, on ast-normalized original and target code, all functions regardless of size"
   },
   "code_sha256": {
-    "scripts/curate_dataset.py": "2a4e1978af9e74f64c987d46b867516217bee7875c2e6719e5aa1cb16897078d",
+    "scripts/curate_dataset.py": "fe48d9157563d4e75abe84c189b14538acae50b52e9797800b65418a98f359cd",
     "src/refactor_ai/data/__init__.py": "5a5b4139c5261c9862343882aad5b7e1c0754c21bd8047bf05a830a7fb3a8400",
     "src/refactor_ai/data/_harness.py": "1db0b11d4812eafb31a5a8a5e33b0d9c682b3328700e3c81c3e5d7b36ca2bb19",
     "src/refactor_ai/data/codegen.py": "bccb7447c12e233a25ae313d55bccaaa07b700718cc9343d4c6060dc0430a165",
-    "src/refactor_ai/data/curate.py": "20a5fac115be6b385d98f8db4fb0f32ae4493939bedac8b3a35f39312c8f5fb1",
+    "src/refactor_ai/data/content.py": "6d0ee9a2f071175f640ee68d22c4af2e7126d796ae080f24290a2720bb0c624d",
+    "src/refactor_ai/data/curate.py": "767bfc9bf69e022ee95f0f4169be2e37f5a24c4daff5fc02c72e4f8607f34f72",
     "src/refactor_ai/data/demo.py": "6a2526e972c8abe778ef73ea8157e88b79306e40ca6cfb7aa95a751989b79dff",
     "src/refactor_ai/data/executor.py": "e07a1da79f250b239d764d931d4e71f3b51ff90055f9686ec477735cf4507280",
     "src/refactor_ai/data/explain.py": "b1b80bd85f038e967e381bce4edb355e8190d2ec95566895f335861a609fe6d5",
     "src/refactor_ai/data/leakage.py": "b75fe416b345edc21f8ab7dd7add0d003cbee1eceb6b56632d111797635d3916",
-    "src/refactor_ai/data/manifest.py": "a35c2b7ed08df3d8efb49cfd384290c25fadbe839570e90bf4ee0bdcbf2124f0",
+    "src/refactor_ai/data/manifest.py": "26227cb56e270674cf948cab8cfe27fc5090eee6dbbcdc6a91904d6e0a959690",
     "src/refactor_ai/data/mutation.py": "da56c0636251320bf59d9827431d92c57636814f6fcea847b77d1cd48c30c0cf",
     "src/refactor_ai/data/refgen.py": "ee877c6479e6bb41c3c3217efb7de7516dd4ca472c322e4bb331a77426f1586b",
     "src/refactor_ai/data/sources.py": "08ee082d8e778d42cee37020da7a2ab1ceb91ec5217c1a269825ce852130f49e",
@@ -1167,6 +1173,6 @@
     "src/refactor_ai/data/families/systems.py": "e0ec6d7251aae1ae1096889f29e4f0e1734b6745309d8f27718fd8ccf006d8ed",
     "src/refactor_ai/data/families/text.py": "d4a9a253aef4a2150a4482e651da07de32abdf28959c5a87d9397630d74470f3",
     "src/refactor_ai/tasks/guard_clauses.py": "0a533a39ab9fecf9423f9e948ff5a4d5d4e5a04fa9179e5504b55c6cba040aff",
-    "src/refactor_ai/task_format.py": "a34251306bf379de71f97f83f995531f6bcb06e0aeeea9ab3294526adbd042d1"
+    "src/refactor_ai/task_format.py": "db4888b490c71e01da8d49c68203b4d95ff1c7286094d6851658a20ea048ae10"
   }
 }

@@ -36,7 +36,9 @@ $env:REFACTOR_AI_PROVIDER = "local"
 uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
 ```
 
-On Linux or macOS use `REFACTOR_AI_PROVIDER=local uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000`. The model loads on the first request; until then GET /health reports `"mode": "local_model"`, the configured model identity and `"ready": false`, or the reason the provider cannot start.
+On Linux or macOS use `REFACTOR_AI_PROVIDER=local uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000`. The service starts at once and loads the model in the background. While it loads, GET /health reports `"mode": "local_model"`, the configured model identity, `"ready": false` and "The model is loading in the background since startup; runs wait until it is ready."; submitted runs stay `queued` until the load finishes. If loading fails, /health shows the provider's reason and runs fail with it.
+
+**Fine-tuned adapter.** Set `REFACTOR_AI_REFACTOR_USE_ADAPTER=true` to run the refactoring role with the LoRA adapter configured in `configs/model.local.json` (the analysis and review roles always use the base model). GET /health then reports `"refactor_use_adapter": true`. If the provider has no adapter configured, /health says so in the provider detail with `"ready": false`, and every run fails with error code `adapter_unavailable` before any model call; the base model is never used in its place.
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -46,6 +48,7 @@ On Linux or macOS use `REFACTOR_AI_PROVIDER=local uv run uvicorn refactor_ai.api
 | REFACTOR_AI_RUNNER | `auto` | `auto` runs trusted reference tests only when the runner's isolation checks pass; `disabled` always reports `not_run` |
 | REFACTOR_AI_MAX_PENDING | `4` | Unfinished runs allowed at once (waiting plus running), 1 to 100 |
 | REFACTOR_AI_RETENTION | `200` | Stored runs kept, 1 to 100,000; the oldest finished runs are deleted first |
+| REFACTOR_AI_REFACTOR_USE_ADAPTER | `false` | `true` runs the refactoring role with the configured LoRA adapter; accepts `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off` |
 
 An invalid value stops startup with a message that names the variable; an empty value means the default.
 

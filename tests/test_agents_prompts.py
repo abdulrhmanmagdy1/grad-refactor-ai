@@ -1,5 +1,6 @@
 import json
 
+from refactor_ai import task_format
 from refactor_ai.agents import prompts
 from refactor_ai.contracts import ChatMessage, GenerationRequest, Role, RoleFinding
 from refactor_ai.providers import FakeProvider
@@ -116,5 +117,22 @@ def test_fake_provider_refactors_the_original_in_a_correction():
 def test_prompt_versions_are_declared():
     assert prompts.ANALYSIS_PROMPT_VERSION == "analysis-v1"
     assert prompts.REVIEW_PROMPT_VERSION == "review-v1"
-    assert prompts.CORRECTION_PROMPT_VERSION == "correction-v1"
-    assert prompts.REFACTOR_PROMPT_VERSION == "refactor-v1"
+    assert prompts.CORRECTION_PROMPT_VERSION == "correction-v2"
+    assert prompts.REFACTOR_PROMPT_VERSION == task_format.PROMPT_VERSION
+
+
+def test_correction_version_matches_the_embedded_refactoring_prompt():
+    # A new refactoring prompt version must come with a new correction version.
+    assert prompts.CORRECTION_EMBEDS == task_format.PROMPT_VERSION
+
+
+def test_correction_feedback_does_not_restate_the_output_format():
+    text = user_text(prompts.build_correction_messages(CODE, None, TARGET, ["Rubric: x"]))
+    base = build_refactor_user_prompt(CODE)
+    feedback = text[len(base) :]
+    assert "Explanation" not in feedback and "format:" not in feedback
+    assert "in exactly the required format." in feedback
+    # The only format description is the embedded refactoring prompt's: code block first.
+    assert text.count("Respond in exactly this format:") == 1
+    format_block = base[base.index("Respond in exactly this format:") :]
+    assert format_block.index("```python") < format_block.index("Explanation:")

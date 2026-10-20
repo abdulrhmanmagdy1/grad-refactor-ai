@@ -4,7 +4,7 @@ Status: **draft, not frozen** (2026-10-20, data and evaluation workstream, codin
 
 ## Questions and comparisons
 
-The comparison separates the effect of fine-tuning from the effect of role coordination on one task (`guard_clauses`, task version 1, prompt `refactor-v1`).
+The comparison separates the effect of fine-tuning from the effect of role coordination on one task (`guard_clauses`, task version 1, prompt `refactor-v2`: the fenced code first, then one `Explanation:` line; selected on validation records only).
 
 | Arm | Model configuration | Workflow | WorkflowSettings |
 |---|---|---|---|
@@ -27,8 +27,8 @@ Pre-declared paired comparisons on the same cases: B vs A (coordination, origina
 ## Data
 
 - Baseline, prompt checks and adapter selection: the validation split (84 cases from 12 unseen families).
-- Final comparison: the frozen test split, 88 cases (12 unseen template families plus 3 MBPP and 1 HumanEval functions), split hash `b765dbb8ba3c3f76771ed6aa4a05e645372de19751f720805ccfc511d5535b72` ([freeze record](../../experiments/data/test-split-freeze.json)). The four real-source cases are also reported separately; pretraining overlap with these public benchmarks cannot be excluded.
-- The harness refuses the test split unless `--i-confirm-frozen-test` and `--protocol-version eval-v1` are given, the protocol is frozen, the provider is the local model and the split hash matches the freeze record.
+- Final comparison: the frozen test split, 88 cases (12 unseen template families plus 3 MBPP and 1 HumanEval functions), case-content hash `3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12` and refactor-v2 rendered hash `27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633` ([freeze record](../../experiments/data/test-split-freeze.json)). The four real-source cases are also reported separately; pretraining overlap with these public benchmarks cannot be excluded.
+- The harness refuses the test split unless `--i-confirm-frozen-test` and `--protocol-version eval-v1` are given, the protocol is frozen, the provider is the local model, and both the rendered split hash and the case-content hash match the freeze record.
 
 ## Measures and denominators
 
