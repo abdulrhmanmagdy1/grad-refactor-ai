@@ -1,0 +1,548 @@
+[
+  {
+    "case_id": "demo-library-fine",
+    "task_type": "guard_clauses",
+    "title": "Library fine (easy: two guard clauses)",
+    "function_name": "library_fine",
+    "original_code": "def library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue >= 0:\n        if days_overdue > 0:\n            rate = 20 if is_member else 35\n            return min(days_overdue * rate, 1500)\n        else:\n            return 0\n    else:\n        raise ValueError(\"days_overdue cannot be negative\")\n",
+    "reference_code": "def library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue < 0:\n        raise ValueError('days_overdue cannot be negative')\n    if days_overdue <= 0:\n        return 0\n    rate = 20 if is_member else 35\n    return min(days_overdue * rate, 1500)\n",
+    "tests": [
+      {
+        "args": "[-1, True]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[0, False]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "0",
+          "exception": null
+        }
+      },
+      {
+        "args": "[1, True]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "20",
+          "exception": null
+        }
+      },
+      {
+        "args": "[1, False]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "35",
+          "exception": null
+        }
+      },
+      {
+        "args": "[3, False]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "105",
+          "exception": null
+        }
+      },
+      {
+        "args": "[100, True]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "1500",
+          "exception": null
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (easy) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 4 branch outcomes and 3 return/raise statements exercised; 6 of 7 single-point mutants detected. Redistribution license pending a team decision."
+  },
+  {
+    "case_id": "demo-print-job",
+    "task_type": "guard_clauses",
+    "title": "Print job cost (easy: guards around an elif chain)",
+    "function_name": "print_job_cost",
+    "original_code": "def print_job_cost(pages, mode, duplex=False):\n    \"\"\"Cost in cents of a print job.\"\"\"\n    if pages > 0:\n        if pages <= 500:\n            if mode == \"color\":\n                per_page = 25\n            elif mode == \"mono\":\n                per_page = 8\n            else:\n                raise ValueError(\"mode must be mono or color\")\n            cost = pages * per_page\n            if duplex:\n                cost = cost - pages // 2 * 2\n            return cost\n        else:\n            return None\n    else:\n        raise ValueError(\"pages must be positive\")\n",
+    "reference_code": "def print_job_cost(pages, mode, duplex=False):\n    \"\"\"Cost in cents of a print job.\"\"\"\n    if pages <= 0:\n        raise ValueError('pages must be positive')\n    if pages > 500:\n        return None\n    if mode == 'color':\n        per_page = 25\n    elif mode == 'mono':\n        per_page = 8\n    else:\n        raise ValueError('mode must be mono or color')\n    cost = pages * per_page\n    if duplex:\n        cost = cost - pages // 2 * 2\n    return cost\n",
+    "tests": [
+      {
+        "args": "[0, 'mono']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[-3, 'color']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[1, 'mono']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "8",
+          "exception": null
+        }
+      },
+      {
+        "args": "[5, 'color']",
+        "kwargs": "{'duplex': True}",
+        "expect": {
+          "kind": "return",
+          "value": "121",
+          "exception": null
+        }
+      },
+      {
+        "args": "[5, 'mono']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "40",
+          "exception": null
+        }
+      },
+      {
+        "args": "[500, 'color']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "12500",
+          "exception": null
+        }
+      },
+      {
+        "args": "[501, 'mono']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "None",
+          "exception": null
+        }
+      },
+      {
+        "args": "[10, 'draft']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (easy) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 10 branch outcomes and 4 return/raise statements exercised; 12 of 13 single-point mutants detected. Redistribution license pending a team decision."
+  },
+  {
+    "case_id": "demo-wifi-signal",
+    "task_type": "guard_clauses",
+    "title": "Wi-Fi signal quality (medium: chained range check and type check)",
+    "function_name": "signal_quality",
+    "original_code": "def signal_quality(dbm, band):\n    \"\"\"Describe a Wi-Fi signal strength reading.\"\"\"\n    if isinstance(dbm, int):\n        if -100 <= dbm <= 0:\n            if band == \"5GHz\":\n                dbm = dbm - 3\n            if dbm >= -50:\n                return \"excellent\"\n            elif dbm >= -67:\n                return \"good\"\n            elif dbm >= -80:\n                return \"fair\"\n            else:\n                return \"poor\"\n        else:\n            raise ValueError(\"dbm must be between -100 and 0\")\n    else:\n        raise TypeError(\"dbm must be an integer\")\n",
+    "reference_code": "def signal_quality(dbm, band):\n    \"\"\"Describe a Wi-Fi signal strength reading.\"\"\"\n    if not isinstance(dbm, int):\n        raise TypeError('dbm must be an integer')\n    if not -100 <= dbm <= 0:\n        raise ValueError('dbm must be between -100 and 0')\n    if band == '5GHz':\n        dbm = dbm - 3\n    if dbm >= -50:\n        return 'excellent'\n    if dbm >= -67:\n        return 'good'\n    if dbm >= -80:\n        return 'fair'\n    return 'poor'\n",
+    "tests": [
+      {
+        "args": "['-60', '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "TypeError"
+        }
+      },
+      {
+        "args": "[-101, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[1, '5GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[-100, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'poor'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[0, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'excellent'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-50, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'excellent'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-48, '5GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'good'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-67, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'good'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-68, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'fair'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-80, '2.4GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'fair'",
+          "exception": null
+        }
+      },
+      {
+        "args": "[-81, '5GHz']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "'poor'",
+          "exception": null
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (medium) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 12 branch outcomes and 6 return/raise statements exercised; 18 of 18 single-point mutants detected. Redistribution license pending a team decision."
+  },
+  {
+    "case_id": "demo-port-number",
+    "task_type": "guard_clauses",
+    "title": "Port number parser (medium: boundaries and a compound condition)",
+    "function_name": "parse_port",
+    "original_code": "def parse_port(text, allow_privileged=False):\n    \"\"\"Parse a TCP port number typed by a user.\"\"\"\n    if text is not None:\n        text = text.strip()\n        if text.isdigit():\n            port = int(text)\n            if 1 <= port <= 65535:\n                if port < 1024 and not allow_privileged:\n                    raise PermissionError(\"privileged port\")\n                return port\n            else:\n                raise ValueError(\"port out of range\")\n        else:\n            raise ValueError(\"port must be a number\")\n    else:\n        return None\n",
+    "reference_code": "def parse_port(text, allow_privileged=False):\n    \"\"\"Parse a TCP port number typed by a user.\"\"\"\n    if text is None:\n        return None\n    text = text.strip()\n    if not text.isdigit():\n        raise ValueError('port must be a number')\n    port = int(text)\n    if not 1 <= port <= 65535:\n        raise ValueError('port out of range')\n    if port < 1024 and (not allow_privileged):\n        raise PermissionError('privileged port')\n    return port\n",
+    "tests": [
+      {
+        "args": "[None]",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "None",
+          "exception": null
+        }
+      },
+      {
+        "args": "[' 8080 ']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "8080",
+          "exception": null
+        }
+      },
+      {
+        "args": "['http']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "['-1']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "['0']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "['1']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "PermissionError"
+        }
+      },
+      {
+        "args": "['1']",
+        "kwargs": "{'allow_privileged': True}",
+        "expect": {
+          "kind": "return",
+          "value": "1",
+          "exception": null
+        }
+      },
+      {
+        "args": "['1023']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "PermissionError"
+        }
+      },
+      {
+        "args": "['1024']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "1024",
+          "exception": null
+        }
+      },
+      {
+        "args": "['65535']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "65535",
+          "exception": null
+        }
+      },
+      {
+        "args": "['65536']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (medium) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 8 branch outcomes and 5 return/raise statements exercised; 14 of 15 single-point mutants detected. Redistribution license pending a team decision."
+  },
+  {
+    "case_id": "demo-recycling-points",
+    "task_type": "guard_clauses",
+    "title": "Recycling reward points (hard: guards before a loop)",
+    "function_name": "recycling_points",
+    "original_code": "def recycling_points(items, member_level):\n    \"\"\"Reward points for recyclables given as (material, grams) pairs.\"\"\"\n    if member_level in (\"bronze\", \"silver\", \"gold\"):\n        if len(items) > 0:\n            points = 0\n            for material, grams in items:\n                if grams <= 0:\n                    continue\n                if material == \"glass\":\n                    points = points + grams // 100\n                elif material in (\"paper\", \"plastic\"):\n                    points = points + grams // 50\n            if member_level == \"gold\":\n                points = points * 2\n            elif member_level == \"silver\":\n                points = points + points // 2\n            return points\n        else:\n            return 0\n    else:\n        raise ValueError(\"unknown member level\")\n",
+    "reference_code": "def recycling_points(items, member_level):\n    \"\"\"Reward points for recyclables given as (material, grams) pairs.\"\"\"\n    if member_level not in ('bronze', 'silver', 'gold'):\n        raise ValueError('unknown member level')\n    if len(items) <= 0:\n        return 0\n    points = 0\n    for material, grams in items:\n        if grams <= 0:\n            continue\n        if material == 'glass':\n            points = points + grams // 100\n        elif material in ('paper', 'plastic'):\n            points = points + grams // 50\n    if member_level == 'gold':\n        points = points * 2\n    elif member_level == 'silver':\n        points = points + points // 2\n    return points\n",
+    "tests": [
+      {
+        "args": "[[('glass', 250)], 'platinum']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[[], 'bronze']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "0",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[('glass', 250), ('paper', 120), ('metal', 500)], 'bronze']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "4",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[('plastic', -5), ('glass', 99)], 'bronze']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "0",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[('glass', 300), ('plastic', 100)], 'silver']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "7",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[('paper', 260)], 'gold']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "10",
+          "exception": null
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (hard) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 14 branch outcomes and 3 return/raise statements exercised; 15 of 17 single-point mutants detected. Redistribution license pending a team decision."
+  },
+  {
+    "case_id": "demo-dice-score",
+    "task_type": "guard_clauses",
+    "title": "Dice score (hard: four levels, a negated all() and an elif chain)",
+    "function_name": "dice_score",
+    "original_code": "def dice_score(dice, category):\n    \"\"\"Score five dice in a small Yacht-style game.\"\"\"\n    if len(dice) == 5:\n        if all(1 <= value <= 6 for value in dice):\n            if category == \"yacht\":\n                if len(set(dice)) == 1:\n                    return 50\n                else:\n                    return 0\n            elif category == \"straight\":\n                if sorted(dice) in ([1, 2, 3, 4, 5], [2, 3, 4, 5, 6]):\n                    return 30\n                return 0\n            elif category == \"chance\":\n                return sum(dice)\n            else:\n                raise ValueError(\"unknown category\")\n        else:\n            raise ValueError(\"dice values must be between 1 and 6\")\n    else:\n        raise ValueError(\"exactly five dice are required\")\n",
+    "reference_code": "def dice_score(dice, category):\n    \"\"\"Score five dice in a small Yacht-style game.\"\"\"\n    if len(dice) != 5:\n        raise ValueError('exactly five dice are required')\n    if not all((1 <= value <= 6 for value in dice)):\n        raise ValueError('dice values must be between 1 and 6')\n    if category == 'yacht':\n        if len(set(dice)) == 1:\n            return 50\n        return 0\n    if category == 'straight':\n        if sorted(dice) in ([1, 2, 3, 4, 5], [2, 3, 4, 5, 6]):\n            return 30\n        return 0\n    if category == 'chance':\n        return sum(dice)\n    raise ValueError('unknown category')\n",
+    "tests": [
+      {
+        "args": "[[1, 2, 3], 'chance']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[[0, 1, 2, 3, 4], 'chance']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[[1, 2, 3, 4, 7], 'yacht']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      },
+      {
+        "args": "[[3, 3, 3, 3, 3], 'yacht']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "50",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[3, 3, 3, 3, 4], 'yacht']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "0",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[5, 4, 3, 2, 1], 'straight']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "30",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[2, 3, 4, 5, 6], 'straight']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "30",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[1, 1, 2, 3, 4], 'straight']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "0",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[1, 2, 3, 4, 6], 'chance']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "return",
+          "value": "16",
+          "exception": null
+        }
+      },
+      {
+        "args": "[[6, 6, 6, 6, 6], 'pairs']",
+        "kwargs": "{}",
+        "expect": {
+          "kind": "raise",
+          "value": null,
+          "exception": "ValueError"
+        }
+      }
+    ],
+    "source_group": "demo",
+    "license": "LicenseRef-team-authored-pending",
+    "provenance": "Hand-written for the demonstration (hard) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 14 branch outcomes and 8 return/raise statements exercised; 23 of 23 single-point mutants detected. Redistribution license pending a team decision."
+  }
+]

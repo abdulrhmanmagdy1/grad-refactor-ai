@@ -4,14 +4,14 @@ This is the first-release specification. The current implementation provides sta
 
 | ID | Requirement | Acceptance criterion | Priority |
 |---|---|---|---|
-| FR01 | Accept bounded Python input | Accept non-blank text up to 20,000 characters; reject larger or malformed requests with an understandable response | P0 |
-| FR02 | Analyze code | Return structured findings with locations and reasons, or an empty result; the foundation rules cover long functions, including async functions, and nested control blocks | P0 |
-| FR03 | Propose a refactoring | Return proposed code, a reason, and the supported refactoring type, or an explicit failure | P0 |
-| FR04 | Verify a proposal | Present syntax checks and available test results separately from the agent's review | P0 |
+| FR01 | Accept bounded Python input | Accept non-blank text up to 20,000 characters; reject larger or malformed requests with an understandable response; input outside the [task scope](task-scope.md) (one function of at most 3,000 characters and 60 lines, with the listed exclusions) completes as `no_change` with reason codes and no model call | P0 |
+| FR02 | Analyze code | Return structured findings with locations and reasons, or an empty result; the foundation rules cover long functions, including async functions, and nested control blocks; the workflow's analysis reports `nested_conditional` findings whose line ranges lie inside the input | P0 |
+| FR03 | Propose a refactoring | Return proposed code, an explanation, and the supported refactoring type (`guard_clauses`, see [task scope](task-scope.md)), or an explicit `no_change` or failure with a reason | P0 |
+| FR04 | Verify a proposal | Present syntax, the task rubric, trusted reference-test results and the agent's review as separate results; missing tests never count as a pass | P0 |
 | FR05 | Show a diff | Display added and removed lines and the affected components | P0 |
 | FR06 | Preserve user control | Allow acceptance, rejection, and download without automatically modifying the original input | P0 |
 | FR07 | Trace each run | Record an identifier, configuration, model version, state, duration, and failures | P0 |
-| FR08 | Bound execution | Enforce declared limits on calls, retries, generated tokens, and elapsed time | P0 |
+| FR08 | Bound execution | Enforce declared limits on calls, retries, generated tokens, and elapsed time: one call in single-role runs, at most five calls and one correction in multi-role runs, per-role token and time limits and a whole-run time limit | P0 |
 | FR09 | Compare experiments | Evaluate the agreed variants on the same test cases and export results | P0 |
 | FR10 | Retain run history | Retrieve previous results on the demonstration machine | P1 |
 

@@ -26,9 +26,9 @@ The roles may share one underlying code model. The team will fine-tune an existi
 
 ## First-release scope
 
-The first release will accept a function or a small Python file. One refactoring type will be selected after the feasibility study, with reference examples and acceptance rules for each. The interface will support input, inspection of the proposed change, verification results, and explicit user acceptance or rejection.
+The first release accepts one small Python function of at most 3,000 characters and 60 lines. The proposed refactoring type, pending the first supervisor review, is Fowler's "Replace Nested Conditional with Guard Clauses": a conditional branch that always returns or raises becomes an early exit when that lowers the nesting depth. Its inclusion and exclusion rules, before and after examples with reference tests, rubric and limits are defined in the [task scope](../requirements/task-scope.md). Inputs outside that scope are answered with an explicit "no change" and a reason, without a model call. The interface will support input, inspection of the proposed change, verification results, and explicit user acceptance or rejection.
 
-Paid model APIs and paid hosting are outside the budget. Public deployment is not required for the initial delivery. Test execution, if enabled, will be restricted to trusted examples in a separately reviewed runner.
+Paid model APIs and paid hosting are outside the budget. Public deployment is not required for the initial delivery. Test execution is restricted to trusted demonstration cases owned by the service, run in a separate, resource-limited process that stays disabled when its isolation self-checks fail.
 
 Training a language model from scratch, supporting multiple languages or large repositories, automatically changing GitHub branches, and guaranteeing behavioral equivalence for all programs are outside this release.
 
