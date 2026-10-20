@@ -1,0 +1,38 @@
+{
+  "record": "Step 0 hardware and foundation reproduction (T01, T02)",
+  "recorded_at": "2026-10-20T11:50:00+03:00",
+  "machine_label": "demonstration-laptop",
+  "os": "Windows 11 Home 10.0.26200 (64-bit)",
+  "cpu": "AMD Ryzen 7 7435HS, 8 cores / 16 threads",
+  "ram_gb": 7.8,
+  "gpu": "NVIDIA GeForce RTX 2050, 4096 MiB VRAM (about 760 MiB already used by the desktop session)",
+  "gpu_driver": "595.71 (driver CUDA API 13.2)",
+  "free_disk_gb_at_start": 9.0,
+  "other_accelerators": "none",
+  "docker": "not installed",
+  "wsl": "WSL 2 available; not used",
+  "administrator": false,
+  "tools": {
+    "python": "3.11.9",
+    "uv": "0.13.3 (installed with pip --user; invoked as python -m uv)",
+    "node": "24.12.0",
+    "git": "2.52.0.windows.1"
+  },
+  "foundation_checks": {
+    "uv sync --frozen": "pass",
+    "scripts/doctor.py": "pass (reports RTX 2050, 4096 MiB)",
+    "pytest": "pass (9 tests)",
+    "ruff check .": "pass",
+    "ruff format --check .": "pass",
+    "scripts/check_docs.py": "pass",
+    "GET /health": "{\"status\":\"ok\",\"version\":\"0.1.0\",\"mode\":\"scaffold\"}",
+    "POST /api/v1/analyze": "200 with syntax_valid=true and no findings for a small function"
+  },
+  "deficiencies": [
+    "uv was not installed on the laptop; installed from PyPI for Python 3.11.",
+    "Free disk (about 9 GB) limits the training environment and model downloads; only one small model can be kept at a time.",
+    "4 GB VRAM limits unquantized fine-tuning to models of roughly 0.5B parameters.",
+    "Only one physical machine is available; cross-machine reproduction is untested."
+  ],
+  "private_identifiers": "omitted"
+}

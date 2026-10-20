@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "status": "in_progress",
+  "last_verified_commit": "3aa2998",
+  "branch": "main (uncommitted working tree; no Git publication authorized yet)",
+  "hardware_report": "experiments/hardware/2026-10-20-demonstration-laptop.json",
+  "environment_records": [
+    "Core: Python 3.11.9, uv 0.13.3, uv sync --frozen (uv.lock unchanged)"
+  ],
+  "steps": [
+    {
+      "id": 0,
+      "status": "completed",
+      "evidence": [
+        "experiments/hardware/2026-10-20-demonstration-laptop.json",
+        "Foundation checks passed on 2026-10-20: doctor, pytest (9), ruff check, ruff format --check, check_docs, /health, /api/v1/analyze"
+      ],
+      "blockers": []
+    },
+    {
+      "id": 1,
+      "status": "in_progress",
+      "evidence": [
+        "docs/architecture/contracts.md (task guard_clauses v1, prompt refactor-v1)",
+        "src/refactor_ai/tasks/guard_clauses.py and tests/test_guard_clauses.py"
+      ],
+      "blockers": []
+    },
+    {
+      "id": 2,
+      "status": "in_progress",
+      "evidence": [
+        "src/refactor_ai/contracts.py, providers/base.py, providers/fake.py with tests"
+      ],
+      "blockers": []
+    },
+    {
+      "id": 3,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 4,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    },
+    {
+      "id": 5,
+      "status": "not_started",
+      "evidence": [],
+      "blockers": []
+    }
+  ],
+  "supervisor_reviews": [
+    {
+      "phase": "P1",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P2",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P3",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P4",
+      "status": "pending_human",
+      "record": null
+    },
+    {
+      "phase": "P5",
+      "status": "pending_human",
+      "record": null
+    }
+  ],
+  "next_action": "Wave 1: run the five workstream agents in parallel on the agreed contracts (see docs/agent-execution/team-allocation.md).",
+  "notes": "Agent team execution started 2026-10-20. Supervisor reviews have not taken place; no approval is implied."
+}
