@@ -24,3 +24,7 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+# The datasets/ directory holds data; "datasets" imports refer to the Hugging Face package.
+known-third-party = ["datasets"]

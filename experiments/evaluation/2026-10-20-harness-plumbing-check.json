@@ -1,0 +1,75 @@
+{
+  "record": "Evaluation harness plumbing check (not an evaluation result)",
+  "date": "2026-10-20",
+  "provider": "fake (deterministic test provider; outputs are not language-model inference)",
+  "command": "python -m uv run python scripts/evaluate.py --split validation --provider fake --limit 6 --evaluation-id plumbing-fake-2026-10-20",
+  "report_command": "python -m uv run python scripts/report_evaluation.py runs/evaluation/plumbing-fake-2026-10-20/records.jsonl --out runs/evaluation/plumbing-fake-2026-10-20/report",
+  "workflow": "refactor_ai.agents.coordinator.run_workflow (workflow workstream, current working tree)",
+  "runner": {
+    "info": {
+      "enabled": true,
+      "reason": null,
+      "isolation": {
+        "platform_supported": true,
+        "interpreter_found": true,
+        "basic_execution": true,
+        "os_limits_applied": true,
+        "audit_hook_installed": true,
+        "environment_scrubbed": true,
+        "working_directory_isolated": true,
+        "workdir_removed": true,
+        "network_blocked": true,
+        "file_write_blocked": true,
+        "host_read_blocked": true,
+        "subprocess_blocked": true,
+        "native_code_blocked": true,
+        "introspection_blocked": true,
+        "process_limit_enforced": true,
+        "memory_limit_enforced": true,
+        "timeout_enforced": true,
+        "process_cleanup": true,
+        "cpu_limit_enforced": true
+      }
+    },
+    "warm_up_self_check_s": 7.487
+  },
+  "dataset_sha256": "6c586c7117ec991fb0a18ca7cf8927c48843cd64e6685980d7688685b354c860",
+  "split": "validation",
+  "split_sha256": "4b8c76255b6e88669715990bb4c1b83a829b5add41d1b63691929352885fe848",
+  "cases": [
+    "gc1-blood-pressure-01",
+    "gc1-blood-pressure-02",
+    "gc1-blood-pressure-03",
+    "gc1-blood-pressure-04",
+    "gc1-blood-pressure-05",
+    "gc1-blood-pressure-06"
+  ],
+  "attempts": 24,
+  "attempts_by_arm": {
+    "A": 6,
+    "B": 6,
+    "C": 6,
+    "D": 6
+  },
+  "dispositions": {
+    "proposal_ready": 24
+  },
+  "reference_tests_status": {
+    "pass": 24
+  },
+  "calls_per_attempt": {
+    "1": 12,
+    "3": 12
+  },
+  "recheck_agrees_with_workflow": {
+    "True": 24
+  },
+  "records_sha256": "66335727333279345fceedd8f38b0fed92e08b9a6443504f0fed443c5e0eff0d",
+  "test_split_refusals_checked": [
+    "--split test without --i-confirm-frozen-test: refused",
+    "--split test --provider local --i-confirm-frozen-test --protocol-version eval-v1: refused because the protocol is not frozen"
+  ],
+  "what_it_shows": "The harness, the real coordinator and the real reference runner work together; every (case, arm) attempt is recorded; budgets match the arms (1 call for A and C, 3 for B and D with the fake provider); the report and figures are generated from the records.",
+  "what_it_does_not_show": "Anything about model quality: the fake provider returns the deterministic reference transformation and a placeholder review.",
+  "raw_records_location": "runs/evaluation/plumbing-fake-2026-10-20/ (Git-ignored)"
+}

@@ -64,7 +64,7 @@
     ],
     "source_group": "demo",
     "license": "LicenseRef-team-authored-pending",
-    "provenance": "Hand-written for the demonstration (easy) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 4 branch outcomes and 3 return/raise statements exercised; 6 of 7 single-point mutants detected. Redistribution license pending a team decision."
+    "provenance": "Hand-written for the demonstration (easy) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 4 branch outcomes and 3 return/raise statements exercised; 7 of 8 single-point mutants detected. Redistribution license pending a team decision."
   },
   {
     "case_id": "demo-print-job",
@@ -373,7 +373,7 @@
     ],
     "source_group": "demo",
     "license": "LicenseRef-team-authored-pending",
-    "provenance": "Hand-written for the demonstration (medium) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 8 branch outcomes and 5 return/raise statements exercised; 14 of 15 single-point mutants detected. Redistribution license pending a team decision."
+    "provenance": "Hand-written for the demonstration (medium) by the coding agent on behalf of the data and evaluation workstream; not derived from any dataset record. reference_code from guard_clauses.to_guard_clauses; expected outcomes from executing the original in the curation executor; all 8 branch outcomes and 5 return/raise statements exercised; 15 of 16 single-point mutants detected. Redistribution license pending a team decision."
   },
   {
     "case_id": "demo-recycling-points",

@@ -1,0 +1,37 @@
+{
+  "repository": "TheAlgorithms/Python",
+  "license": "MIT",
+  "commit": "6e03a48579ca212a08b36be00378f887dc41a003",
+  "archive_url": "https://codeload.github.com/TheAlgorithms/Python/tar.gz/6e03a48579ca212a08b36be00378f887dc41a003",
+  "archive_sha256": "8dea8df7d2faf42242714dc70da6bbc35639cc3ae93754d72d5a32e0530db463",
+  "python_files": 1608,
+  "top_level_functions": 2630,
+  "qualified": 4,
+  "qualified_functions": [
+    "bit_manipulation/power_of_4.py::power_of_4",
+    "divide_and_conquer/max_difference_pair.py::max_difference",
+    "dynamic_programming/rod_cutting.py::_top_down_cut_rod_recursive",
+    "project_euler/problem_025/sol1.py::fibonacci"
+  ],
+  "exclusion_reasons": {
+    "decorated_function": 36,
+    "denied_call:__import__": 1,
+    "denied_call:globals": 2,
+    "denied_call:input": 30,
+    "denied_call:locals": 3,
+    "denied_call:open": 47,
+    "denied_call:print": 199,
+    "dunder_access": 51,
+    "file_not_parseable_by_python_3.11": 90,
+    "free_names": 3,
+    "generator_function": 31,
+    "global_or_nonlocal": 12,
+    "imports_present": 31,
+    "match_present": 31,
+    "nested_definition": 69,
+    "no_opportunity": 2031,
+    "too_long": 183,
+    "try_or_with_present": 108
+  },
+  "note": "Reasons count once per reason code; a function can have several. Parsing only; the archive's code is never executed. Not used in the dataset."
+}
