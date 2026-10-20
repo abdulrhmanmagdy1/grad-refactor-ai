@@ -1,0 +1,140 @@
+/*
+ * Design tokens. Colors are plain hex values so src/styles/contrast.test.ts can check
+ * every text/background pair used by the interface against WCAG AA.
+ *
+ * Visual vocabulary: indigo ink is the interactive accent and is never used for a
+ * result. Green, red and amber are reserved for pass, fail and warning. Missing
+ * evidence (not run, not available, error) is drawn hatched and outlined, never filled.
+ */
+
+:root {
+  color-scheme: light;
+
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-heading: Bahnschrift, "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-code: "Cascadia Mono", "Cascadia Code", Consolas, "SF Mono", Menlo, "Liberation Mono", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --code-size: 0.84375rem;
+  --code-line: 1.3125rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  --radius-panel: 12px;
+  --radius-card: 8px;
+  --radius-control: 6px;
+  --radius-tag: 4px;
+
+  --color-canvas: #edf0f4;
+  --color-surface: #ffffff;
+  --color-surface-2: #f5f7fa;
+  --color-surface-3: #e8ecf1;
+  --color-border: #d6dce4;
+  --color-border-strong: #7b8696;
+  --color-text: #18202b;
+  --color-text-muted: #4f5b6b;
+  --color-accent: #3b3fb6;
+  --color-accent-strong: #2c2f8f;
+  --color-accent-soft: #e9eafb;
+  --color-on-accent: #ffffff;
+  --color-focus: #3b3fb6;
+  --color-hatch: #dfe4ea;
+
+  --tone-pass-fg: #116329;
+  --tone-pass-bg: #e4f4e8;
+  --tone-pass-line: #2f8f4e;
+  --tone-fail-fg: #a1131f;
+  --tone-fail-bg: #fdeceb;
+  --tone-fail-line: #c93a3a;
+  --tone-warn-fg: #7a4b00;
+  --tone-warn-bg: #fff3d4;
+  --tone-warn-line: #b27a00;
+  --tone-neutral-fg: #46505e;
+  --tone-neutral-bg: #eef1f5;
+  --tone-neutral-line: #7b8696;
+  --tone-info-fg: #0b4f8a;
+  --tone-info-bg: #e6f1fb;
+  --tone-info-line: #3a7bc8;
+  --tone-progress-fg: #3b3fb6;
+  --tone-progress-bg: #ecedfc;
+  --tone-progress-line: #3b3fb6;
+
+  --diff-add-bg: #e6f6ea;
+  --diff-add-num: #cdeed6;
+  --diff-add-fg: #116329;
+  --diff-del-bg: #fdecec;
+  --diff-del-num: #f8d6d6;
+  --diff-del-fg: #a1131f;
+  --diff-hunk-bg: #eceefa;
+  --diff-hunk-fg: #2c2f8f;
+  --diff-flag: #3b3fb6;
+
+  --hazard-a: #f2b705;
+  --hazard-b: #1f1a0e;
+
+  --shadow-panel: 0 1px 2px rgba(24, 32, 43, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --color-canvas: #0f141b;
+    --color-surface: #171d26;
+    --color-surface-2: #1c232e;
+    --color-surface-3: #252e3b;
+    --color-border: #2d3745;
+    --color-border-strong: #6f7a8b;
+    --color-text: #e3e8ef;
+    --color-text-muted: #a2adbb;
+    --color-accent: #a3a9ff;
+    --color-accent-strong: #c3c7ff;
+    --color-accent-soft: #23264a;
+    --color-on-accent: #12142b;
+    --color-focus: #a3a9ff;
+    --color-hatch: #2a3240;
+
+    --tone-pass-fg: #72d98f;
+    --tone-pass-bg: #11291a;
+    --tone-pass-line: #3fae62;
+    --tone-fail-fg: #ff9189;
+    --tone-fail-bg: #351619;
+    --tone-fail-line: #e05a55;
+    --tone-warn-fg: #f2c25b;
+    --tone-warn-bg: #33270b;
+    --tone-warn-line: #d39b26;
+    --tone-neutral-fg: #c3cbd6;
+    --tone-neutral-bg: #222a35;
+    --tone-neutral-line: #6f7a8b;
+    --tone-info-fg: #8cc4ff;
+    --tone-info-bg: #12263b;
+    --tone-info-line: #4b8fd8;
+    --tone-progress-fg: #a9afff;
+    --tone-progress-bg: #1d2042;
+    --tone-progress-line: #a3a9ff;
+
+    --diff-add-bg: #132c1c;
+    --diff-add-num: #1a3d26;
+    --diff-add-fg: #72d98f;
+    --diff-del-bg: #371a1d;
+    --diff-del-num: #4a2126;
+    --diff-del-fg: #ff9189;
+    --diff-hunk-bg: #1f2346;
+    --diff-hunk-fg: #c3c7ff;
+    --diff-flag: #a3a9ff;
+
+    --hazard-a: #f2b705;
+    --hazard-b: #1f1a0e;
+
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+}

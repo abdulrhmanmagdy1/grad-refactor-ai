@@ -1,0 +1,93 @@
+# Frontend notes
+
+Workstream: frontend and delivery (owner Dania El-Walily). Tasks: T16, the code-input and result interface, and the interface half of T21, verification and failure results. Written on 2026-10-20 from the implementation and its tests. Every run shown in the interface during development came from the deterministic fake provider, so nothing here is evidence of model behavior. Setup and commands are in the [frontend development guide](../../development/frontend.md).
+
+## What the interface does
+
+A local single-page application lets a person paste one Python function, or load a demonstration case, and ask the service for a guard-clause refactoring. It follows the run while it is queued, analyzed, generated and verified, then shows the outcome, a diff, the four verification results, the explanation and findings, and the run record. The person can copy or download the proposal and record an accept or reject decision. Earlier runs can be reopened or deleted from the history. The service's API and records are described in the [contracts](../../architecture/contracts.md) and the [backend notes](backend.md).
+
+| Requirement | How the interface meets it |
+|---|---|
+| FR01 bounded input | Counts characters as Python does (code points) against the 20,000-character limit and blocks submission above it; warns above the task's 3,000 characters or 60 lines; shows the service's 422 errors |
+| FR04 verification | Syntax, task rubric, reference tests and model review in four separate cards, never merged into one verdict |
+| FR05 diff | Unified diff parsed from the service's `diff`, and a side-by-side view of the full original and proposed code |
+| FR06 user control | Accept and reject record a decision only; copy and download are explicit; the editor content is never changed by a run, a decision or an error |
+| FR07 traceability | Run record: identifier, workflow, provider, exact model and adapter identity, calls and attempts against their limits, stage timings, per-attempt outcomes and raw output, stop reason, warnings |
+| FR10 history | Bounded history (20, or up to 50) with status, outcome, provider and decision; reopen and delete with confirmation |
+| NFR06 | Every result shows that passing tests cover the trusted inputs only and do not prove equivalence for every input |
+
+## Design decisions
+
+| Decision | Alternatives considered | Reason |
+|---|---|---|
+| React 19, TypeScript and Vite, exact versions and a lock file | Server-rendered pages; a component kit | The execution plan names React and TypeScript; a kit would add weight and a generic look |
+| Plain textarea with line numbers | Monaco or CodeMirror | Functions are at most 60 lines; an editor component would add several megabytes and its own accessibility questions. Tab inserts four spaces; Escape then Tab leaves the editor, and Shift+Tab is never captured, so there is no keyboard trap |
+| Polling with bounded backoff | WebSocket or server-sent events | The API defines polling; runs last seconds to minutes. The first request comes after 750 ms, the delay grows by 1.5x to at most 3 s while the status is unchanged and returns to 750 ms when it changes. Only one request is in flight; polling stops on `completed` or `failed`, when the page closes and after at least 20 minutes (or twice the run's own time limit). Network, proxy and busy errors are retried without losing the shown state; 404 stops at once |
+| Reference-case link derived from the code | A stored flag cleared on the first keystroke | The request carries `reference_case_id` only while the code matches the case exactly, by the server's own rule (newlines normalized, trailing whitespace ignored). An edit removes the link with a notice and undoing the edit restores it, so the interface can never send a case id the server would reject as a mismatch |
+| Side-by-side alignment from the service's diff | Computing a second diff in the browser | Both views then show the same change. The alignment checks every line against both texts and falls back to two unaligned listings if they disagree; an unreadable diff is shown as raw text |
+| Missing evidence drawn as absent | One color per status | Pass and accept are the only states in green with a check mark. `not_available`, `not_run` and `error` use a dashed outline, a hatched edge and their own words, and a fake provider's placeholder review is drawn the same way. Tests assert this for every status |
+| Sticky warning banner in fake mode | A dismissible notice | The banner stays at the top of every scroll position, so no screenshot of a fake result can omit it; results from the fake provider are also labeled in the outcome, explanation and history |
+| Decisions never edit files or the input | An "apply" button | FR06 and the API contract: the service writes nothing to host files and the download happens after inspection |
+| Production build with a Content Security Policy | No policy | The page may load scripts, styles and data from its own origin only, so it works offline and cannot fetch from the internet |
+| Fixed English formats; UTC for zone-less timestamps | The browser locale | The laptop's regional settings must not change the page language or date order |
+
+The visual design is a quiet set of white panels on a cool grey page, with an indigo accent kept for actions and progress so that green, red and amber mean only results. Headings use Bahnschrift where it exists (Windows) and code uses Cascadia Mono or Consolas, with system fallbacks and no downloaded fonts. Light and dark themes follow the operating system. WCAG AA contrast is checked by a test for every text and background pair the stylesheet uses in both themes (4.5:1 for text, 3:1 for borders, focus rings and status bars). Focus is always visible, every control has a label, status changes are announced through a polite live region, and the layout works from 380 px wide (one column) to wide screens (input and history beside the result).
+
+## Interface states and screenshots to take
+
+Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, the default). Screenshot files will be added by the coordinator; none are included yet.
+
+| ID | State | How to produce it |
+|---|---|---|
+| S1 | Empty page with the service status and the fake-provider banner | Open the page with the service running in fake mode |
+| S2 | Demonstration case loaded and linked | Choose a case, then Load case |
+| S3 | Link removed after an edit | Change one character of the loaded case |
+| S4 | Run in progress with the stepper | Propose refactoring and capture during analysis or generation |
+| S5 | Proposal ready: outcome, unified diff, four verification cards | Submit a demonstration case unchanged, multi-role |
+| S6 | Side-by-side view with lines flagged by the analysis | Choose Side by side on S5 |
+| S7 | Uncertain: reference tests not available, review not run | Single-role run of code that is not linked to a case |
+| S8 | No change | Submit a function without a nested conditional, for example `def sign(x)` with an `if`/`elif` chain |
+| S9 | Invalid syntax error with line and column | Submit code with a missing colon |
+| S10 | Service busy | Submit while the queue is full (set `REFACTOR_AI_MAX_PENDING=1` and submit twice quickly) |
+| S11 | Failed or interrupted run with Try again | Stop the service during a run, restart it and open the run from the history |
+| S12 | Decision recorded and download started | Accept on S5, then Download proposal |
+| S13 | History with several outcomes and delete confirmation | After S5 to S11, choose Delete on one run |
+| S14 | Dark theme and phone width | Switch the operating system to dark mode; narrow the window to about 390 px |
+
+## Evidence
+
+Commands run in `frontend/` on 2026-10-20 on the demonstration laptop (Windows 11, Node 24.12.0, npm 11.6.2):
+
+| Command | Result |
+|---|---|
+| `npm ci` equivalent (`npm install` from the pinned manifest) | 106 packages, 0 vulnerabilities reported by npm audit, `node_modules` about 110 MB |
+| `npm run typecheck` (`tsc -b`) | Passed; a deliberately wrong type in an application file and in a test file each made it fail |
+| `npm test` | 404 passed, 5 skipped (the optional end-to-end file), 0 failed, in 12 test files |
+| `npm run build` | Passed: one 307 kB script (93 kB compressed) and one 32 kB stylesheet in `frontend/dist` |
+
+| Test file | Tests | Subject |
+|---|---|---|
+| `src/lib/diff.test.ts` | 22 | Unified diff parser and side-by-side alignment |
+| `src/lib/polling.test.ts` | 15 | Backoff, terminal stop, `stop()`, timeout, retries, fatal errors (fake timers) |
+| `src/api/client.test.ts` | 29 | Requests, error bodies, retry delay, network failure, timeout, cancellation, download names |
+| `src/lib/helpers.test.ts` | 18 | Text measurement, time and duration formats, status vocabulary, reasons, `hasProposal` |
+| `src/state/state.test.ts` | 14 | Run and editor reducers |
+| `src/components/results.test.tsx` | 40 | Every disposition and verification status, diff views, progress steps |
+| `src/components/editor.test.tsx` | 6 | Tab, Escape and Shift+Tab, line numbers |
+| `src/App.test.tsx` | 36 | The whole page against a fake service |
+| `src/test/contractMirror.test.ts` | 53 | TypeScript contract against `contracts.py`, task limits and API limits |
+| `src/test/contractExamples.test.tsx` | 44 | Every file in `docs/architecture/examples/` |
+| `src/styles/contrast.test.ts` | 127 | WCAG contrast of the color pairs in both themes |
+| `src/test/e2e.test.ts` | 5 | Optional, against a running service |
+
+The end-to-end file was run once against the real service on a private port, with the fake provider, the real coordinator and the real reference runner, and a database in a temporary folder: all 5 tests passed. They covered a demonstration case completed with verification, a diff that parses and aligns, the downloaded file's content and name, a recorded decision, a single-role run without review, the `invalid_syntax`, `reference_case_mismatch`, `unknown_reference_case` and `run_not_found` errors, and deletion. All six demonstration cases completed as `proposal_ready` with every reference test passing; with the fake provider this shows the plumbing only.
+
+The built interface was also checked in a headless browser served by that service, at 1440 px and 390 px, in light and dark themes. This found and fixed a side-by-side table that grew to 4,400 px (a percentage column width), screen-reader text that widened the page from inside a scroll box, notices whose bold words broke onto their own lines, a fake placeholder review that still showed a check mark and an unbalanced three-plus-one card grid.
+
+## Known limitations
+
+- No screenshots are stored yet; the list above names the states to capture.
+- The browser checks were manual; there is no automated browser test, by design (no Playwright dependency).
+- Without ESLint, React hook dependency rules are not checked mechanically; effects were reviewed by hand and the unmount behavior is tested.
+- Elapsed time while a run is active uses the browser clock against the service's `created_at`; both run on the same machine.
+- The interface polls; it does not receive pushed updates. A run that outlasts the maximum wait keeps running on the server and can be checked again from the page or the history.
