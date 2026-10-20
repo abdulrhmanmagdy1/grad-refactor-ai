@@ -1,7 +1,13 @@
-# Candidates only. Resolve and pin on the actual CUDA machine after the P1 smoke test.
-# Install the hardware-compatible PyTorch build from https://pytorch.org/get-started/locally/
-torch
-transformers>=4.45,<5
-peft>=0.13,<1
-accelerate>=1,<2
-datasets>=3,<5
+# Training and local-inference environment (.venv-train), never the core .venv.
+# Resolved on 2026-10-20 into training/requirements-cuda.txt (the exact lock) with:
+#   python -m uv pip install --python .venv-train/Scripts/python.exe --torch-backend cu126 \
+#       "torch==2.14.1" transformers peft accelerate datasets huggingface_hub safetensors
+# torch comes from the official PyTorch CUDA 12.6 index (https://download.pytorch.org/whl/cu126);
+# the rest from PyPI. Use another CUDA backend only after testing it on the target machine.
+torch==2.14.1
+transformers>=5.20,<6
+peft>=0.21,<1
+accelerate>=1.15,<2
+datasets>=5,<6
+huggingface_hub>=2.2,<3
+safetensors>=0.8,<1

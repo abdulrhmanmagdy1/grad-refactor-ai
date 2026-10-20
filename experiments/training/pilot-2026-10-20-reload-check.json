@@ -1,0 +1,371 @@
+{
+  "record": "T05 adapter reload check in a fresh process (pilot material; not an evaluation)",
+  "recorded_at": "2026-10-20T11:51:44+00:00",
+  "command": "python.exe training/check_adapter.py --adapter-dir runs/training/pilot-full/adapter --dataset training/pilot/pilot-records.jsonl --base-benchmark experiments/models/2026-10-20-qwen2.5-coder-0.5b-instruct-benchmark-run1-under-memory-pressure.json --out experiments/training/pilot-2026-10-20-reload-check.json",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "adapter_dir": "runs/training/pilot-full/adapter",
+  "adapter_sha256": "cf74fcea961ea9e94ffc228711c90c2bc5ac29e943a2dd27774a3bfca82bb34f",
+  "adapter_sha256_reported_by_worker": "cf74fcea961ea9e94ffc228711c90c2bc5ac29e943a2dd27774a3bfca82bb34f",
+  "dataset_sha256": "c83a9fb975e2c84dd255a05afb495777711fbc32cd157aacf924662329c1f883",
+  "load_s": 25.69,
+  "versions": {
+    "python": "3.11.9",
+    "torch": "2.14.1+cu126",
+    "cuda": "12.6",
+    "transformers": "5.20.2",
+    "peft": "0.21.2"
+  },
+  "summary": {
+    "items": 12,
+    "max_abs_logit_diff_max": 6.5625,
+    "outputs_differ": 12,
+    "validation_mean_reference_loss": {
+      "adapter": 0.0795,
+      "base": 0.7966
+    },
+    "parse_ok": {
+      "validation": {
+        "adapter": 4,
+        "base": 1
+      },
+      "benchmark": {
+        "adapter": 8,
+        "base": 0
+      }
+    },
+    "rubric_passed": {
+      "validation": {
+        "adapter": 3,
+        "base": 0
+      },
+      "benchmark": {
+        "adapter": 7,
+        "base": 0
+      }
+    },
+    "disabled_adapter_matches_separate_base_process": {
+      "benchmark_record": "2026-10-20-qwen2.5-coder-0.5b-instruct-benchmark-run1-under-memory-pressure.json",
+      "compared": 8,
+      "identical": 8
+    }
+  },
+  "items": [
+    {
+      "id": "pilot-17",
+      "kind": "validation",
+      "max_abs_logit_diff_last_prompt_position": 5.6875,
+      "argmax_same": true,
+      "reference_completion_loss": {
+        "adapter": 0.066,
+        "base": 0.8688
+      },
+      "adapter": {
+        "completion_tokens": 80,
+        "finish_reason": "stop",
+        "generation_s": 25.5075,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef temperature_alert(reading, threshold):\n    if reading is None:\n        raise ValueError(\"reading is required\")\n    if threshold is None:\n        return \"missing\"\n    if reading > threshold:\n        return \"alert\"\n    return \"ok\"\n```"
+      },
+      "base": {
+        "completion_tokens": 140,
+        "finish_reason": "stop",
+        "generation_s": 12.5297,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `temperature_alert` is designed to determine if a temperature reading is above a specified threshold. It uses a series of nested conditionals to handle different scenarios. The first condition checks if the `reading` is not `None`, and if the `threshold` is not `None`. If both conditions are met, it checks if the `reading` is greater than the `threshold`. If the condition is true, it returns \"alert\"; otherwise, it returns \"ok\". If either condition is false, it raises a `ValueError` with the message \"threshold is required\". The function also includes a check for `reading` being `None` to avoid a `TypeError`."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "pilot-18",
+      "kind": "validation",
+      "max_abs_logit_diff_last_prompt_position": 5.6875,
+      "argmax_same": true,
+      "reference_completion_loss": {
+        "adapter": 0.1322,
+        "base": 0.865
+      },
+      "adapter": {
+        "completion_tokens": 78,
+        "finish_reason": "stop",
+        "generation_s": 18.4602,
+        "parse_error": null,
+        "rubric_passed": false,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 3 to 1.\n```python\ndef order_status(order):\n    if order.get(\"paid\"):\n        if order.get(\"shipped\"):\n            if order.get(\"delivered\"):\n                return \"delivered\"\n            return \"in transit\"\n    return \"awaiting payment\"\n```"
+      },
+      "base": {
+        "completion_tokens": 186,
+        "finish_reason": "stop",
+        "generation_s": 19.5561,
+        "parse_error": null,
+        "rubric_passed": false,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `order_status` is designed to determine the status of an order based on the payment status, shipping status, and delivery status. The function uses nested conditionals to handle each special case first, with early returns or raises if necessary, and then continues the main logic without the extra nesting. The function returns the appropriate status based on the given conditions.\n\n```python\ndef order_status(order):\n    if order.get(\"paid\"):\n        if order.get(\"shipped\"):\n            if order.get(\"delivered\"):\n                return \"delivered\"\n            else:\n                return \"in transit\"\n        else:\n            return \"processing\"\n    else:\n        return \"awaiting payment\"\n```\n\nThis refactored function is designed to handle each special case first, with early returns or raises if necessary, and then continues the main logic without the extra nesting. The function returns the appropriate status based on the given conditions."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "pilot-19",
+      "kind": "validation",
+      "max_abs_logit_diff_last_prompt_position": 6.0,
+      "argmax_same": true,
+      "reference_completion_loss": {
+        "adapter": 0.0879,
+        "base": 0.7901
+      },
+      "adapter": {
+        "completion_tokens": 86,
+        "finish_reason": "stop",
+        "generation_s": 20.4999,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef capped_total(items, cap):\n    if cap <= 0:\n        raise ValueError(\"cap must be positive\")\n    total = 0\n    for item in items:\n        if item <= 0:\n            return cap\n        total += item\n    return total\n```"
+      },
+      "base": {
+        "completion_tokens": 130,
+        "finish_reason": "stop",
+        "generation_s": 13.3954,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `capped_total` takes a list of items and a cap value as input. It first checks if the cap is positive. If it is, it initializes a variable `total` to 0. It then iterates over each item in the list. If an item is greater than 0, it adds the item to `total`. After the loop, it checks if `total` is greater than the cap. If it is, it returns the cap. If not, it returns the total. If the cap is not positive, it raises a `ValueError` with the message \"cap must be positive\"."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "pilot-20",
+      "kind": "validation",
+      "max_abs_logit_diff_last_prompt_position": 6.2656,
+      "argmax_same": true,
+      "reference_completion_loss": {
+        "adapter": 0.0317,
+        "base": 0.6624
+      },
+      "adapter": {
+        "completion_tokens": 118,
+        "finish_reason": "stop",
+        "generation_s": 19.5442,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": true,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef status_text(code):\n    if not isinstance(code, int):\n        raise TypeError(\"code must be an integer\")\n    if 200 <= code < 300:\n        return \"success\"\n    if 400 <= code < 500:\n        return \"client error\"\n    if 500 <= code < 600:\n        return \"server error\"\n    return \"other\"\n```"
+      },
+      "base": {
+        "completion_tokens": 72,
+        "finish_reason": "stop",
+        "generation_s": 5.1844,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `status_text` is designed to handle different types of HTTP status codes. It uses a series of `if` statements to check the status code and return the appropriate message. If the input is not an integer, it raises a `TypeError`. This approach ensures that the function behaves as expected and provides clear error messages for invalid input."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-01",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 5.7891,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 76,
+        "finish_reason": "stop",
+        "generation_s": 10.2247,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": true,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef shipping_cost(weight, express):\n    if weight <= 0:\n        raise ValueError(\"weight must be positive\")\n    if express:\n        return 10 + weight * 2\n    return 5 + weight\n```"
+      },
+      "base": {
+        "completion_tokens": 122,
+        "finish_reason": "stop",
+        "generation_s": 7.0681,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `shipping_cost` is designed to calculate the shipping cost based on the weight and express option. It first checks if the weight is positive. If the weight is positive, it then checks if the express option is set to `True`. If the express option is `True`, it calculates the shipping cost by adding 10 to the weight multiplied by 2. If the express option is `False`, it calculates the shipping cost by adding 5 to the weight. If the weight is not positive, it raises a `ValueError` with the message \"weight must be positive\"."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-02",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.0312,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 83,
+        "finish_reason": "stop",
+        "generation_s": 9.7712,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": true,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef describe_user(user):\n    if user is None:\n        return \"No user\"\n    if not user.get(\"active\"):\n        return \"Inactive user\"\n    name = user.get(\"name\", \"unknown\")\n    return \"Active user: \" + name\n```"
+      },
+      "base": {
+        "completion_tokens": 124,
+        "finish_reason": "stop",
+        "generation_s": 6.0691,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `describe_user` is designed to describe a user based on their active status. It first checks if the user is not `None`. If the user is not `None`, it then checks if the user is active. If the user is active, it retrieves the user's name and returns a descriptive message. If the user is not active, it returns a message indicating that the user is inactive. If the user is `None`, it returns a message indicating that no user is available. This refactoring ensures that the function is self-contained, clear, and adheres to the guidelines provided."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-03",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.0781,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 103,
+        "finish_reason": "stop",
+        "generation_s": 11.6901,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef letter_grade(score):\n    if score < 0 or score > 100:\n        raise ValueError(\"score out of range\")\n    if score >= 90:\n        return \"A\"\n    if score >= 80:\n        return \"B\"\n    if score >= 70:\n        return \"C\"\n    return \"F\"\n```"
+      },
+      "base": {
+        "completion_tokens": 80,
+        "finish_reason": "stop",
+        "generation_s": 4.0197,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `letter_grade` checks if the input score is within the valid range (0 to 100). If the score is within the range, it returns the corresponding letter grade. If the score is outside the range, it raises a `ValueError`. This refactoring ensures that the function is clear and concise, with the nested conditionals being replaced by guard clauses."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-04",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.3047,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 101,
+        "finish_reason": "stop",
+        "generation_s": 15.5685,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef apply_discount(prices, rate):\n    \"\"\"Return the prices after applying a discount rate.\"\"\"\n    if not prices:\n        return []\n    if 0 < rate < 1:\n        return [round(price * (1 - rate), 2) for price in prices]\n    raise ValueError(\"rate must be between 0 and 1\")\n```"
+      },
+      "base": {
+        "completion_tokens": 121,
+        "finish_reason": "stop",
+        "generation_s": 7.9373,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `apply_discount` takes two parameters: `prices` and `rate`. It first checks if the `prices` list is not empty. If it is, it then checks if the `rate` is between 0 and 1. If the `rate` is within the valid range, it applies the discount by multiplying each price by 1 minus the rate and rounding the result to two decimal places. If the `rate` is not within the valid range, it raises a `ValueError`. If the `prices` list is empty, it returns an empty list."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-05",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.4375,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 97,
+        "finish_reason": "stop",
+        "generation_s": 13.1023,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": true,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef parse_port(text):\n    if not text:\n        raise ValueError(\"port is required\")\n    if not text.isdigit():\n        raise ValueError(\"port must be numeric\")\n    port = int(text)\n    if 0 < port < 65536:\n        return port\n    raise ValueError(\"port out of range\")\n```"
+      },
+      "base": {
+        "completion_tokens": 134,
+        "finish_reason": "stop",
+        "generation_s": 8.1535,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `parse_port` is designed to parse a port number from a given string. It first checks if the input string is not empty. If it is, it then checks if the string is a digit. If the string is a digit, it converts the string to an integer and checks if the integer is between 0 and 65535. If the integer is within this range, it returns the port number. If the integer is out of range, it raises a `ValueError`. If the string is not a digit, it raises a `ValueError`. If the string is empty, it raises a `ValueError`."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-06",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.0156,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 69,
+        "finish_reason": "stop",
+        "generation_s": 12.8007,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef withdraw(balance, amount):\n    if amount <= 0:\n        raise ValueError(\"amount must be positive\")\n    if amount > balance:\n        return balance - amount\n    return balance\n```"
+      },
+      "base": {
+        "completion_tokens": 111,
+        "finish_reason": "stop",
+        "generation_s": 12.8811,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `withdraw` is designed to handle two special cases: withdrawing a positive amount and withdrawing a negative amount. The function first checks if the amount is positive. If it is, it then checks if the amount is less than or equal to the balance. If both conditions are met, it returns the remaining balance. If the amount is negative, it raises a `ValueError` with the message \"insufficient funds\". If the amount is not positive, it raises a `ValueError` with the message \"amount must be positive\"."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-07",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 5.875,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 85,
+        "finish_reason": "stop",
+        "generation_s": 12.2187,
+        "parse_error": null,
+        "rubric_passed": false,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef classify_temperature(celsius, unit):\n    if unit == \"C\":\n        if celsius < 0:\n            return \"freezing\"\n        if celsius < 20:\n            return \"cold\"\n        return \"warm\"\n    return \"unknown unit\"\n```"
+      },
+      "base": {
+        "completion_tokens": 137,
+        "finish_reason": "stop",
+        "generation_s": 7.4171,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `classify_temperature` is designed to classify a temperature based on its unit. It uses a series of conditional statements to determine the classification. The function first checks if the unit is \"C\". If it is, it then checks if the temperature is below 0 degrees Celsius. If so, it returns \"freezing\". If the temperature is between 0 and 20 degrees Celsius, it returns \"cold\". If the temperature is above 20 degrees Celsius, it returns \"warm\". If the unit is not \"C\", it returns \"unknown unit\". This refactoring ensures that the function is clear and concise, with the necessary checks and returns."
+      },
+      "outputs_differ": true
+    },
+    {
+      "id": "bench-08",
+      "kind": "benchmark",
+      "max_abs_logit_diff_last_prompt_position": 6.5625,
+      "argmax_same": true,
+      "adapter": {
+        "completion_tokens": 124,
+        "finish_reason": "stop",
+        "generation_s": 11.2018,
+        "parse_error": null,
+        "rubric_passed": true,
+        "same_as_reference": false,
+        "raw_output": "Explanation: Handled the special cases first with early returns or raises, which lowers the nesting depth from 2 to 1.\n```python\ndef average_positive(values):\n    if values is None:\n        raise TypeError(\"values must not be None\")\n    if len(values) == 0:\n        return 0.0\n    total = 0\n    count = 0\n    for value in values:\n        if value > 0:\n            total += value\n            count += 1\n    if count == 0:\n        return 0.0\n    return total / count\n```"
+      },
+      "base": {
+        "completion_tokens": 107,
+        "finish_reason": "stop",
+        "generation_s": 3.7252,
+        "parse_error": "no_code_block",
+        "rubric_passed": null,
+        "same_as_reference": false,
+        "raw_output": "Explanation: The function `average_positive` is designed to calculate the average of positive numbers in a list. It first checks if the input list is not `None`. If it is, it then checks if the list is not empty. If both conditions are met, it iterates through the list, summing up the positive numbers and counting them. If the count is zero, it returns 0.0. If the list is empty, it raises a `TypeError`. Otherwise, it returns the average of the positive numbers."
+      },
+      "outputs_differ": true
+    }
+  ]
+}

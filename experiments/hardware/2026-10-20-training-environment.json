@@ -1,0 +1,57 @@
+{
+  "record": "Training environment and GPU check (models workstream, T04/T05)",
+  "recorded_at": "2026-10-20T13:25:00+03:00",
+  "machine_label": "demonstration-laptop",
+  "environment": ".venv-train (CPython 3.11.9), ignored by Git",
+  "commands": [
+    "python -m uv venv .venv-train --python 3.11",
+    "python -m uv pip install --python .venv-train/Scripts/python.exe --torch-backend cu126 \"torch==2.14.1\" transformers peft accelerate datasets huggingface_hub safetensors",
+    "python -m uv pip freeze --python .venv-train/Scripts/python.exe  (header added, saved as training/requirements-cuda.txt)"
+  ],
+  "lock": "training/requirements-cuda.txt, 55 packages; a dry run into a fresh venv resolved the same 55 packages and the installed environment reported 'Would make no changes'",
+  "torch": {
+    "version": "2.14.1+cu126",
+    "index": "https://download.pytorch.org/whl/cu126 (latest stable on that index on 2026-10-20; the cu128 index stops at 2.11.0)",
+    "wheel_bytes": 2602753280,
+    "wheel_last_modified": "2026-09-30",
+    "cuda_runtime": "12.6",
+    "cudnn": "9.10.2 (91002)"
+  },
+  "packages": {
+    "transformers": "5.20.2",
+    "peft": "0.21.2",
+    "accelerate": "1.15.0",
+    "datasets": "5.1.0",
+    "huggingface-hub": "2.2.0",
+    "safetensors": "0.8.0",
+    "tokenizers": "0.23.3",
+    "numpy": "2.4.6",
+    "psutil": "7.2.2"
+  },
+  "gpu_check": {
+    "device": "NVIDIA GeForce RTX 2050",
+    "compute_capability": "8.6",
+    "bf16_supported": true,
+    "driver": "595.71 (driver CUDA API 13.2)",
+    "torch_mem_get_info_free_mib_of_total": "3305 of 4095 at 12:37 with the desktop session running",
+    "driver_model": "WDDM; nvidia-smi cannot report per-process GPU memory, so process usage is measured as the change in total use"
+  },
+  "install": {
+    "prepare_duration": "17 min 36 s for 46 downloaded packages (download-bound)",
+    "install_duration_s": 10.06,
+    "hard_links": "uv hard-linked the files from its cache into .venv-train (link count 2, e.g. torch/lib/torch_cuda.dll 1,060,440,064 bytes), so the environment is stored once; deleting only the uv cache frees nothing while .venv-train exists",
+    "free_disk_mb_before": 8200,
+    "free_disk_mb_after": 3367,
+    "note": "other workstreams were also writing during the install, so the difference is not the environment size alone"
+  },
+  "windows_launcher": "On this laptop .venv-train/Scripts/python.exe is the CPython venv launcher (274,712 bytes): it starts the real interpreter as a child process with a different PID and terminates it when the launcher is terminated (verified with Popen.kill on both .venv and .venv-train).",
+  "memory_pressure_observed": {
+    "window": "13:04 to 13:25 while five workstreams ran concurrently",
+    "free_ram_mb": "130 to 850 of 8009",
+    "commit_charge_mb": "25651 to 26539 of a 30372 limit",
+    "pagefile_allocated_mb": 22363,
+    "effects": "process creation failed with WinError 1455 (paging file too small) and Git Bash fork failed; the T04 benchmark run 1 started with 0.3 GB of RAM available, so its load time and throughput are not representative",
+    "action": "GPU work paused until disk and memory recover"
+  },
+  "private_identifiers": "omitted"
+}

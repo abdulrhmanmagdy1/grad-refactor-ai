@@ -1,0 +1,289 @@
+{
+  "record": "Exploratory base-model format check with sampling (pilot functions; not the evaluation protocol)",
+  "recorded_at": "2026-10-20T10:44:39+00:00",
+  "command": "python.exe training/explore_base_format.py --out experiments/models/2026-10-20-base-format-sampling-exploration.json",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "decoding": {
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": null
+  },
+  "seeds": [
+    1,
+    2,
+    3
+  ],
+  "summary": {
+    "outputs": 24,
+    "with_code_fence": 1,
+    "parsed": 1,
+    "rubric_passed": 0
+  },
+  "results": [
+    {
+      "case_id": "bench-01",
+      "seed": 1,
+      "completion_tokens": 137,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `shipping_cost` is designed to calculate the shipping cost based on the weight and express status. It first checks if the weight is positive. If the weight is positive, it then checks if the express status is true. If the express status is true, it calculates the cost as 10 plus twice the weight. If the express status is false, it calculates the cost as 5 plus the weight. If the weight is negative, it raises a `ValueError` because weight must be positive.\n\nThe refactored function uses guard clauses to handle each special case first with an early return or raise, then continue the main logic without the extra nesting."
+    },
+    {
+      "case_id": "bench-02",
+      "seed": 1,
+      "completion_tokens": 116,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `describe_user` is designed to handle a user's status. It first checks if the `user` parameter is not `None`. If it is not `None`, it then checks if the `user` is active. If the user is active, it returns a message indicating the user's name. If the user is inactive, it returns a message indicating the user's status. If the user is `None`, it returns a message indicating that there is no user. This refactoring preserves the program's behavior while adhering to the guidelines provided."
+    },
+    {
+      "case_id": "bench-03",
+      "seed": 1,
+      "completion_tokens": 93,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `letter_grade` checks if the score is between 0 and 100. If the score is within this range, it returns the corresponding letter grade. If the score is outside this range, it raises a `ValueError` with an appropriate message.\n\nThe refactored function uses guard clauses to handle each special case first and then continue the main logic without the extra nesting. This makes the code more readable and maintainable."
+    },
+    {
+      "case_id": "bench-04",
+      "seed": 1,
+      "completion_tokens": 135,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `apply_discount` takes two parameters: `prices`, which is a list of prices, and `rate`, which is a float representing the discount rate. The function checks if the `prices` list is not empty. If it is not empty, it checks if the `rate` is within the valid range (0 to 1). If the `rate` is valid, it applies the discount by multiplying each price by 1 minus the rate and rounding the result to two decimal places. If the `rate` is not valid, it raises a `ValueError`. If the `prices` list is empty, it returns an empty list."
+    },
+    {
+      "case_id": "bench-05",
+      "seed": 1,
+      "completion_tokens": 224,
+      "finish_reason": "stop",
+      "has_code_fence": true,
+      "parse_error": null,
+      "parse_repaired": true,
+      "rubric_passed": false,
+      "raw_output": "Explanation: The function `parse_port` is designed to parse a port number from a given text. It checks if the input is a valid port number and raises a `ValueError` if the port is invalid. The function handles each special case by early returning or raising, and then continues the main logic without the extra nesting.\n\n```python\ndef parse_port(text):\n    if text:\n        if text.isdigit():\n            port = int(text)\n            if 0 < port < 65536:\n                return port\n            else:\n                raise ValueError(\"port out of range\")\n        else:\n            raise ValueError(\"port must be numeric\")\n    else:\n        raise ValueError(\"port is required\")\n```\n\nCode:\n```python\ndef parse_port(text):\n    if text:\n        if text.isdigit():\n            port = int(text)\n            if 0 < port < 65536:\n                return port\n            else:\n                raise ValueError(\"port out of range\")\n        else:\n            raise ValueError(\"port must be numeric\")\n    else:\n        raise ValueError(\"port is required\")\n```"
+    },
+    {
+      "case_id": "bench-06",
+      "seed": 1,
+      "completion_tokens": 83,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `withdraw` handles both positive and negative amounts. If the amount is positive, it checks if the remaining balance is sufficient. If not, it raises a `ValueError`. If the amount is negative, it raises another `ValueError`. This refactoring makes the function cleaner and more readable, as it separates the logic into two separate conditions and uses exception handling to manage potential errors gracefully."
+    },
+    {
+      "case_id": "bench-07",
+      "seed": 1,
+      "completion_tokens": 130,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `classify_temperature` is designed to classify a temperature based on the given unit. It first checks if the unit is \"C\". If it is, it then checks if the temperature is below 0 degrees Celsius. If so, it returns \"freezing\". If the temperature is between 0 and 20 degrees Celsius, it returns \"cold\". If the temperature is greater than 20 degrees Celsius, it returns \"warm\". If the unit is not \"C\", it returns \"unknown unit\". The function handles the case where the unit is not \"C\" by returning \"unknown unit\" in this scenario."
+    },
+    {
+      "case_id": "bench-08",
+      "seed": 1,
+      "completion_tokens": 119,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `average_positive` is designed to calculate the average of a list of positive numbers. It first checks if the input list is not `None`. If it is not `None`, it proceeds to calculate the sum of the positive numbers and count the number of positive numbers. If the count is zero, it returns 0.0 to indicate that there are no positive numbers in the list. Otherwise, it returns the average of the positive numbers. If the input list is `None`, it raises a `TypeError` to indicate that the input must not be `None`."
+    },
+    {
+      "case_id": "bench-01",
+      "seed": 2,
+      "completion_tokens": 93,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `shipping_cost` now handles the special case where the weight is positive by checking if the express flag is `True`. If it is, the function calculates the shipping cost as if it were a regular shipping cost. If it is not, the function calculates the shipping cost as if it were a regular shipping cost. If the weight is zero or negative, the function raises a `ValueError` with the message \"weight must be positive\"."
+    },
+    {
+      "case_id": "bench-02",
+      "seed": 2,
+      "completion_tokens": 125,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `describe_user` is designed to describe a user based on their status. It first checks if the `user` is not `None`. If it is, it then checks if the `user` has an \"active\" attribute. If the user is active, it retrieves the user's name and returns a descriptive message. If the user is inactive, it returns a message indicating that. If the `user` is `None`, it returns a message indicating that no user is available. The function uses the `get` method to safely retrieve user attributes and handles any `None` values gracefully."
+    },
+    {
+      "case_id": "bench-03",
+      "seed": 2,
+      "completion_tokens": 78,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `letter_grade` takes a score as input and returns a letter grade based on the score. It handles the special case where the score is within the range of 0 to 100. If the score is outside the range, it raises a `ValueError`. The function also includes a docstring that describes the problem and the expected input and output."
+    },
+    {
+      "case_id": "bench-04",
+      "seed": 2,
+      "completion_tokens": 112,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `apply_discount` takes two parameters: `prices` and `rate`. It first checks if `prices` is not empty. If it is, it checks if `rate` is between 0 and 1. If `rate` is within the valid range, it applies the discount by multiplying each price by `(1 - rate)` and rounding the result to two decimal places. If `rate` is outside the valid range, it raises a `ValueError`. If `prices` is empty, it returns an empty list."
+    },
+    {
+      "case_id": "bench-05",
+      "seed": 2,
+      "completion_tokens": 124,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `parse_port` takes a string `text` as input. It first checks if the string is not empty. If it is, it further checks if the string is a digit. If the string is a digit, it converts the string to an integer and checks if it falls within the valid range (0 to 65535). If the range is valid, it returns the port number. If the range is invalid, it raises a `ValueError` with an appropriate message. If the string is empty, it also raises a `ValueError` with an appropriate message."
+    },
+    {
+      "case_id": "bench-06",
+      "seed": 2,
+      "completion_tokens": 72,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `withdraw` handles both positive and negative amounts. If the amount is positive, it checks if there are sufficient funds in the balance. If the amount is negative, it raises a `ValueError`. If the amount is zero, it also raises a `ValueError`. This ensures that the function behaves correctly regardless of the input values."
+    },
+    {
+      "case_id": "bench-07",
+      "seed": 2,
+      "completion_tokens": 109,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `classify_temperature` now uses a guard clause to handle each special case first. If the unit is \"C\", it checks if the temperature is below 0, in which case it returns \"freezing\". If the temperature is between 0 and 20, it returns \"cold\". If the temperature is greater than 20, it returns \"warm\". If the unit is not \"C\", it returns \"unknown unit\". This approach ensures that the function only processes valid temperature values and provides meaningful output."
+    },
+    {
+      "case_id": "bench-08",
+      "seed": 2,
+      "completion_tokens": 167,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `average_positive` takes a list of values as input. It first checks if the input is not `None`. If it is not, it proceeds to calculate the average of the positive values. If there are no positive values, it returns 0.0. If the list is empty, it also returns 0.0. If the input is `None`, it raises a `TypeError`.\n\nThe refactored function uses guard clauses to handle the special cases first. If the input is not `None`, it checks if the list is not empty and if there are any positive values. If both conditions are met, it calculates the average and returns it. If either condition is not met, it returns 0.0. This approach ensures that the function behaves as expected without the nested conditionals."
+    },
+    {
+      "case_id": "bench-01",
+      "seed": 3,
+      "completion_tokens": 72,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `shipping_cost` now uses guard clauses to handle special cases first, which can be more readable and maintainable. The early return or raise statement is used to handle cases where the weight is zero or negative, ensuring the function behaves as expected. The main logic is not nested, as the guard clauses are executed before the main logic."
+    },
+    {
+      "case_id": "bench-02",
+      "seed": 3,
+      "completion_tokens": 83,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `describe_user` now uses guard clauses to handle special cases first, which can be more readable and maintainable. The early return or raise is used to exit the function early if the user is `None`, which can be useful in cases where the function might be called with an invalid input. The main logic remains the same, but the function is now more concise and easier to understand."
+    },
+    {
+      "case_id": "bench-03",
+      "seed": 3,
+      "completion_tokens": 78,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `letter_grade` now uses guard clauses to handle the special cases first, with early returns or raises for the rest of the logic. This ensures that the function behaves correctly and raises an appropriate error when the input score is out of range. The function now returns the appropriate letter grade based on the score, and the docstring and return values have been updated accordingly."
+    },
+    {
+      "case_id": "bench-04",
+      "seed": 3,
+      "completion_tokens": 103,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `apply_discount` takes a list of prices and a discount rate as input. It first checks if the list is not empty and if the discount rate is within the valid range (0 to 1). If both conditions are met, it calculates the discounted prices by multiplying each price by the discount rate and rounding the result to two decimal places. If the discount rate is not within the range, it raises a `ValueError`. If the list is empty, it returns an empty list."
+    },
+    {
+      "case_id": "bench-05",
+      "seed": 3,
+      "completion_tokens": 111,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `parse_port` checks if the input string `text` is not empty. If it is not empty, it checks if the string is a digit. If it is a digit, it converts the string to an integer and checks if the integer is between 0 and 65535. If the integer is within the valid range, it returns the integer. If the integer is not within the valid range, it raises a `ValueError`. If the input string is empty, it raises a `ValueError`."
+    },
+    {
+      "case_id": "bench-06",
+      "seed": 3,
+      "completion_tokens": 88,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `withdraw` takes two parameters: `balance` and `amount`. It checks if `amount` is positive. If it is, it checks if the remaining balance is sufficient to withdraw the specified amount. If the remaining balance is sufficient, it returns the remaining balance. If the remaining balance is not sufficient, it raises a `ValueError`. If `amount` is negative, it raises a `ValueError`."
+    },
+    {
+      "case_id": "bench-07",
+      "seed": 3,
+      "completion_tokens": 43,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `classify_temperature` now uses guard clauses to handle the special cases first, with early returns or raises if necessary. This refactoring maintains the same functionality while adhering to the original requirements."
+    },
+    {
+      "case_id": "bench-08",
+      "seed": 3,
+      "completion_tokens": 65,
+      "finish_reason": "stop",
+      "has_code_fence": false,
+      "parse_error": "no_code_block",
+      "parse_repaired": false,
+      "rubric_passed": null,
+      "raw_output": "Explanation: The function `average_positive` now uses a guard clause to handle cases where the input `values` is `None`. If the input is `None`, the function immediately returns `0.0` without executing the rest of the code. This approach ensures that the function is robust and handles edge cases gracefully."
+    }
+  ]
+}

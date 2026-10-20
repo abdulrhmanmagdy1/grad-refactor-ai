@@ -1,0 +1,287 @@
+{
+  "status": "stopped_after_steps (simulated interruption)",
+  "run_id": "pilot-interrupted",
+  "code_sha": {
+    "head": "d2d2f0bea9fbe220ad5c15114db15624e19e35c6",
+    "dirty": true
+  },
+  "train_script_sha256": "1cad5bbad95ee9e0b397ce6c027eced96db3adf5072204a6618c31b8710aa53c",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "dataset_sha256": "c83a9fb975e2c84dd255a05afb495777711fbc32cd157aacf924662329c1f883",
+  "split_manifest": {
+    "train": 16,
+    "validation": 4,
+    "test_excluded": 2
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "nvidia_smi": "NVIDIA GeForce RTX 2050, 4096, 595.71",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9"
+  },
+  "dependency_lock": {
+    "file": "training/requirements-cuda.txt",
+    "sha256": "99ce0f70911d6fa7750b1f15731d23e4b48244e8e3f78d1573166dad110e8eeb",
+    "packages": {
+      "torch": "2.14.1+cu126",
+      "transformers": "5.20.2",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "datasets": "5.1.0",
+      "huggingface-hub": "2.2.0",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3"
+    },
+    "cuda": "12.6"
+  },
+  "config": {
+    "run_id": "pilot-interrupted",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "model_path": "../models/Qwen2.5-Coder-0.5B-Instruct",
+    "dataset": "../training/pilot/pilot-records.jsonl",
+    "output_dir": "C:\\Users\\abdel\\Desktop\\Projects\\grad-refactor-ai\\runs\\training\\pilot-interrupted",
+    "seed": 42,
+    "max_length": 1024,
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "learning_rate": 0.0002,
+    "epochs": 2,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 2,
+    "warmup_steps": 1,
+    "lr_scheduler_type": "linear",
+    "logging_steps": 1,
+    "eval_steps": 4,
+    "save_steps": 4,
+    "save_total_limit": 1,
+    "max_steps": 16,
+    "gradient_checkpointing": false,
+    "precision": "auto",
+    "weight_decay": 0.0,
+    "precision_resolved": "bf16"
+  },
+  "seed": 42,
+  "duration_seconds": 11.0,
+  "peak_memory_mb": {
+    "torch_peak_allocated_per_step_max": 2167.4,
+    "torch_peak_reserved_per_step_max": 3714.0,
+    "torch_peak_allocated_evaluation": 1527.8,
+    "gpu_used_all_processes_before_load": 477,
+    "gpu_used_all_processes_peak_sampled": 3856
+  },
+  "validation_metrics": {
+    "eval_loss": 0.19715076684951782,
+    "eval_runtime": 0.7439,
+    "eval_samples_per_second": 5.377,
+    "eval_steps_per_second": 5.377,
+    "epoch": 1.0
+  },
+  "test_metrics": null,
+  "failures": [],
+  "artifact_url": null,
+  "artifact_sha256": "e7b1e45dc672cadb8832ec5e249b4b2a36d230869ed3cdab104e160006238729",
+  "evaluator": null,
+  "started_at": "2026-10-20T11:44:15+00:00",
+  "command": "python.exe training/train_lora.py --config configs/training.pilot.json --output-dir runs/training/pilot-interrupted --stop-after-steps 8 --record experiments/training/pilot-2026-10-20-interrupted.json",
+  "resumed_from_checkpoint": null,
+  "stop_after_steps": 8,
+  "data": {
+    "dataset": "pilot-records.jsonl",
+    "dataset_sha256": "c83a9fb975e2c84dd255a05afb495777711fbc32cd157aacf924662329c1f883",
+    "records": {
+      "train": 16,
+      "validation": 4,
+      "test_excluded": 2
+    },
+    "end_of_turn_token": "<|im_end|>",
+    "end_of_turn_id": 151645,
+    "template_suffix_after_completion": "<|im_end|>\n",
+    "eos_ids": [
+      151645,
+      151643
+    ],
+    "max_tokens": {
+      "train": 330,
+      "validation": 351
+    },
+    "mean_tokens": {
+      "train": 291.9,
+      "validation": 304.8
+    },
+    "max_length": 1024,
+    "records_over_max_length": [],
+    "revision_verified": true
+  },
+  "trainable_parameters": 4399104,
+  "total_parameters": 498431872,
+  "trainable_parameter_dtypes": [
+    "torch.float32"
+  ],
+  "finished_at": "2026-10-20T11:44:27+00:00",
+  "train_runtime_seconds": 10.0,
+  "global_step": 8,
+  "artifact_path": "runs\\training\\pilot-interrupted\\adapter",
+  "adapter_files": {
+    "adapter_config.json": "adf8b8a68a768ebca4c39c25e1b58510909392a71f6a0740dc490a8fff635bee",
+    "adapter_model.safetensors": "e7b1e45dc672cadb8832ec5e249b4b2a36d230869ed3cdab104e160006238729",
+    "README.md": "6718fe791df1098b30979f2af5b512a48768f65dd6a646b29de9d6015ab5229b",
+    "training_args.bin": "f71d8be59967147cd54b9136d00addb1fe9a84aaaf6e4f28fb7e486150f892d0"
+  },
+  "adapter_bytes": 17640136,
+  "checkpoints": {
+    "checkpoint-8": "e7b1e45dc672cadb8832ec5e249b4b2a36d230869ed3cdab104e160006238729"
+  },
+  "step_metrics": [
+    {
+      "step": 1,
+      "seconds": 1.958,
+      "peak_allocated_mib": 2000.7,
+      "peak_reserved_mib": 2170.0
+    },
+    {
+      "step": 2,
+      "seconds": 0.956,
+      "peak_allocated_mib": 2099.2,
+      "peak_reserved_mib": 2736.0
+    },
+    {
+      "step": 3,
+      "seconds": 0.824,
+      "peak_allocated_mib": 1978.0,
+      "peak_reserved_mib": 2740.0
+    },
+    {
+      "step": 4,
+      "seconds": 0.709,
+      "peak_allocated_mib": 2063.2,
+      "peak_reserved_mib": 2740.0
+    },
+    {
+      "step": 5,
+      "seconds": 0.87,
+      "peak_allocated_mib": 2107.5,
+      "peak_reserved_mib": 3332.0
+    },
+    {
+      "step": 6,
+      "seconds": 0.699,
+      "peak_allocated_mib": 2151.5,
+      "peak_reserved_mib": 3522.0
+    },
+    {
+      "step": 7,
+      "seconds": 0.993,
+      "peak_allocated_mib": 2164.4,
+      "peak_reserved_mib": 3714.0
+    },
+    {
+      "step": 8,
+      "seconds": 1.042,
+      "peak_allocated_mib": 2167.4,
+      "peak_reserved_mib": 3714.0
+    }
+  ],
+  "log_history": [
+    {
+      "loss": 0.8461713790893555,
+      "grad_norm": 1.9813538789749146,
+      "learning_rate": 0.0,
+      "epoch": 0.125,
+      "step": 1
+    },
+    {
+      "loss": 0.8356889486312866,
+      "grad_norm": 1.845456600189209,
+      "learning_rate": 0.0002,
+      "epoch": 0.25,
+      "step": 2
+    },
+    {
+      "loss": 0.7818650603294373,
+      "grad_norm": 1.7151308059692383,
+      "learning_rate": 0.0001866666666666667,
+      "epoch": 0.375,
+      "step": 3
+    },
+    {
+      "loss": 0.5845664143562317,
+      "grad_norm": 1.2814961671829224,
+      "learning_rate": 0.00017333333333333334,
+      "epoch": 0.5,
+      "step": 4
+    },
+    {
+      "eval_loss": 0.43205034732818604,
+      "eval_runtime": 0.5852,
+      "eval_samples_per_second": 6.835,
+      "eval_steps_per_second": 6.835,
+      "epoch": 0.5,
+      "step": 4
+    },
+    {
+      "loss": 0.48084527254104614,
+      "grad_norm": 1.1463773250579834,
+      "learning_rate": 0.00016,
+      "epoch": 0.625,
+      "step": 5
+    },
+    {
+      "loss": 0.30974307656288147,
+      "grad_norm": 0.9348639249801636,
+      "learning_rate": 0.00014666666666666666,
+      "epoch": 0.75,
+      "step": 6
+    },
+    {
+      "loss": 0.2596123516559601,
+      "grad_norm": 0.9039109349250793,
+      "learning_rate": 0.00013333333333333334,
+      "epoch": 0.875,
+      "step": 7
+    },
+    {
+      "loss": 0.2506173253059387,
+      "grad_norm": 1.0995993614196777,
+      "learning_rate": 0.00012,
+      "epoch": 1.0,
+      "step": 8
+    },
+    {
+      "eval_loss": 0.19715076684951782,
+      "eval_runtime": 0.592,
+      "eval_samples_per_second": 6.756,
+      "eval_steps_per_second": 6.756,
+      "epoch": 1.0,
+      "step": 8
+    },
+    {
+      "train_runtime": 10.0029,
+      "train_samples_per_second": 1.6,
+      "train_steps_per_second": 0.8,
+      "total_flos": 10151567992320.0,
+      "train_loss": 0.5436387285590172,
+      "epoch": 1.0,
+      "step": 8
+    },
+    {
+      "eval_loss": 0.19715076684951782,
+      "eval_runtime": 0.7439,
+      "eval_samples_per_second": 5.377,
+      "eval_steps_per_second": 5.377,
+      "epoch": 1.0,
+      "step": 8
+    }
+  ]
+}

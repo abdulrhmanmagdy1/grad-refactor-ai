@@ -1,0 +1,365 @@
+{
+  "status": "completed (pilot)",
+  "run_id": "pilot-2026-10-20",
+  "code_sha": {
+    "head": "d2d2f0bea9fbe220ad5c15114db15624e19e35c6",
+    "dirty": true
+  },
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "dataset_sha256": "c83a9fb975e2c84dd255a05afb495777711fbc32cd157aacf924662329c1f883",
+  "split_manifest": {
+    "train": 16,
+    "validation": 4,
+    "test_excluded": 2,
+    "dataset": "training/pilot/pilot-records.jsonl (pilot material built by training/pilot/build_pilot_data.py; not the curated dataset)"
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "nvidia_smi": "NVIDIA GeForce RTX 2050, 4096, 595.71",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9"
+  },
+  "dependency_lock": {
+    "file": "training/requirements-cuda.txt",
+    "sha256": "99ce0f70911d6fa7750b1f15731d23e4b48244e8e3f78d1573166dad110e8eeb",
+    "packages": {
+      "torch": "2.14.1+cu126",
+      "transformers": "5.20.2",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "datasets": "5.1.0",
+      "huggingface-hub": "2.2.0",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3"
+    },
+    "cuda": "12.6"
+  },
+  "config": {
+    "run_id": "pilot-2026-10-20",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "model_path": "../models/Qwen2.5-Coder-0.5B-Instruct",
+    "dataset": "../training/pilot/pilot-records.jsonl",
+    "output_dir": "../runs/training/pilot-full",
+    "seed": 42,
+    "max_length": 1024,
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "learning_rate": 0.0002,
+    "epochs": 2,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 2,
+    "warmup_steps": 1,
+    "lr_scheduler_type": "linear",
+    "logging_steps": 1,
+    "eval_steps": 4,
+    "save_steps": 4,
+    "save_total_limit": 1,
+    "max_steps": 16,
+    "gradient_checkpointing": false,
+    "precision": "auto",
+    "weight_decay": 0.0,
+    "precision_resolved": "bf16"
+  },
+  "seed": 42,
+  "duration_seconds": 20.8,
+  "peak_memory_mb": {
+    "torch_peak_allocated_per_step_max": 2167.4,
+    "torch_peak_reserved_per_step_max": 3728.0,
+    "torch_peak_allocated_evaluation": 1527.8,
+    "gpu_used_all_processes_before_load": 845,
+    "gpu_used_all_processes_peak_sampled": 3896
+  },
+  "validation_metrics": {
+    "eval_loss": 0.08009767532348633,
+    "note": "teacher-forced loss on 4 pilot validation records; not a refactoring metric"
+  },
+  "test_metrics": null,
+  "failures": [],
+  "artifact_url": null,
+  "artifact_sha256": "cf74fcea961ea9e94ffc228711c90c2bc5ac29e943a2dd27774a3bfca82bb34f",
+  "evaluator": null,
+  "artifact": {
+    "path": "runs/training/pilot-full/adapter (ignored by Git, kept locally)",
+    "adapter_model_bytes": 17640136,
+    "files_sha256": {
+      "adapter_config.json": "52fcc1e067ce4d18334d2dea49043452eb29dc3afac1e7812ad79d890774ce02",
+      "adapter_model.safetensors": "cf74fcea961ea9e94ffc228711c90c2bc5ac29e943a2dd27774a3bfca82bb34f",
+      "README.md": "6718fe791df1098b30979f2af5b512a48768f65dd6a646b29de9d6015ab5229b",
+      "training_args.bin": "b532f6b764aed158795c330b8dea60c712f25ef3f253f52add101369b42d4bdd"
+    }
+  },
+  "commands": [
+    "python training/pilot/build_pilot_data.py",
+    ".venv-train/Scripts/python.exe -X utf8 training/train_lora.py --config configs/training.pilot.json --check-data",
+    ".venv-train/Scripts/python.exe -X utf8 training/train_lora.py --config configs/training.pilot.json --record experiments/training/pilot-2026-10-20-full.json",
+    ".venv-train/Scripts/python.exe -X utf8 training/train_lora.py --config configs/training.pilot.json --output-dir runs/training/pilot-interrupted --stop-after-steps 8 --record experiments/training/pilot-2026-10-20-interrupted.json",
+    ".venv-train/Scripts/python.exe -X utf8 training/train_lora.py --config configs/training.pilot.json --output-dir runs/training/pilot-resumed --resume-from-checkpoint runs/training/pilot-interrupted/checkpoint-8 --record experiments/training/pilot-2026-10-20-resumed.json",
+    ".venv-train/Scripts/python.exe -X utf8 training/check_adapter.py --adapter-dir runs/training/pilot-full/adapter --dataset training/pilot/pilot-records.jsonl --base-benchmark experiments/models/2026-10-20-qwen2.5-coder-0.5b-instruct-benchmark-run1-under-memory-pressure.json --out experiments/training/pilot-2026-10-20-reload-check.json",
+    ".venv-train/Scripts/python.exe -X utf8 training/probe_training_memory.py --lengths 384,512,768,1024,1280,1536,2048 --out experiments/training/2026-10-20-training-memory-probe.json"
+  ],
+  "training": {
+    "optimizer_steps": 16,
+    "train_runtime_seconds": 20.0,
+    "trainable_parameters": 4399104,
+    "total_parameters": 498431872,
+    "trainable_parameter_dtypes": [
+      "torch.float32"
+    ],
+    "precision": "bf16",
+    "end_of_turn_token": "<|im_end|>",
+    "max_record_tokens": {
+      "train": 330,
+      "validation": 351
+    },
+    "train_loss_by_step": {
+      "1": 0.8462,
+      "2": 0.8357,
+      "3": 0.7822,
+      "4": 0.5875,
+      "5": 0.4824,
+      "6": 0.311,
+      "7": 0.26,
+      "8": 0.2509,
+      "9": 0.1925,
+      "10": 0.1317,
+      "11": 0.1136,
+      "12": 0.1085,
+      "13": 0.0874,
+      "14": 0.0797,
+      "15": 0.0902,
+      "16": 0.0387
+    },
+    "eval_loss_by_step": {
+      "4": 0.4331,
+      "8": 0.1979,
+      "12": 0.0963,
+      "16": 0.0801
+    }
+  },
+  "reload_check": {
+    "record": "experiments/training/pilot-2026-10-20-reload-check.json",
+    "fresh_process": true,
+    "items": 12,
+    "max_abs_logit_diff_max": 6.5625,
+    "outputs_differ": 12,
+    "validation_mean_reference_loss": {
+      "adapter": 0.0795,
+      "base": 0.7966
+    },
+    "parse_ok": {
+      "validation": {
+        "adapter": 4,
+        "base": 1
+      },
+      "benchmark": {
+        "adapter": 8,
+        "base": 0
+      }
+    },
+    "rubric_passed": {
+      "validation": {
+        "adapter": 3,
+        "base": 0
+      },
+      "benchmark": {
+        "adapter": 7,
+        "base": 0
+      }
+    },
+    "disabled_adapter_matches_separate_base_process": {
+      "benchmark_record": "2026-10-20-qwen2.5-coder-0.5b-instruct-benchmark-run1-under-memory-pressure.json",
+      "compared": 8,
+      "identical": 8
+    }
+  },
+  "resume_check": {
+    "interrupted_run": "experiments/training/pilot-2026-10-20-interrupted.json (same schedule, stopped and checkpointed after step 8)",
+    "resumed_run": "experiments/training/pilot-2026-10-20-resumed.json (resumed from checkpoint-8, ran steps 9 to 16 only)",
+    "learning_rate_steps_9_16_identical_to_uninterrupted": true,
+    "max_abs_train_loss_difference_steps_1_8_fresh_runs": 0.00289,
+    "max_abs_train_loss_difference_steps_9_16_after_resume": 0.00198,
+    "final_eval_loss": {
+      "uninterrupted": 0.0801,
+      "resumed": 0.0797
+    },
+    "adapter_sha256": {
+      "uninterrupted": "cf74fcea961ea9e94ffc228711c90c2bc5ac29e943a2dd27774a3bfca82bb34f",
+      "interrupted_step_8": "e7b1e45dc672cadb8832ec5e249b4b2a36d230869ed3cdab104e160006238729",
+      "resumed": "0eea532883c130a94b7dff0e45106d49d74db5fb5053da0305d77187ea5dbae4"
+    },
+    "note": "Two fresh runs with the same seed already differ by up to 3e-3 in loss from step 3 (non-deterministic GPU kernels), so the adapters differ bitwise; the resumed run stays within the same band."
+  },
+  "checkpoints": {
+    "bytes_each": 53152250,
+    "content": "adapter 17,640,136 bytes plus optimizer state 35,479,763 bytes",
+    "deleted_after_recording_checksums": true
+  },
+  "training_memory_probe": {
+    "record": "experiments/training/2026-10-20-training-memory-probe.json",
+    "results": [
+      {
+        "gradient_checkpointing": false,
+        "length": 384,
+        "status": "ok",
+        "step_s": 0.585,
+        "loss": 0.9979,
+        "peak_allocated_mib": 2308.4,
+        "peak_reserved_mib": 2468.0,
+        "gpu_used_mib_all_processes_after": 1484
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 512,
+        "status": "ok",
+        "step_s": 0.431,
+        "loss": 0.2495,
+        "peak_allocated_mib": 2772.5,
+        "peak_reserved_mib": 3008.0,
+        "gpu_used_mib_all_processes_after": 1484
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 768,
+        "status": "ok",
+        "step_s": 1.247,
+        "loss": 0.0313,
+        "peak_allocated_mib": 3652.1,
+        "peak_reserved_mib": 3930.0,
+        "gpu_used_mib_all_processes_after": 1259
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 1024,
+        "status": "ok",
+        "step_s": 2.298,
+        "loss": 0.554,
+        "peak_allocated_mib": 4528.8,
+        "peak_reserved_mib": 4920.0,
+        "gpu_used_mib_all_processes_after": 1294
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 1280,
+        "status": "ok",
+        "step_s": 28.023,
+        "loss": 0.445,
+        "peak_allocated_mib": 5353.2,
+        "peak_reserved_mib": 5854.0,
+        "gpu_used_mib_all_processes_after": 1309
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 1536,
+        "status": "ok",
+        "step_s": 9.58,
+        "loss": 0.395,
+        "peak_allocated_mib": 6234.6,
+        "peak_reserved_mib": 6814.0,
+        "gpu_used_mib_all_processes_after": 1309
+      },
+      {
+        "gradient_checkpointing": false,
+        "length": 2048,
+        "status": "out_of_memory",
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 384,
+        "status": "ok",
+        "step_s": 0.709,
+        "loss": 0.9979,
+        "peak_allocated_mib": 1660.7,
+        "peak_reserved_mib": 1866.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 512,
+        "status": "ok",
+        "step_s": 0.763,
+        "loss": 0.2476,
+        "peak_allocated_mib": 1922.6,
+        "peak_reserved_mib": 2142.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 768,
+        "status": "ok",
+        "step_s": 0.673,
+        "loss": 0.0309,
+        "peak_allocated_mib": 2382.8,
+        "peak_reserved_mib": 2694.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 1024,
+        "status": "ok",
+        "step_s": 0.87,
+        "loss": 0.5576,
+        "peak_allocated_mib": 2838.4,
+        "peak_reserved_mib": 3240.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 1280,
+        "status": "ok",
+        "step_s": 1.606,
+        "loss": 0.4462,
+        "peak_allocated_mib": 3292.6,
+        "peak_reserved_mib": 3786.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 1536,
+        "status": "ok",
+        "step_s": 1.967,
+        "loss": 0.3977,
+        "peak_allocated_mib": 3749.3,
+        "peak_reserved_mib": 4344.0,
+        "gpu_used_mib_all_processes_after": 1331
+      },
+      {
+        "gradient_checkpointing": true,
+        "length": 2048,
+        "status": "ok",
+        "step_s": 2.675,
+        "loss": 0.1762,
+        "peak_allocated_mib": 4665.4,
+        "peak_reserved_mib": 5432.0,
+        "gpu_used_mib_all_processes_after": 1331
+      }
+    ]
+  },
+  "budget_for_t17": {
+    "max_length_tokens": 1024,
+    "gradient_checkpointing": true,
+    "batch_size": 1,
+    "measured_at_1024_tokens": "peak allocated 2,838 MiB, reserved 3,240 MiB, 0.87 s per micro-batch with checkpointing",
+    "vram_limit": "keep PyTorch reserved memory at or below about 3.3 GB: above that the Windows driver spills into system RAM (1,280 tokens without checkpointing took 28 s for one step)",
+    "max_job_duration_minutes": 60,
+    "duration_estimate": "about 0.9 s per micro-batch of up to 1,024 tokens, so 1,000 micro-batches (for example 330 records for 3 epochs) take about 15 minutes plus evaluation",
+    "disk": "about 51 MB per checkpoint and 17.6 MB per adapter; save_total_limit 1",
+    "data_constraint": "curated train and validation records must be at most 1,024 tokens (check with train_lora.py --check-data); a realistic 3,000-character input gives about 1,512 tokens (910 prompt plus 602 completion)"
+  },
+  "limitations": [
+    "22 pilot records written by the models workstream, 16 of them trained on; the benchmark functions share their style, so the reload-check rubric results show that the adapter learned the output format, not that it generalizes.",
+    "Behavior was not tested: one adapter output (pilot-18) drops the paid-but-not-shipped branch, and the templated explanations state nesting depths the model did not verify."
+  ]
+}

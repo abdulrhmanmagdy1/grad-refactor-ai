@@ -1,0 +1,51 @@
+{
+  "record": "T04 second candidate: not measured because of the measured disk limit",
+  "recorded_at": "2026-10-20T13:22:00+03:00",
+  "status": "not_measured",
+  "decision": "Benchmark only Qwen/Qwen2.5-Coder-0.5B-Instruct in wave 1. No 1.5B model, quantized variant or bitsandbytes was downloaded or installed (coordinator instruction of 2026-10-20 after the disk check).",
+  "candidate": {
+    "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct",
+    "revision_seen": "2e1fd397ee46e1388853d2af2c993145b0f1098a",
+    "license_card_metadata": "apache-2.0 (Hugging Face API cardData; the LICENSE file itself was not reviewed because nothing was downloaded)",
+    "weights_bytes_bf16": 3087467144,
+    "repository_total_mb": 3099
+  },
+  "variants_considered": [
+    {
+      "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct-GPTQ-Int4",
+      "revision_seen": "d45c7545dc428f013534f8bfd0441b3afffc0006",
+      "weights_bytes": 1149862960,
+      "extra_runtime_needed": "a GPTQ kernel package that is not in training/requirements-cuda.txt"
+    },
+    {
+      "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct-AWQ",
+      "revision_seen": "867d050da8a1af36b04fde627402656b3f918511",
+      "weights_bytes": 1614553840,
+      "extra_runtime_needed": "an AWQ kernel package that is not in training/requirements-cuda.txt"
+    },
+    {
+      "model_id": "Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF",
+      "revision_seen": "f86cb2c1fa58255f8052cc32aeede1b7482d4361",
+      "weights_bytes_q4_k_m": 1117320768,
+      "extra_runtime_needed": "llama.cpp; a different runtime from the Transformers/PEFT training path"
+    }
+  ],
+  "measured_free_disk_mb": {
+    "before_training_environment_install_12_14": 8200,
+    "after_training_environment_install_12_37": 3367,
+    "after_0_5b_download_12_45": 2300,
+    "coordinator_message_report": 1900,
+    "13_12_after_system_wide_drop": 288,
+    "13_20": 127
+  },
+  "free_space_floor_mb": {
+    "team_rule": 1500,
+    "coordinator_stop_threshold": 1200
+  },
+  "why_not_measured": [
+    "Disk: with 2.3 GB free after the 0.5B download, even the smallest 1.5B variant (GPTQ-Int4, 1.15 GB) would have left about 1.15 GB, below both floors; the bf16 weights (3.09 GB) exceed the free space outright.",
+    "GPU memory: the bf16 1.5B weights alone are 2,944 MiB. The measured free VRAM with the desktop running was 3,305 MiB (torch.cuda.mem_get_info at 12:37), and the 0.5B worker process needed about 140 MiB beyond its weights, so bf16 inference would leave almost nothing for activations and LoRA training of 1.5B in bf16 is not possible on this GPU.",
+    "Quantized variants need an extra kernel runtime outside the pinned, tested lock, and the training script implements unquantized LoRA only (QLoRA is not implemented)."
+  ],
+  "revisit_if": "More disk (at least about 3 GB beyond the floor) and a second GPU environment check become available, or the 0.5B model proves unusable after fine-tuning."
+}

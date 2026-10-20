@@ -1,0 +1,162 @@
+{
+  "record": "T05 training memory probe (one LoRA step per length; pilot text)",
+  "recorded_at": "2026-10-20T11:56:58+00:00",
+  "command": "python.exe training/probe_training_memory.py --lengths 384,512,768,1024,1280,1536,2048 --out experiments/training/2026-10-20-training-memory-probe.json",
+  "gpu": "NVIDIA GeForce RTX 2050, 4096, 595.71",
+  "gpu_used_mib_all_processes_before_load": 314,
+  "lora": {
+    "r": 8,
+    "alpha": 16,
+    "dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ]
+  },
+  "precision": "bf16 base weights, fp32 LoRA weights, bf16 autocast",
+  "batch_size": 1,
+  "label_share": 0.45,
+  "results": [
+    {
+      "gradient_checkpointing": false,
+      "length": 384,
+      "status": "ok",
+      "step_s": 0.585,
+      "loss": 0.9979,
+      "peak_allocated_mib": 2308.4,
+      "peak_reserved_mib": 2468.0,
+      "gpu_used_mib_all_processes_after": 1484
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 512,
+      "status": "ok",
+      "step_s": 0.431,
+      "loss": 0.2495,
+      "peak_allocated_mib": 2772.5,
+      "peak_reserved_mib": 3008.0,
+      "gpu_used_mib_all_processes_after": 1484
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 768,
+      "status": "ok",
+      "step_s": 1.247,
+      "loss": 0.0313,
+      "peak_allocated_mib": 3652.1,
+      "peak_reserved_mib": 3930.0,
+      "gpu_used_mib_all_processes_after": 1259
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 1024,
+      "status": "ok",
+      "step_s": 2.298,
+      "loss": 0.554,
+      "peak_allocated_mib": 4528.8,
+      "peak_reserved_mib": 4920.0,
+      "gpu_used_mib_all_processes_after": 1294
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 1280,
+      "status": "ok",
+      "step_s": 28.023,
+      "loss": 0.445,
+      "peak_allocated_mib": 5353.2,
+      "peak_reserved_mib": 5854.0,
+      "gpu_used_mib_all_processes_after": 1309
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 1536,
+      "status": "ok",
+      "step_s": 9.58,
+      "loss": 0.395,
+      "peak_allocated_mib": 6234.6,
+      "peak_reserved_mib": 6814.0,
+      "gpu_used_mib_all_processes_after": 1309
+    },
+    {
+      "gradient_checkpointing": false,
+      "length": 2048,
+      "status": "out_of_memory",
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 384,
+      "status": "ok",
+      "step_s": 0.709,
+      "loss": 0.9979,
+      "peak_allocated_mib": 1660.7,
+      "peak_reserved_mib": 1866.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 512,
+      "status": "ok",
+      "step_s": 0.763,
+      "loss": 0.2476,
+      "peak_allocated_mib": 1922.6,
+      "peak_reserved_mib": 2142.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 768,
+      "status": "ok",
+      "step_s": 0.673,
+      "loss": 0.0309,
+      "peak_allocated_mib": 2382.8,
+      "peak_reserved_mib": 2694.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 1024,
+      "status": "ok",
+      "step_s": 0.87,
+      "loss": 0.5576,
+      "peak_allocated_mib": 2838.4,
+      "peak_reserved_mib": 3240.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 1280,
+      "status": "ok",
+      "step_s": 1.606,
+      "loss": 0.4462,
+      "peak_allocated_mib": 3292.6,
+      "peak_reserved_mib": 3786.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 1536,
+      "status": "ok",
+      "step_s": 1.967,
+      "loss": 0.3977,
+      "peak_allocated_mib": 3749.3,
+      "peak_reserved_mib": 4344.0,
+      "gpu_used_mib_all_processes_after": 1331
+    },
+    {
+      "gradient_checkpointing": true,
+      "length": 2048,
+      "status": "ok",
+      "step_s": 2.675,
+      "loss": 0.1762,
+      "peak_allocated_mib": 4665.4,
+      "peak_reserved_mib": 5432.0,
+      "gpu_used_mib_all_processes_after": 1331
+    }
+  ]
+}
