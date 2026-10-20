@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "reference_case_mismatch",
+    "message": "The submitted code differs from reference case 'shipping_cost'. Submit the case's code unchanged, or submit without a reference case.",
+    "details": [
+      {
+        "reference_case_id": "shipping_cost"
+      }
+    ]
+  }
+}

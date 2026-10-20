@@ -1,0 +1,114 @@
+"""Service configuration from the REFACTOR_AI_* environment variables.
+
+Defaults and meanings are documented in docs/architecture/contracts.md. Values are read
+once when the service starts; an invalid value stops startup with a message that names
+the variable. Empty values count as unset. Relative paths are resolved against the
+working directory, so start the service from the repository root.
+"""
+
+from __future__ import annotations
+
+import os
+import re
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+
+ENV_PROVIDER = "REFACTOR_AI_PROVIDER"
+ENV_MODEL_CONFIG = "REFACTOR_AI_MODEL_CONFIG"
+ENV_DB = "REFACTOR_AI_DB"
+ENV_RUNNER = "REFACTOR_AI_RUNNER"
+ENV_MAX_PENDING = "REFACTOR_AI_MAX_PENDING"
+ENV_RETENTION = "REFACTOR_AI_RETENTION"
+
+PROVIDERS = ("fake", "local")
+RUNNER_MODES = ("auto", "disabled")
+MAX_PENDING_RANGE = (1, 100)
+RETENTION_RANGE = (1, 100_000)
+
+_INTEGER = re.compile(r"[+-]?[0-9]+")
+
+
+class ConfigError(ValueError):
+    """A configuration value is invalid; the message names the variable."""
+
+
+@dataclass(frozen=True)
+class Settings:
+    """Validated service settings.
+
+    provider: "fake" (deterministic test provider, the default) or "local" (the pinned
+    local model through refactor_ai.providers.local). runner: "auto" lets the reference
+    runner execute trusted tests only when its isolation checks pass; "disabled" forces
+    not_run. max_pending bounds unfinished runs (waiting plus the one running).
+    retention caps stored runs. frontend_dist, refactor_use_adapter and
+    shutdown_grace_s are code-level settings without environment variables.
+    """
+
+    provider: str = "fake"
+    local_model_config: Path = Path("configs/model.local.json")
+    db_path: Path = Path("runs/app/runs.sqlite3")
+    runner: str = "auto"
+    max_pending: int = 4
+    retention: int = 200
+    frontend_dist: Path | None = Path("frontend/dist")
+    refactor_use_adapter: bool = False
+    shutdown_grace_s: float = 10.0
+
+    def __post_init__(self) -> None:
+        if self.provider not in PROVIDERS:
+            raise ConfigError(f"{ENV_PROVIDER} must be 'fake' or 'local', got {self.provider!r}")
+        if self.runner not in RUNNER_MODES:
+            raise ConfigError(f"{ENV_RUNNER} must be 'auto' or 'disabled', got {self.runner!r}")
+        _check_int(ENV_MAX_PENDING, self.max_pending, *MAX_PENDING_RANGE)
+        _check_int(ENV_RETENTION, self.retention, *RETENTION_RANGE)
+        for name, env in (("local_model_config", ENV_MODEL_CONFIG), ("db_path", ENV_DB)):
+            value = getattr(self, name)
+            if not str(value).strip():
+                raise ConfigError(f"{env} must not be empty")
+            object.__setattr__(self, name, Path(value))
+        if self.frontend_dist is not None:
+            object.__setattr__(self, "frontend_dist", Path(self.frontend_dist))
+        if not isinstance(self.refactor_use_adapter, bool):
+            raise ConfigError("refactor_use_adapter must be a boolean")
+        if not 0 <= float(self.shutdown_grace_s) <= 600:
+            raise ConfigError("shutdown_grace_s must be between 0 and 600 seconds")
+
+    @classmethod
+    def from_env(cls, environ: Mapping[str, str] | None = None) -> Settings:
+        """Read the documented variables; unset or empty variables keep their defaults."""
+        env = os.environ if environ is None else environ
+        values: dict[str, object] = {}
+        if (value := _get(env, ENV_PROVIDER)) is not None:
+            values["provider"] = value.lower()
+        if (value := _get(env, ENV_MODEL_CONFIG)) is not None:
+            values["local_model_config"] = Path(value)
+        if (value := _get(env, ENV_DB)) is not None:
+            values["db_path"] = Path(value)
+        if (value := _get(env, ENV_RUNNER)) is not None:
+            values["runner"] = value.lower()
+        if (value := _get(env, ENV_MAX_PENDING)) is not None:
+            values["max_pending"] = _parse_int(ENV_MAX_PENDING, value)
+        if (value := _get(env, ENV_RETENTION)) is not None:
+            values["retention"] = _parse_int(ENV_RETENTION, value)
+        return cls(**values)
+
+
+def _get(env: Mapping[str, str], name: str) -> str | None:
+    value = env.get(name)
+    if value is None or not value.strip():
+        return None
+    return value.strip()
+
+
+def _parse_int(name: str, value: str) -> int:
+    if not _INTEGER.fullmatch(value):
+        raise ConfigError(f"{name} must be a whole number, got {value!r}")
+    return int(value)
+
+
+def _check_int(name: str, value: object, low: int, high: int) -> None:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ConfigError(f"{name} must be a whole number, got {value!r}")
+    if not low <= value <= high:
+        raise ConfigError(f"{name} must be between {low} and {high}, got {value}")

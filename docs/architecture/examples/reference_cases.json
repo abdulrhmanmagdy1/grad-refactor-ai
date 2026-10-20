@@ -1,0 +1,16 @@
+[
+  {
+    "case_id": "shipping_cost",
+    "title": "Shipping cost with nested validation",
+    "function_name": "shipping_cost",
+    "code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight > 0:\n        if express:\n            return weight * 3\n        else:\n            return weight * 2\n    else:\n        raise ValueError(\"weight must be positive\")\n",
+    "test_count": 4
+  },
+  {
+    "case_id": "member_discount",
+    "title": "Member discount with a missing price",
+    "function_name": "discount",
+    "code": "def discount(price, member):\n    if price is not None:\n        if member:\n            return price * 0.9\n        else:\n            return price\n    else:\n        return 0\n",
+    "test_count": 3
+  }
+]

@@ -17,7 +17,45 @@ uv run pytest
 uv run uvicorn refactor_ai.api:app --reload --host 127.0.0.1
 ```
 
-These uv commands also work in Windows PowerShell without activating the virtual environment manually. Open http://127.0.0.1:8000/docs and try POST /api/v1/analyze. The service parses code but does not execute it.
+These uv commands also work in Windows PowerShell without activating the virtual environment manually. Open http://127.0.0.1:8000/docs for the API reference, then try POST /api/v1/analyze or submit a run as described below. The service parses code but never executes it.
+
+## Running the service
+
+```bash
+uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
+```
+
+Start it from the repository root, because relative paths in the settings are resolved against the working directory. With `--reload`, a code change restarts the process and any run in progress is recorded as interrupted.
+
+**Fake mode (default).** The deterministic fake provider stands in for the model and labels every text `FAKE PROVIDER (not a model):`. GET /health reports `"mode": "fake"`. Use it for development and tests; its output is never evidence of model behavior.
+
+**Local model mode.** Create `configs/model.local.json` (ignored by Git) from the models workstream's `configs/model.example.json`; the keys are documented in `src/refactor_ai/providers/local.py`. Then start the service with the provider variable set:
+
+```powershell
+$env:REFACTOR_AI_PROVIDER = "local"
+uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
+```
+
+On Linux or macOS use `REFACTOR_AI_PROVIDER=local uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000`. The model loads on the first request; until then GET /health reports `"mode": "local_model"`, the configured model identity and `"ready": false`, or the reason the provider cannot start.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| REFACTOR_AI_PROVIDER | `fake` | `fake` or `local` |
+| REFACTOR_AI_MODEL_CONFIG | `configs/model.local.json` | Local model, adapter and worker interpreter settings |
+| REFACTOR_AI_DB | `runs/app/runs.sqlite3` | SQLite run history, ignored by Git |
+| REFACTOR_AI_RUNNER | `auto` | `auto` runs trusted reference tests only when the runner's isolation checks pass; `disabled` always reports `not_run` |
+| REFACTOR_AI_MAX_PENDING | `4` | Unfinished runs allowed at once (waiting plus running), 1 to 100 |
+| REFACTOR_AI_RETENTION | `200` | Stored runs kept, 1 to 100,000; the oldest finished runs are deleted first |
+
+An invalid value stops startup with a message that names the variable; an empty value means the default.
+
+**Using the run API.** POST /api/v1/runs with `{"code": "...", "workflow_mode": "multi_role"}` returns 202 with a `run_id`; poll GET /api/v1/runs/{run_id} until `status` is `completed` or `failed`, then read the diff and the verification results, download GET /api/v1/runs/{run_id}/proposal and record a decision with POST /api/v1/runs/{run_id}/decision. GET /api/v1/reference-cases lists the demonstration cases whose trusted tests can run. The [contracts](../architecture/contracts.md), the [example JSON](../architecture/examples/README.md) and the [backend notes](../report/notes/backend.md) describe every field and error.
+
+**Web interface.** When `frontend/dist` exists, the same process serves the built interface at http://127.0.0.1:8000/. During frontend development the API accepts browser requests only from `http://127.0.0.1:5173` and `http://localhost:5173`.
+
+**Run history.** Delete one run with DELETE /api/v1/runs/{run_id}. To clear everything, stop the service and delete `runs/app/`, or point REFACTOR_AI_DB at another file.
+
+**Contract examples.** After changing a contract model, the task module or an error message, regenerate the examples with `uv run python scripts/export_contract_examples.py`; `--check` verifies them, and the test suite fails while they are stale.
 
 ## Before a pull request
 

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "supported_task": true,
+  "findings": [
+    {
+      "type": "nested_conditional",
+      "start_line": 3,
+      "end_line": 9,
+      "reason": "FAKE PROVIDER (not a model): The else branch ending near line 9 always returns or raises, so it can become a guard clause and the remaining logic can be dedented."
+    }
+  ],
+  "unsupported_reason": null,
+  "source": "model"
+}

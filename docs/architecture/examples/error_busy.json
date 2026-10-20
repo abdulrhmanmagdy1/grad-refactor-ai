@@ -1,0 +1,12 @@
+{
+  "error": {
+    "code": "busy",
+    "message": "The run queue is full (4 unfinished runs). Try again later.",
+    "details": [
+      {
+        "max_pending": 4,
+        "retry_after_s": 10
+      }
+    ]
+  }
+}

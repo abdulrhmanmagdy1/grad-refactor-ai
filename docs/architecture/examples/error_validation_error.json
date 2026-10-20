@@ -1,0 +1,16 @@
+{
+  "error": {
+    "code": "validation_error",
+    "message": "Invalid request (code): code must not be blank",
+    "details": [
+      {
+        "loc": [
+          "body",
+          "code"
+        ],
+        "message": "Value error, code must not be blank",
+        "type": "value_error"
+      }
+    ]
+  }
+}

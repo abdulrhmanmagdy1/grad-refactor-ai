@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "unknown_reference_case",
+    "message": "No demonstration reference case has the id 'missing_case'.",
+    "details": [
+      {
+        "reference_case_id": "missing_case"
+      }
+    ]
+  }
+}

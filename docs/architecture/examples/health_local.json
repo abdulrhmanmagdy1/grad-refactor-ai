@@ -1,0 +1,32 @@
+{
+  "status": "ok",
+  "version": "0.1.0",
+  "mode": "local_model",
+  "provider": {
+    "provider_mode": "local_model",
+    "model_id": "example-org/example-code-model",
+    "model_revision": "0000000000000000000000000000000000000000",
+    "adapter_id": "example-guard-clauses-lora",
+    "adapter_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "device": "cuda:0",
+    "ready": true,
+    "detail": "Illustrative placeholder identity; real values come from configs/model.local.json."
+  },
+  "runner": {
+    "enabled": true,
+    "reason": null,
+    "isolation": {
+      "separate_process": true,
+      "time_limit": true,
+      "memory_limit": true,
+      "process_limit": true,
+      "no_network": true,
+      "empty_environment": true,
+      "temporary_directory": true
+    }
+  },
+  "queue": {
+    "max_pending": 4,
+    "pending": 1
+  }
+}

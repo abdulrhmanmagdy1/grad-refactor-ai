@@ -8,9 +8,9 @@ __pycache__/
 .env
 .env.*
 !.env.example
-data/
-models/
-runs/
+/data/
+/models/
+/runs/
 *.safetensors
 *.pt
 *.pth

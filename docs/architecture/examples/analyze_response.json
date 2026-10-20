@@ -1,0 +1,12 @@
+{
+  "syntax_valid": true,
+  "findings": [
+    {
+      "rule": "deep-nesting",
+      "line": 5,
+      "message": "Four nested control blocks; consider simplifying control flow."
+    }
+  ],
+  "error": null,
+  "engine": "static-heuristics"
+}

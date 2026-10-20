@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "proposal_unavailable",
+    "message": "No proposal is available: The run finished without a proposal.",
+    "details": null
+  }
+}

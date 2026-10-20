@@ -1,0 +1,244 @@
+{
+  "schema_version": 1,
+  "run_id": "2a6d8f0b1c3e4a5b9d7f6e5d4c3b2a10",
+  "created_at": "2026-10-20T09:02:00Z",
+  "started_at": "2026-10-20T09:02:00.400000Z",
+  "finished_at": "2026-10-20T09:02:01Z",
+  "status": "completed",
+  "task_type": "guard_clauses",
+  "workflow_mode": "multi_role",
+  "reference_case_id": "shipping_cost",
+  "original_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight > 0:\n        if express:\n            return weight * 3\n        else:\n            return weight * 2\n    else:\n        raise ValueError(\"weight must be positive\")\n",
+  "proposed_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight <= 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n",
+  "provider_mode": "fake",
+  "model": {
+    "model_id": "fake-provider",
+    "model_revision": "fake-v1",
+    "adapter_id": null,
+    "adapter_sha256": null,
+    "use_adapter": false
+  },
+  "settings": {
+    "mode": "multi_role",
+    "refactor_use_adapter": false,
+    "max_calls": 5,
+    "max_corrections": 1,
+    "run_timeout_s": 600.0,
+    "generation": {
+      "analysis": {
+        "max_new_tokens": 384,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 2048,
+        "timeout_s": 120.0
+      },
+      "refactor": {
+        "max_new_tokens": 768,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 2048,
+        "timeout_s": 120.0
+      },
+      "review": {
+        "max_new_tokens": 384,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_input_tokens": 2048,
+        "timeout_s": 120.0
+      }
+    }
+  },
+  "attempt_count": 1,
+  "call_count": 3,
+  "stage_timings": [
+    {
+      "stage": "validation",
+      "attempt": 0,
+      "started_at": "2026-10-20T09:02:00.400000Z",
+      "elapsed_s": 0.002,
+      "calls": 0
+    },
+    {
+      "stage": "analysis",
+      "attempt": 0,
+      "started_at": "2026-10-20T09:02:00.410000Z",
+      "elapsed_s": 0.01,
+      "calls": 1
+    },
+    {
+      "stage": "generation",
+      "attempt": 0,
+      "started_at": "2026-10-20T09:02:00.420000Z",
+      "elapsed_s": 0.01,
+      "calls": 1
+    },
+    {
+      "stage": "verification",
+      "attempt": 0,
+      "started_at": "2026-10-20T09:02:00.430000Z",
+      "elapsed_s": 0.45,
+      "calls": 0
+    },
+    {
+      "stage": "review",
+      "attempt": 0,
+      "started_at": "2026-10-20T09:02:00.880000Z",
+      "elapsed_s": 0.01,
+      "calls": 1
+    }
+  ],
+  "analysis": {
+    "schema_version": 1,
+    "supported_task": true,
+    "findings": [
+      {
+        "type": "nested_conditional",
+        "start_line": 3,
+        "end_line": 9,
+        "reason": "FAKE PROVIDER (not a model): The else branch ending near line 9 always returns or raises, so it can become a guard clause and the remaining logic can be dedented."
+      }
+    ],
+    "unsupported_reason": null,
+    "source": "model"
+  },
+  "findings": [
+    {
+      "type": "nested_conditional",
+      "start_line": 3,
+      "end_line": 9,
+      "reason": "FAKE PROVIDER (not a model): The else branch ending near line 9 always returns or raises, so it can become a guard clause and the remaining logic can be dedented."
+    }
+  ],
+  "explanation": "FAKE PROVIDER (not a model): deterministic AST transformation used for testing.",
+  "diff": "--- original.py\n+++ proposed.py\n@@ -1,9 +1,7 @@\n def shipping_cost(weight, express):\n     \"\"\"Return the shipping cost.\"\"\"\n-    if weight > 0:\n-        if express:\n-            return weight * 3\n-        else:\n-            return weight * 2\n-    else:\n-        raise ValueError(\"weight must be positive\")\n+    if weight <= 0:\n+        raise ValueError('weight must be positive')\n+    if express:\n+        return weight * 3\n+    return weight * 2\n",
+  "changed_lines": [
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "review": {
+    "schema_version": 1,
+    "verdict": "accept",
+    "reasons": [
+      "FAKE PROVIDER (not a model): placeholder review; no model judged this code."
+    ],
+    "suggested_correction": null
+  },
+  "verification": {
+    "syntax": {
+      "status": "pass",
+      "error": null
+    },
+    "rubric": {
+      "status": "pass",
+      "checks": {
+        "parses_as_single_function": true,
+        "same_name": true,
+        "same_signature": true,
+        "same_docstring": true,
+        "within_task_constraints": true,
+        "nesting_reduced": true,
+        "has_guard_clause": true,
+        "no_new_calls": true
+      },
+      "reasons": []
+    },
+    "reference_tests": {
+      "status": "pass",
+      "case_id": "shipping_cost",
+      "total": 4,
+      "passed": 4,
+      "failed": 0,
+      "errored": 0,
+      "reason": null,
+      "duration_s": 0.42,
+      "failures": []
+    },
+    "model_review": {
+      "status": "accept",
+      "reasons": [
+        "FAKE PROVIDER (not a model): placeholder review; no model judged this code."
+      ],
+      "error": null
+    },
+    "disposition": "proposal_ready",
+    "disposition_reasons": []
+  },
+  "attempts": [
+    {
+      "attempt": 0,
+      "raw_output": "Explanation: FAKE PROVIDER (not a model): deterministic AST transformation used for testing.\n```python\ndef shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight <= 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n```",
+      "parse_error": null,
+      "parse_repaired": false,
+      "proposed_code": "def shipping_cost(weight, express):\n    \"\"\"Return the shipping cost.\"\"\"\n    if weight <= 0:\n        raise ValueError('weight must be positive')\n    if express:\n        return weight * 3\n    return weight * 2\n",
+      "explanation": "FAKE PROVIDER (not a model): deterministic AST transformation used for testing.",
+      "verification": {
+        "syntax": {
+          "status": "pass",
+          "error": null
+        },
+        "rubric": {
+          "status": "pass",
+          "checks": {
+            "parses_as_single_function": true,
+            "same_name": true,
+            "same_signature": true,
+            "same_docstring": true,
+            "within_task_constraints": true,
+            "nesting_reduced": true,
+            "has_guard_clause": true,
+            "no_new_calls": true
+          },
+          "reasons": []
+        },
+        "reference_tests": {
+          "status": "pass",
+          "case_id": "shipping_cost",
+          "total": 4,
+          "passed": 4,
+          "failed": 0,
+          "errored": 0,
+          "reason": null,
+          "duration_s": 0.42,
+          "failures": []
+        },
+        "model_review": {
+          "status": "accept",
+          "reasons": [
+            "FAKE PROVIDER (not a model): placeholder review; no model judged this code."
+          ],
+          "error": null
+        },
+        "disposition": "proposal_ready",
+        "disposition_reasons": []
+      },
+      "review": {
+        "schema_version": 1,
+        "verdict": "accept",
+        "reasons": [
+          "FAKE PROVIDER (not a model): placeholder review; no model judged this code."
+        ],
+        "suggested_correction": null
+      },
+      "model": {
+        "model_id": "fake-provider",
+        "model_revision": "fake-v1",
+        "adapter_id": null,
+        "adapter_sha256": null,
+        "use_adapter": false
+      },
+      "prompt_tokens": 120,
+      "completion_tokens": 40,
+      "elapsed_s": 0.01
+    }
+  ],
+  "stop_reason": "completed",
+  "error": null,
+  "warnings": [],
+  "human_decision": "accepted"
+}

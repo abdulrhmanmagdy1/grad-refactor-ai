@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "payload_too_large",
+    "message": "The request body exceeds the 1048576-byte limit.",
+    "details": null
+  }
+}

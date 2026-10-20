@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "verdict": "reject",
+  "reasons": [
+    "FAKE PROVIDER (not a model): scripted review: a weight of 0 no longer raises ValueError."
+  ],
+  "suggested_correction": "Keep zero invalid: the guard must test weight <= 0."
+}
