@@ -1,5 +1,6 @@
 """Evaluation harness: arms, test-split guard, case-level records, failures, resume."""
 
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -151,16 +152,58 @@ def test_arms_follow_the_contract_and_share_generation_settings():
 
 
 def write_dataset(path: Path) -> None:
+    case_fields = {
+        "source_url": None,
+        "task_version": 1,
+        "prompt": "Task: guard_clauses\nCode:\n```python\n" + ORIGINAL + "```",
+        "completion": "```python\n" + TARGET + "```\nExplanation: guard clauses",
+    }
     rows = [
-        dict(RECORD, split=split, id=f"gc1-{split}") for split in ("train", "validation", "test")
+        dict(RECORD, split=split, id=f"gc1-{split}", **case_fields)
+        for split in ("train", "validation", "test")
     ]
     path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+
+
+def frozen_record(dataset: Path) -> dict:
+    """A protocol freeze record that matches the dataset, the harness and this code."""
+    from refactor_ai.data import content
+
+    rows = content.records_from_text(dataset.read_text(encoding="utf-8"))
+    return {
+        "protocol_version": "eval-v1",
+        "status": "frozen",
+        "model": dict(FROZEN_MODEL),
+        "arms": protocol.frozen_arm_settings(),
+        "data": {
+            "dataset_sha256": cases.dataset_sha256(dataset),
+            "test_split": {
+                "split_sha256": protocol.split_sha256(dataset, "test"),
+                "content_sha256": content.content_sha256(rows, "test"),
+                "count": sum(row["split"] == "test" for row in rows),
+            },
+        },
+        "frozen_code": {"files": protocol.frozen_code_sha256()},
+    }
+
+
+def write_freezes(root: Path, freeze: dict, test_freeze: dict | None = None) -> None:
+    path = root / protocol.PROTOCOL_FREEZE_PATH
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(freeze), encoding="utf-8")
+    test_path = root / protocol.TEST_FREEZE_PATH
+    if test_freeze is None:
+        test_path.unlink(missing_ok=True)
+    else:
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text(json.dumps(test_freeze), encoding="utf-8")
 
 
 def test_test_split_guard(tmp_path):
     dataset = tmp_path / "records.jsonl"
     write_dataset(dataset)
     kwargs = {"records_path": dataset, "root": tmp_path, "provider_mode": "local_model"}
+    confirmed = {"confirm_frozen_test": True, "protocol_version": "eval-v1", **kwargs}
     assert (
         protocol.authorize_split(
             "validation", confirm_frozen_test=False, protocol_version=None, **kwargs
@@ -178,40 +221,109 @@ def test_test_split_guard(tmp_path):
             "test", confirm_frozen_test=True, protocol_version="eval-v0", **kwargs
         )
     with pytest.raises(protocol.TestSplitRefused, match="not frozen"):
-        protocol.authorize_split(
-            "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
-        )
-    freeze = tmp_path / protocol.PROTOCOL_FREEZE_PATH
-    freeze.parent.mkdir(parents=True)
-    freeze.write_text(
-        json.dumps({"status": "frozen", "protocol_version": "eval-v1"}), encoding="utf-8"
-    )
+        protocol.authorize_split("test", **confirmed)
+    good = frozen_record(dataset)
+    write_freezes(tmp_path, dict(good, status="draft"))
+    with pytest.raises(protocol.TestSplitRefused, match="not frozen"):
+        protocol.authorize_split("test", **confirmed)
+    write_freezes(tmp_path, good)
     with pytest.raises(protocol.TestSplitRefused, match="local model"):
+        protocol.authorize_split("test", **dict(confirmed, provider_mode="fake"))
+
+    # Exactly this record is accepted, with or without the test-split freeze record.
+    evidence = protocol.authorize_split("test", **confirmed)
+    assert evidence == {"test_freeze": None, "protocol_freeze": good}
+    split = good["data"]["test_split"]
+    test_freeze = {"split_sha256": split["split_sha256"], "content_sha256": split["content_sha256"]}
+    write_freezes(tmp_path, good, test_freeze)
+    assert protocol.authorize_split("test", **confirmed)["test_freeze"] == test_freeze
+
+
+@pytest.mark.parametrize(
+    ("change", "expected"),
+    [
+        (lambda f: f.update(protocol_version="eval-v2"), "is not frozen"),
+        (lambda f: f["data"]["test_split"].update(split_sha256="0" * 64), "split_sha256"),
+        (lambda f: f["data"]["test_split"].update(content_sha256="0" * 64), "content_sha256"),
+        (lambda f: f["data"]["test_split"].update(count=87), "count 1 differs"),
+        (lambda f: f["data"].update(dataset_sha256="0" * 64), "dataset hash"),
+        (lambda f: f["arms"]["D"].update(max_corrections=0), "arm D"),
+        (
+            lambda f: f["arms"]["A"]["generation"]["review"].update(max_new_tokens=768),
+            "arm A",
+        ),
+        (lambda f: f["arms"].pop("C"), "exactly the arms"),
+        (lambda f: f["model"].pop("adapter_sha256"), "model.adapter_sha256 is missing"),
+        (lambda f: f["model"].update(adapter_sha256="abc"), "not a SHA-256"),
+        (lambda f: f.pop("model"), "no 'model' object"),
+        (
+            lambda f: f["frozen_code"]["files"].update({"scripts/evaluate.py": "0" * 64}),
+            "frozen code changed since the freeze: scripts/evaluate.py",
+        ),
+        (
+            lambda f: f["frozen_code"]["files"].update({"src/refactor_ai/gone.py": "0" * 64}),
+            "frozen code missing since the freeze: src/refactor_ai/gone.py",
+        ),
+        (
+            lambda f: f["frozen_code"]["files"].pop("src/refactor_ai/task_format.py"),
+            "frozen code new since the freeze: src/refactor_ai/task_format.py",
+        ),
+        (lambda f: f.pop("frozen_code"), "lists no frozen code"),
+    ],
+)
+def test_test_split_guard_refuses_any_other_freeze_record(tmp_path, change, expected):
+    dataset = tmp_path / "records.jsonl"
+    write_dataset(dataset)
+    freeze = frozen_record(dataset)
+    change(freeze)
+    write_freezes(tmp_path, freeze)
+    with pytest.raises(protocol.TestSplitRefused) as refused:
         protocol.authorize_split(
             "test",
             confirm_frozen_test=True,
             protocol_version="eval-v1",
             records_path=dataset,
             root=tmp_path,
-            provider_mode="fake",
+            provider_mode="local_model",
         )
-    with pytest.raises(protocol.TestSplitRefused, match="No test-split freeze"):
-        protocol.authorize_split(
-            "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
-        )
-    test_freeze = tmp_path / protocol.TEST_FREEZE_PATH
-    test_freeze.parent.mkdir(parents=True)
-    test_freeze.write_text(json.dumps({"split_sha256": "0" * 64}), encoding="utf-8")
-    with pytest.raises(protocol.TestSplitRefused, match="differs from the frozen"):
-        protocol.authorize_split(
-            "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
-        )
-    actual = protocol.split_sha256(dataset, "test")
-    test_freeze.write_text(json.dumps({"split_sha256": actual}), encoding="utf-8")
-    evidence = protocol.authorize_split(
-        "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
+    assert expected in str(refused.value)
+
+
+def test_test_split_guard_needs_both_freeze_records_to_agree(tmp_path):
+    dataset = tmp_path / "records.jsonl"
+    write_dataset(dataset)
+    freeze = frozen_record(dataset)
+    split = freeze["data"]["test_split"]
+    write_freezes(
+        tmp_path, freeze, {"split_sha256": "0" * 64, "content_sha256": split["content_sha256"]}
     )
-    assert evidence["test_freeze"]["split_sha256"] == actual
+    kwargs = {"records_path": dataset, "root": tmp_path, "provider_mode": "local_model"}
+    with pytest.raises(protocol.TestSplitRefused, match="test-split-freeze.json has split_sha256"):
+        protocol.authorize_split(
+            "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
+        )
+    # A changed test case no longer matches the frozen split and content hashes.
+    rows = [json.loads(line) for line in dataset.read_text(encoding="utf-8").splitlines()]
+    rows[-1]["tests"] = rows[-1]["tests"][:1]
+    dataset.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
+    write_freezes(tmp_path, freeze)
+    with pytest.raises(protocol.TestSplitRefused, match="content_sha256"):
+        protocol.authorize_split(
+            "test", confirm_frozen_test=True, protocol_version="eval-v1", **kwargs
+        )
+
+
+def test_frozen_code_hashes_read_crlf_as_lf(tmp_path):
+    for pattern in protocol.FROZEN_CODE_PATTERNS:
+        name = pattern.replace("*", "module")
+        (tmp_path / name).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / name).write_bytes(b"x = 1\r\ny = 2\r\n")
+    (tmp_path / "src/refactor_ai/providers/fake.py").write_text("ignored\n", encoding="utf-8")
+    hashes = protocol.frozen_code_sha256(tmp_path)
+    assert len(hashes) == len(protocol.FROZEN_CODE_PATTERNS)
+    assert "src/refactor_ai/providers/fake.py" not in hashes
+    expected = hashlib.sha256(b"x = 1\ny = 2\n").hexdigest()
+    assert set(hashes.values()) == {expected}
 
 
 def evaluate(workflow, arm="A", provider=None):
@@ -631,16 +743,7 @@ def test_a_test_split_run_stops_before_any_attempt_unless_it_is_complete_and_rea
 ):
     dataset = tmp_path / "records.jsonl"
     write_dataset(dataset)
-    freeze = tmp_path / protocol.PROTOCOL_FREEZE_PATH
-    freeze.parent.mkdir(parents=True)
-    freeze.write_text(
-        json.dumps({"status": "frozen", "protocol_version": "eval-v1", "model": FROZEN_MODEL}),
-        encoding="utf-8",
-    )
-    test_freeze = tmp_path / protocol.TEST_FREEZE_PATH
-    test_freeze.parent.mkdir(parents=True)
-    split_hash = protocol.split_sha256(dataset, "test")
-    test_freeze.write_text(json.dumps({"split_sha256": split_hash}), encoding="utf-8")
+    write_freezes(tmp_path, frozen_record(dataset))
     monkeypatch.setattr(evaluate_script, "ROOT", tmp_path)
     out = tmp_path / "out"
     built: list[ClosingProvider] = []

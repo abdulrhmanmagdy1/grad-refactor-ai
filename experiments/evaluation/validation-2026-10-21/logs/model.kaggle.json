@@ -1,0 +1,12 @@
+{
+  "python": "/usr/bin/python3",
+  "model_dir": "/tmp/grad/models/Qwen2.5-Coder-0.5B-Instruct",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "adapter_dir": "/tmp/grad/repo/adapter",
+  "adapter_id": "full-2026-10-21",
+  "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+  "device": "cuda",
+  "dtype": "float32",
+  "load_timeout_s": 600
+}

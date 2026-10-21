@@ -1,0 +1,241 @@
+{
+  "record": "First end-to-end run with the real fine-tuned model on the demonstration laptop (T18)",
+  "recorded_at": "2026-10-21T10:13:41.222585Z",
+  "machine": "demonstration laptop (RTX 2050 4 GB, bf16 inference); see experiments/hardware/2026-10-20-demonstration-laptop.json",
+  "service": "uvicorn refactor_ai.api:app with REFACTOR_AI_PROVIDER=local, REFACTOR_AI_REFACTOR_USE_ADAPTER=true",
+  "health": {
+    "mode": "local_model",
+    "provider": {
+      "provider_mode": "local_model",
+      "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+      "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+      "adapter_id": "full-2026-10-21",
+      "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+      "device": "cuda:0 (NVIDIA GeForce RTX 2050)",
+      "ready": true,
+      "detail": "Model loaded in 33.2 s on cuda:0 (NVIDIA GeForce RTX 2050) (bfloat16); revision verified: True. Adapter weights sha256 dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2, adapter config sha256 a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571."
+    },
+    "runner": {
+      "enabled": true,
+      "reason": null,
+      "isolation": {
+        "platform_supported": true,
+        "interpreter_found": true,
+        "basic_execution": true,
+        "os_limits_applied": true,
+        "audit_hook_installed": true,
+        "environment_scrubbed": true,
+        "working_directory_isolated": true,
+        "workdir_removed": true,
+        "network_blocked": true,
+        "file_write_blocked": true,
+        "host_read_blocked": true,
+        "subprocess_blocked": true,
+        "native_code_blocked": true,
+        "introspection_blocked": true,
+        "process_limit_enforced": true,
+        "memory_limit_enforced": true,
+        "timeout_enforced": true,
+        "process_cleanup": true,
+        "cpu_limit_enforced": true
+      }
+    },
+    "refactor_use_adapter": true
+  },
+  "run": {
+    "schema_version": 1,
+    "run_id": "d2a3e024f6ca427599d55a56cb6d0500",
+    "created_at": "2026-10-21T10:13:21.165937Z",
+    "started_at": "2026-10-21T10:13:21.174537Z",
+    "finished_at": "2026-10-21T10:13:41.222585Z",
+    "status": "completed",
+    "task_type": "guard_clauses",
+    "workflow_mode": "single_role",
+    "reference_case_id": "demo-library-fine",
+    "original_code": "def library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue >= 0:\n        if days_overdue > 0:\n            rate = 20 if is_member else 35\n            return min(days_overdue * rate, 1500)\n        else:\n            return 0\n    else:\n        raise ValueError(\"days_overdue cannot be negative\")\n",
+    "proposed_code": "def library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue < 0:\n        raise ValueError(\"days_overdue cannot be negative\")\n    if days_overdue > 0:\n        rate = 20 if is_member else 35\n        return min(days_overdue * rate, 1500)\n    return 0\n",
+    "provider_mode": "local_model",
+    "model": {
+      "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+      "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+      "adapter_id": "full-2026-10-21",
+      "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+      "use_adapter": true
+    },
+    "settings": {
+      "mode": "single_role",
+      "refactor_use_adapter": true,
+      "max_calls": 5,
+      "max_corrections": 1,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 60.0
+        },
+        "refactor": {
+          "max_new_tokens": 1024,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 4096,
+          "timeout_s": 90.0
+        }
+      }
+    },
+    "attempt_count": 1,
+    "call_count": 1,
+    "stage_timings": [
+      {
+        "stage": "validation",
+        "attempt": 0,
+        "started_at": "2026-10-21T10:13:21.174537Z",
+        "elapsed_s": 0.002746300073340535,
+        "calls": 0
+      },
+      {
+        "stage": "generation",
+        "attempt": 0,
+        "started_at": "2026-10-21T10:13:21.193102Z",
+        "elapsed_s": 19.780319099896587,
+        "calls": 1
+      },
+      {
+        "stage": "verification",
+        "attempt": 0,
+        "started_at": "2026-10-21T10:13:40.975691Z",
+        "elapsed_s": 0.2479922000784427,
+        "calls": 0
+      }
+    ],
+    "analysis": null,
+    "findings": [],
+    "explanation": "Turned 2 if/else conditionals into guard clauses: `days_overdue < 0` raises ValueError and `days_overdue > 0` returns 0. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+    "diff": "--- original.py\n+++ proposed.py\n@@ -1,10 +1,8 @@\n def library_fine(days_overdue, is_member):\n     \"\"\"Fine in cents for returning a library item late.\"\"\"\n-    if days_overdue >= 0:\n-        if days_overdue > 0:\n-            rate = 20 if is_member else 35\n-            return min(days_overdue * rate, 1500)\n-        else:\n-            return 0\n-    else:\n+    if days_overdue < 0:\n         raise ValueError(\"days_overdue cannot be negative\")\n+    if days_overdue > 0:\n+        rate = 20 if is_member else 35\n+        return min(days_overdue * rate, 1500)\n+    return 0\n",
+    "changed_lines": [
+      3,
+      5,
+      6,
+      7,
+      8
+    ],
+    "review": null,
+    "verification": {
+      "syntax": {
+        "status": "pass",
+        "error": null
+      },
+      "rubric": {
+        "status": "pass",
+        "checks": {
+          "parses_as_single_function": true,
+          "same_name": true,
+          "same_signature": true,
+          "same_docstring": true,
+          "within_task_constraints": true,
+          "nesting_reduced": true,
+          "has_guard_clause": true,
+          "no_new_calls": true
+        },
+        "reasons": []
+      },
+      "reference_tests": {
+        "status": "pass",
+        "case_id": "demo-library-fine",
+        "total": 6,
+        "passed": 6,
+        "failed": 0,
+        "errored": 0,
+        "reason": null,
+        "duration_s": 0.234,
+        "failures": []
+      },
+      "model_review": {
+        "status": "not_run",
+        "reasons": [],
+        "error": null
+      },
+      "disposition": "proposal_ready",
+      "disposition_reasons": [
+        "ready: Syntax and rubric passed, 6 of 6 reference tests passed and no model review is part of the single-role workflow. Passing tests does not prove equal behavior for every input."
+      ]
+    },
+    "attempts": [
+      {
+        "attempt": 0,
+        "raw_output": "```python\ndef library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue < 0:\n        raise ValueError(\"days_overdue cannot be negative\")\n    if days_overdue > 0:\n        rate = 20 if is_member else 35\n        return min(days_overdue * rate, 1500)\n    return 0\n```\nExplanation: Turned 2 if/else conditionals into guard clauses: `days_overdue < 0` raises ValueError and `days_overdue > 0` returns 0. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+        "parse_error": null,
+        "parse_repaired": false,
+        "proposed_code": "def library_fine(days_overdue, is_member):\n    \"\"\"Fine in cents for returning a library item late.\"\"\"\n    if days_overdue < 0:\n        raise ValueError(\"days_overdue cannot be negative\")\n    if days_overdue > 0:\n        rate = 20 if is_member else 35\n        return min(days_overdue * rate, 1500)\n    return 0\n",
+        "explanation": "Turned 2 if/else conditionals into guard clauses: `days_overdue < 0` raises ValueError and `days_overdue > 0` returns 0. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+        "verification": {
+          "syntax": {
+            "status": "pass",
+            "error": null
+          },
+          "rubric": {
+            "status": "pass",
+            "checks": {
+              "parses_as_single_function": true,
+              "same_name": true,
+              "same_signature": true,
+              "same_docstring": true,
+              "within_task_constraints": true,
+              "nesting_reduced": true,
+              "has_guard_clause": true,
+              "no_new_calls": true
+            },
+            "reasons": []
+          },
+          "reference_tests": {
+            "status": "pass",
+            "case_id": "demo-library-fine",
+            "total": 6,
+            "passed": 6,
+            "failed": 0,
+            "errored": 0,
+            "reason": null,
+            "duration_s": 0.234,
+            "failures": []
+          },
+          "model_review": {
+            "status": "not_run",
+            "reasons": [],
+            "error": null
+          },
+          "disposition": "proposal_ready",
+          "disposition_reasons": [
+            "ready: Syntax and rubric passed, 6 of 6 reference tests passed and no model review is part of the single-role workflow. Passing tests does not prove equal behavior for every input."
+          ]
+        },
+        "review": null,
+        "model": {
+          "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+          "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+          "adapter_id": "full-2026-10-21",
+          "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+          "use_adapter": true
+        },
+        "prompt_tokens": 233,
+        "completion_tokens": 149,
+        "elapsed_s": 19.779560999944806
+      }
+    ],
+    "stop_reason": "single_role_complete",
+    "error": null,
+    "warnings": [],
+    "human_decision": null
+  }
+}

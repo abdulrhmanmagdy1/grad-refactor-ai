@@ -2,3 +2,4 @@
 datasets/** text eol=lf
 experiments/data/*.json text eol=lf
 src/refactor_ai/fixtures/*.json text eol=lf
+experiments/evaluation/** text eol=lf

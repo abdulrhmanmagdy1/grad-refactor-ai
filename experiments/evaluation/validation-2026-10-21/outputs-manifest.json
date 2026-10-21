@@ -1,0 +1,22 @@
+{
+  "evaluation/kaggle-grad-refactor-ai-eval-600603dc/records.jsonl": "121007ca7205e463897fda346e9169ed9a32e59e192c6a69f7fabf88ee7c2027",
+  "evaluation/kaggle-grad-refactor-ai-eval-600603dc/run.json": "d0515dc64afd8837e30f73e91d1e72799aa91d795ff84c05e75a6fb8bf3432ad",
+  "hardware.json": "a4557d44b923fb013d85dc8189722dc955a4faff3b8a5a07f5eec5bb453572cd",
+  "logs/evaluate.log": "75e6a5139127cdbbb65c7f4c74b868a2053764c1504fcd9d713e0cc17be7ce37",
+  "logs/kernel.log": "210b2f8a1c3f0be7e2f180a19cf03a8eb1d3a6b6a08b1d5c40bcf1de306a45d3",
+  "logs/model.kaggle.json": "a6b83d340aec75e9fef4eef7ed8342f68671efc5c0125c793d0383a08c06a151",
+  "logs/pip-freeze.log": "27d26edb3493ec36a9c8bf073d2a978bf1160a8c8ee10f7e63ba425f0d7661ef",
+  "logs/pip-install.log": "f2c8670619a94baca029f1cdf91a771f48a4103f4415d8b21cfd07848bd6f0bf",
+  "logs/pip-uninstall-torchao.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "logs/report.log": "560244a64fa417d3e1c05fd209837a38f340963b301a65092945291e9d35fbee",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/arm_metrics.csv": "6807d3ff5d4c089f1695e3d2538a51fb404db31414bfce108e7848a767e0d02b",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/by_failure_type.csv": "0993669e23fbdb3225d6fb7daa4a6c29ec3e2b3fd2da485e8db67353176dcd9f",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/by_source.csv": "1c88018f1c2407deb9336c55e0e9a646489dcf5489c2cc7a24602009ceed5e0b",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/by_source_group.csv": "e15d51d19377e4a81d0856a8e79f52d604add99a6a551d88a8fb8c5eb118afbb",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/figures/latency.svg": "404e1e14308dd0a948d113e26c42eb8f167bb34f020ffbc721060b600c51ad22",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/figures/outcome_rates.svg": "b6f582e8ee9134cf74f7a5e961ef6f1cfc5b1736d80466e8ad73fa6510d30c58",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/paired.csv": "6cb1ef922dbbe3a2cfff1259c38ad54c7eccac3f844437c91a16d7932b90eb42",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/report.json": "0f4ea4f093725dc35bd11aac5df3307d7a3d93e5b958b30f9e2f73ce4cb52a7f",
+  "report/kaggle-grad-refactor-ai-eval-600603dc/summary.md": "983061b22520674e9cd717f1c4aebf018cf91e0c7cf6d131f3b92f3a8cd7666c",
+  "status.json": "30bd40922a202327382e5f0fa673a07060d9aaca7535df2fcb7c6afaca43a278"
+}

@@ -1,0 +1,5 @@
+comparison,meaning,metric,paired_cases,both,B_only,A_only,neither,rate_first,rate_second,exact_mcnemar_p,holm_adjusted_p,C_only,D_only
+B vs A,"role coordination, original model",proposal_ready,84,1,2,5,76,0.035714,0.071429,0.453125,0.453125,,
+C vs A,"fine-tuning, single role",proposal_ready,84,4,,2,13,0.821429,0.071429,0.000000,0.000000,65,
+D vs C,"role coordination, adapted refactoring role",proposal_ready,84,44,,,13,0.547619,0.821429,0.000006,0.000011,25,2
+D vs B,"fine-tuning, multi-role",proposal_ready,84,2,1,,37,0.547619,0.035714,0.000000,0.000000,,44

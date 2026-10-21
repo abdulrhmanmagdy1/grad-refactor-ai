@@ -301,6 +301,7 @@ def evaluate() -> None:
         "adapter_dir": str(adapter) if JOB.get("adapter_id") else None,
         "adapter_id": JOB.get("adapter_id"),
         "adapter_sha256": JOB.get("adapter_sha256"),
+        "adapter_config_sha256": JOB.get("adapter_config_sha256"),
         "device": "cuda",
         "dtype": dtype,
         "load_timeout_s": 600,

@@ -54,6 +54,7 @@ BUNDLE_FILES = (
     "training/requirements-cuda.txt",
     "training/kaggle/kernel_template.py",
     "experiments/evaluation/protocol-freeze.json",
+    "experiments/data/test-split-freeze.json",
 )
 ZIP_TIME = (1980, 1, 1, 0, 0, 0)
 
@@ -105,6 +106,7 @@ def bundle(adapter: Path | None) -> dict:
         for path in sorted(ROOT.glob(pattern)):
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = path
+    repo_files = set(files)
     if adapter is not None:
         for path in sorted(adapter.iterdir()):
             if path.is_file() and path.suffix != ".bin":  # training_args.bin is a pickle
@@ -114,7 +116,11 @@ def bundle(adapter: Path | None) -> dict:
     manifest = {
         "bundle_sha256": bundle_sha,
         "git_head": git("rev-parse", "HEAD"),
-        "git_dirty": bool(git("status", "--porcelain")),
+        # Only the bundled repository files matter for the bundle's provenance; edits
+        # elsewhere in the working tree (for example frontend/) do not make it dirty.
+        "git_dirty": bool(
+            git("status", "--porcelain", "--untracked-files=all", "--", *sorted(repo_files))
+        ),
         "adapter": None if adapter is None else adapter.relative_to(ROOT).as_posix(),
         "files": hashes,
     }
@@ -214,6 +220,7 @@ def push(args) -> str:
         "run_id": args.run_id,
         "adapter_id": args.adapter_id,
         "adapter_sha256": args.adapter_sha256,
+        "adapter_config_sha256": args.adapter_config_sha256,
     }
     key = sha256_bytes(json.dumps(job, sort_keys=True).encode())[:8]
     slug = f"grad-refactor-ai-{args.job}-{key}"
@@ -320,6 +327,7 @@ def main() -> int:
     p.add_argument("--run-id", default="full-2026-10-20")
     p.add_argument("--adapter-id")
     p.add_argument("--adapter-sha256")
+    p.add_argument("--adapter-config-sha256")
     p.add_argument("--timeout-min", type=int, default=240)
     p.add_argument("--split", choices=("validation", "test"), default="validation")
     p.add_argument("--i-confirm-frozen-test", action="store_true")

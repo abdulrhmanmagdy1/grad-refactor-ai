@@ -16,8 +16,10 @@ Records go to runs/evaluation/<evaluation-id>/records.jsonl (Git-ignored) with a
 manifest next to them (run.json; each resumed segment writes its own run-<UTC time>.json);
 tables and figures come from scripts/report_evaluation.py. An interrupted run is resumed
 by repeating its command with --resume --evaluation-id <id> (the id is printed at start).
-On the test split, the run is refused unless it covers every test case, the reference
-runner is enabled, and the warm-up reports the model identity of the protocol freeze.
+On the test split, the run is refused unless the protocol freeze record matches the arm
+settings, the dataset and test-split hashes and the running code, the run covers every
+test case, the reference runner is enabled, and the warm-up reports the model identity of
+the protocol freeze.
 """
 
 from __future__ import annotations
@@ -36,13 +38,25 @@ from refactor_ai.evaluation import cases, harness, protocol  # noqa: E402
 
 
 def git_head() -> str | None:
+    """The commit of the running code: git HEAD, else the commit in the Kaggle bundle's
+    manifest (Kaggle has no checkout), with "-dirty" when the bundle came from a modified
+    tree. The exact files are fixed by the protocol freeze record's code hashes."""
     try:
         done = subprocess.run(
             ["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True, timeout=30
         )
+        if done.returncode == 0 and done.stdout.strip():
+            return done.stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
+        pass
+    try:
+        bundle = json.loads((ROOT / "bundle-manifest.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
         return None
-    return done.stdout.strip() or None
+    head = bundle.get("git_head") if isinstance(bundle, dict) else None
+    if not isinstance(head, str) or not head:
+        return None
+    return head + ("-dirty" if bundle.get("git_dirty") else "")
 
 
 def make_provider(kind: str, model_config: Path | None):

@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="824" viewBox="0 0 760 824" role="img" aria-label="Outcome rates by arm (validation split, eval-v1)">
+<title>Outcome rates by arm (validation split, eval-v1)</title>
+<style>
+  .surface { fill: #fcfcfb; }
+  .bar { fill: #2a78d6; }
+  .grid { stroke: #e1e0d9; stroke-width: 1; }
+  .axis { stroke: #c3c2b7; stroke-width: 1; }
+  .range { stroke: #2a78d6; stroke-width: 2; stroke-linecap: round; }
+  .dot { fill: #2a78d6; stroke: #fcfcfb; stroke-width: 2; }
+  .title { fill: #0b0b0b; font: 600 14px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .panel { fill: #0b0b0b; font: 600 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .label { fill: #52514e; font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .value { fill: #0b0b0b; font: 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .tick { fill: #898781; font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .warn { fill: #52514e; font: italic 12px system-ui, -apple-system, "Segoe UI", sans-serif; }
+  @media (prefers-color-scheme: dark) {
+    .surface { fill: #1a1a19; }
+    .bar { fill: #3987e5; }
+    .grid { stroke: #2c2c2a; }
+    .axis { stroke: #383835; }
+    .range { stroke: #3987e5; }
+    .dot { fill: #3987e5; stroke: #1a1a19; }
+    .title, .panel, .value { fill: #ffffff; }
+    .label, .warn { fill: #c3c2b7; }
+  }
+</style>
+<rect class="surface" x="0" y="0" width="760" height="824"/>
+<text class="title" x="16.0" y="26.0">Outcome rates by arm (validation split, eval-v1)</text>
+<text class="panel" x="16.0" y="60.0">Proposal parses</text>
+<line class="grid" x1="140.0" y1="68.0" x2="140.0" y2="178.0"/>
+<line class="grid" x1="247.5" y1="68.0" x2="247.5" y2="178.0"/>
+<line class="grid" x1="355.0" y1="68.0" x2="355.0" y2="178.0"/>
+<line class="grid" x1="462.5" y1="68.0" x2="462.5" y2="178.0"/>
+<line class="grid" x1="570.0" y1="68.0" x2="570.0" y2="178.0"/>
+<line class="axis" x1="140.0" y1="68.0" x2="140.0" y2="178.0"/>
+<text class="label" x="130.0" y="85.0" text-anchor="end">Arm A</text>
+<path class="bar" d="M140.0,72.0 H560.9 Q564.9,72.0 564.9,76.0 V86.0 Q564.9,90.0 560.9,90.0 H140.0 Z"><title>Arm A: Proposal parses 83/84 (98.8%)</title></path>
+<text class="value" x="572.9" y="85.0">83/84 (98.8%)</text>
+<text class="label" x="130.0" y="113.0" text-anchor="end">Arm B</text>
+<path class="bar" d="M140.0,100.0 H566.0 Q570.0,100.0 570.0,104.0 V114.0 Q570.0,118.0 566.0,118.0 H140.0 Z"><title>Arm B: Proposal parses 84/84 (100.0%)</title></path>
+<text class="value" x="578.0" y="113.0">84/84 (100.0%)</text>
+<text class="label" x="130.0" y="141.0" text-anchor="end">Arm C</text>
+<path class="bar" d="M140.0,128.0 H566.0 Q570.0,128.0 570.0,132.0 V142.0 Q570.0,146.0 566.0,146.0 H140.0 Z"><title>Arm C: Proposal parses 84/84 (100.0%)</title></path>
+<text class="value" x="578.0" y="141.0">84/84 (100.0%)</text>
+<text class="label" x="130.0" y="169.0" text-anchor="end">Arm D</text>
+<path class="bar" d="M140.0,156.0 H566.0 Q570.0,156.0 570.0,160.0 V170.0 Q570.0,174.0 566.0,174.0 H140.0 Z"><title>Arm D: Proposal parses 84/84 (100.0%)</title></path>
+<text class="value" x="578.0" y="169.0">84/84 (100.0%)</text>
+<text class="panel" x="16.0" y="214.0">Task rubric pass</text>
+<line class="grid" x1="140.0" y1="222.0" x2="140.0" y2="332.0"/>
+<line class="grid" x1="247.5" y1="222.0" x2="247.5" y2="332.0"/>
+<line class="grid" x1="355.0" y1="222.0" x2="355.0" y2="332.0"/>
+<line class="grid" x1="462.5" y1="222.0" x2="462.5" y2="332.0"/>
+<line class="grid" x1="570.0" y1="222.0" x2="570.0" y2="332.0"/>
+<line class="axis" x1="140.0" y1="222.0" x2="140.0" y2="332.0"/>
+<text class="label" x="130.0" y="239.0" text-anchor="end">Arm A</text>
+<path class="bar" d="M140.0,226.0 H223.0 Q227.0,226.0 227.0,230.0 V240.0 Q227.0,244.0 223.0,244.0 H140.0 Z"><title>Arm A: Task rubric pass 17/84 (20.2%)</title></path>
+<text class="value" x="235.0" y="239.0">17/84 (20.2%)</text>
+<text class="label" x="130.0" y="267.0" text-anchor="end">Arm B</text>
+<path class="bar" d="M140.0,254.0 H217.9 Q221.9,254.0 221.9,258.0 V268.0 Q221.9,272.0 217.9,272.0 H140.0 Z"><title>Arm B: Task rubric pass 16/84 (19.0%)</title></path>
+<text class="value" x="229.9" y="267.0">16/84 (19.0%)</text>
+<text class="label" x="130.0" y="295.0" text-anchor="end">Arm C</text>
+<path class="bar" d="M140.0,282.0 H566.0 Q570.0,282.0 570.0,286.0 V296.0 Q570.0,300.0 566.0,300.0 H140.0 Z"><title>Arm C: Task rubric pass 84/84 (100.0%)</title></path>
+<text class="value" x="578.0" y="295.0">84/84 (100.0%)</text>
+<text class="label" x="130.0" y="323.0" text-anchor="end">Arm D</text>
+<path class="bar" d="M140.0,310.0 H566.0 Q570.0,310.0 570.0,314.0 V324.0 Q570.0,328.0 566.0,328.0 H140.0 Z"><title>Arm D: Task rubric pass 84/84 (100.0%)</title></path>
+<text class="value" x="578.0" y="323.0">84/84 (100.0%)</text>
+<text class="panel" x="16.0" y="368.0">Reference tests pass</text>
+<line class="grid" x1="140.0" y1="376.0" x2="140.0" y2="486.0"/>
+<line class="grid" x1="247.5" y1="376.0" x2="247.5" y2="486.0"/>
+<line class="grid" x1="355.0" y1="376.0" x2="355.0" y2="486.0"/>
+<line class="grid" x1="462.5" y1="376.0" x2="462.5" y2="486.0"/>
+<line class="grid" x1="570.0" y1="376.0" x2="570.0" y2="486.0"/>
+<line class="axis" x1="140.0" y1="376.0" x2="140.0" y2="486.0"/>
+<text class="label" x="130.0" y="393.0" text-anchor="end">Arm A</text>
+<path class="bar" d="M140.0,380.0 H473.9 Q477.9,380.0 477.9,384.0 V394.0 Q477.9,398.0 473.9,398.0 H140.0 Z"><title>Arm A: Reference tests pass 66/84 (78.6%)</title></path>
+<text class="value" x="485.9" y="393.0">66/84 (78.6%)</text>
+<text class="label" x="130.0" y="421.0" text-anchor="end">Arm B</text>
+<path class="bar" d="M140.0,408.0 H489.2 Q493.2,408.0 493.2,412.0 V422.0 Q493.2,426.0 489.2,426.0 H140.0 Z"><title>Arm B: Reference tests pass 69/84 (82.1%)</title></path>
+<text class="value" x="501.2" y="421.0">69/84 (82.1%)</text>
+<text class="label" x="130.0" y="449.0" text-anchor="end">Arm C</text>
+<path class="bar" d="M140.0,436.0 H489.2 Q493.2,436.0 493.2,440.0 V450.0 Q493.2,454.0 489.2,454.0 H140.0 Z"><title>Arm C: Reference tests pass 69/84 (82.1%)</title></path>
+<text class="value" x="501.2" y="449.0">69/84 (82.1%)</text>
+<text class="label" x="130.0" y="477.0" text-anchor="end">Arm D</text>
+<path class="bar" d="M140.0,464.0 H489.2 Q493.2,464.0 493.2,468.0 V478.0 Q493.2,482.0 489.2,482.0 H140.0 Z"><title>Arm D: Reference tests pass 69/84 (82.1%)</title></path>
+<text class="value" x="501.2" y="477.0">69/84 (82.1%)</text>
+<text class="panel" x="16.0" y="522.0">Overall acceptance (proposal_ready)</text>
+<line class="grid" x1="140.0" y1="530.0" x2="140.0" y2="640.0"/>
+<line class="grid" x1="247.5" y1="530.0" x2="247.5" y2="640.0"/>
+<line class="grid" x1="355.0" y1="530.0" x2="355.0" y2="640.0"/>
+<line class="grid" x1="462.5" y1="530.0" x2="462.5" y2="640.0"/>
+<line class="grid" x1="570.0" y1="530.0" x2="570.0" y2="640.0"/>
+<line class="axis" x1="140.0" y1="530.0" x2="140.0" y2="640.0"/>
+<text class="label" x="130.0" y="547.0" text-anchor="end">Arm A</text>
+<path class="bar" d="M140.0,534.0 H166.7 Q170.7,534.0 170.7,538.0 V548.0 Q170.7,552.0 166.7,552.0 H140.0 Z"><title>Arm A: Overall acceptance (proposal_ready) 6/84 (7.1%)</title></path>
+<text class="value" x="178.7" y="547.0">6/84 (7.1%)</text>
+<text class="label" x="130.0" y="575.0" text-anchor="end">Arm B</text>
+<path class="bar" d="M140.0,562.0 H151.4 Q155.4,562.0 155.4,566.0 V576.0 Q155.4,580.0 151.4,580.0 H140.0 Z"><title>Arm B: Overall acceptance (proposal_ready) 3/84 (3.6%)</title></path>
+<text class="value" x="163.4" y="575.0">3/84 (3.6%)</text>
+<text class="label" x="130.0" y="603.0" text-anchor="end">Arm C</text>
+<path class="bar" d="M140.0,590.0 H489.2 Q493.2,590.0 493.2,594.0 V604.0 Q493.2,608.0 489.2,608.0 H140.0 Z"><title>Arm C: Overall acceptance (proposal_ready) 69/84 (82.1%)</title></path>
+<text class="value" x="501.2" y="603.0">69/84 (82.1%)</text>
+<text class="label" x="130.0" y="631.0" text-anchor="end">Arm D</text>
+<path class="bar" d="M140.0,618.0 H371.5 Q375.5,618.0 375.5,622.0 V632.0 Q375.5,636.0 371.5,636.0 H140.0 Z"><title>Arm D: Overall acceptance (proposal_ready) 46/84 (54.8%)</title></path>
+<text class="value" x="383.5" y="631.0">46/84 (54.8%)</text>
+<text class="panel" x="16.0" y="676.0">Run failed</text>
+<line class="grid" x1="140.0" y1="684.0" x2="140.0" y2="794.0"/>
+<text class="tick" x="140.0" y="808.0" text-anchor="middle">0%</text>
+<line class="grid" x1="247.5" y1="684.0" x2="247.5" y2="794.0"/>
+<text class="tick" x="247.5" y="808.0" text-anchor="middle">25%</text>
+<line class="grid" x1="355.0" y1="684.0" x2="355.0" y2="794.0"/>
+<text class="tick" x="355.0" y="808.0" text-anchor="middle">50%</text>
+<line class="grid" x1="462.5" y1="684.0" x2="462.5" y2="794.0"/>
+<text class="tick" x="462.5" y="808.0" text-anchor="middle">75%</text>
+<line class="grid" x1="570.0" y1="684.0" x2="570.0" y2="794.0"/>
+<text class="tick" x="570.0" y="808.0" text-anchor="middle">100%</text>
+<line class="axis" x1="140.0" y1="684.0" x2="140.0" y2="794.0"/>
+<text class="label" x="130.0" y="701.0" text-anchor="end">Arm A</text>
+<path class="bar" d="M140.0,688.0 H141.1 Q145.1,688.0 145.1,692.0 V702.0 Q145.1,706.0 141.1,706.0 H140.0 Z"><title>Arm A: Run failed 1/84 (1.2%)</title></path>
+<text class="value" x="153.1" y="701.0">1/84 (1.2%)</text>
+<text class="label" x="130.0" y="729.0" text-anchor="end">Arm B</text>
+<text class="value" x="148.0" y="729.0">0/84 (0.0%)</text>
+<text class="label" x="130.0" y="757.0" text-anchor="end">Arm C</text>
+<text class="value" x="148.0" y="757.0">0/84 (0.0%)</text>
+<text class="label" x="130.0" y="785.0" text-anchor="end">Arm D</text>
+<text class="value" x="148.0" y="785.0">0/84 (0.0%)</text>
+</svg>

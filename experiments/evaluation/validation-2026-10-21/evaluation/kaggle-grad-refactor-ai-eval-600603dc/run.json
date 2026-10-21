@@ -1,0 +1,332 @@
+{
+  "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc",
+  "command": [
+    "python3",
+    "scripts/evaluate.py",
+    "--split",
+    "validation",
+    "--provider",
+    "local",
+    "--model-config",
+    "/tmp/grad/model.kaggle.json",
+    "--arms",
+    "A,B,C,D",
+    "--output-dir",
+    "/kaggle/working/evaluation",
+    "--evaluation-id",
+    "kaggle-grad-refactor-ai-eval-600603dc",
+    "--gpu-memory"
+  ],
+  "started_at": "2026-10-21T08:45:59+00:00",
+  "finished_at": "2026-10-21T10:01:10+00:00",
+  "protocol": {
+    "version": "eval-v1",
+    "status": "draft",
+    "freeze_record": null
+  },
+  "arms": {
+    "A": {
+      "mode": "single_role",
+      "refactor_use_adapter": false,
+      "max_calls": 1,
+      "max_corrections": 0,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "B": {
+      "mode": "multi_role",
+      "refactor_use_adapter": false,
+      "max_calls": 5,
+      "max_corrections": 1,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "C": {
+      "mode": "single_role",
+      "refactor_use_adapter": true,
+      "max_calls": 1,
+      "max_corrections": 0,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "D": {
+      "mode": "multi_role",
+      "refactor_use_adapter": true,
+      "max_calls": 5,
+      "max_corrections": 1,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    }
+  },
+  "dataset": "datasets/guard_clauses/v1/records.jsonl",
+  "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+  "split": "validation",
+  "split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
+  "cases": [
+    "gc1-blood-pressure-01",
+    "gc1-blood-pressure-02",
+    "gc1-blood-pressure-03",
+    "gc1-blood-pressure-04",
+    "gc1-blood-pressure-05",
+    "gc1-blood-pressure-06",
+    "gc1-blood-pressure-07",
+    "gc1-card-checksum-01",
+    "gc1-card-checksum-02",
+    "gc1-card-checksum-03",
+    "gc1-card-checksum-04",
+    "gc1-card-checksum-05",
+    "gc1-card-checksum-06",
+    "gc1-card-checksum-07",
+    "gc1-garden-watering-01",
+    "gc1-garden-watering-02",
+    "gc1-garden-watering-03",
+    "gc1-garden-watering-04",
+    "gc1-garden-watering-05",
+    "gc1-garden-watering-06",
+    "gc1-garden-watering-07",
+    "gc1-http-status-01",
+    "gc1-http-status-02",
+    "gc1-http-status-03",
+    "gc1-http-status-04",
+    "gc1-http-status-05",
+    "gc1-http-status-06",
+    "gc1-http-status-07",
+    "gc1-income-tax-01",
+    "gc1-income-tax-02",
+    "gc1-income-tax-03",
+    "gc1-income-tax-04",
+    "gc1-income-tax-05",
+    "gc1-income-tax-06",
+    "gc1-income-tax-07",
+    "gc1-meeting-end-01",
+    "gc1-meeting-end-02",
+    "gc1-meeting-end-03",
+    "gc1-meeting-end-04",
+    "gc1-meeting-end-05",
+    "gc1-meeting-end-06",
+    "gc1-meeting-end-07",
+    "gc1-parcel-shipping-01",
+    "gc1-parcel-shipping-02",
+    "gc1-parcel-shipping-03",
+    "gc1-parcel-shipping-04",
+    "gc1-parcel-shipping-05",
+    "gc1-parcel-shipping-06",
+    "gc1-parcel-shipping-07",
+    "gc1-parking-fee-01",
+    "gc1-parking-fee-02",
+    "gc1-parking-fee-03",
+    "gc1-parking-fee-04",
+    "gc1-parking-fee-05",
+    "gc1-parking-fee-06",
+    "gc1-parking-fee-07",
+    "gc1-retry-backoff-01",
+    "gc1-retry-backoff-02",
+    "gc1-retry-backoff-03",
+    "gc1-retry-backoff-04",
+    "gc1-retry-backoff-05",
+    "gc1-retry-backoff-06",
+    "gc1-retry-backoff-07",
+    "gc1-scholarship-01",
+    "gc1-scholarship-02",
+    "gc1-scholarship-03",
+    "gc1-scholarship-04",
+    "gc1-scholarship-05",
+    "gc1-scholarship-06",
+    "gc1-scholarship-07",
+    "gc1-version-parse-01",
+    "gc1-version-parse-02",
+    "gc1-version-parse-03",
+    "gc1-version-parse-04",
+    "gc1-version-parse-05",
+    "gc1-version-parse-06",
+    "gc1-version-parse-07",
+    "gc1-warehouse-bin-01",
+    "gc1-warehouse-bin-02",
+    "gc1-warehouse-bin-03",
+    "gc1-warehouse-bin-04",
+    "gc1-warehouse-bin-05",
+    "gc1-warehouse-bin-06",
+    "gc1-warehouse-bin-07"
+  ],
+  "provider": {
+    "provider_mode": "local_model",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "device": "cuda:0 (Tesla T4)",
+    "ready": true,
+    "detail": "Model loaded in 31.3 s on cuda:0 (Tesla T4) (float32); revision verified: True."
+  },
+  "runner": {
+    "enabled": true,
+    "reason": null,
+    "isolation": {
+      "platform_supported": true,
+      "interpreter_found": true,
+      "basic_execution": true,
+      "os_limits_applied": true,
+      "audit_hook_installed": true,
+      "environment_scrubbed": true,
+      "working_directory_isolated": true,
+      "workdir_removed": true,
+      "network_blocked": true,
+      "file_write_blocked": true,
+      "host_read_blocked": true,
+      "subprocess_blocked": true,
+      "native_code_blocked": true,
+      "introspection_blocked": true,
+      "process_limit_enforced": true,
+      "memory_limit_enforced": true,
+      "timeout_enforced": true,
+      "process_cleanup": true,
+      "cpu_limit_enforced": true
+    }
+  },
+  "warm_up": {
+    "runner": {
+      "enabled": true,
+      "reason": null,
+      "elapsed_s": 2.361
+    },
+    "provider_calls": [
+      {
+        "use_adapter": false,
+        "elapsed_s": 33.137,
+        "error": null,
+        "model": {
+          "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+          "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+          "adapter_id": "full-2026-10-21",
+          "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+          "use_adapter": false
+        }
+      },
+      {
+        "use_adapter": true,
+        "elapsed_s": 3.118,
+        "error": null,
+        "model": {
+          "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+          "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+          "adapter_id": "full-2026-10-21",
+          "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+          "use_adapter": true
+        }
+      }
+    ]
+  },
+  "arm_order": "rotated per case (case i starts with arm i mod number of arms)",
+  "code_sha": null,
+  "test_authorization": null,
+  "summary": {
+    "written_by_arm": {
+      "A": 84,
+      "B": 84,
+      "C": 84,
+      "D": 84
+    },
+    "skipped_existing": 0,
+    "output": "/kaggle/working/evaluation/kaggle-grad-refactor-ai-eval-600603dc/records.jsonl"
+  }
+}

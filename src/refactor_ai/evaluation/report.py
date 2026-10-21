@@ -21,6 +21,7 @@ from collections import Counter
 from pathlib import Path
 from xml.sax.saxutils import escape
 
+from refactor_ai.evaluation import targets as frozen_targets
 from refactor_ai.evaluation.protocol import ARMS
 from refactor_ai.evaluation.records import TIMEOUT_FAILURES, RecordFileError, read_jsonl
 
@@ -593,26 +594,77 @@ def latency_figure(rows: list[dict], metrics: dict, meta: dict) -> str:
     return _svg(width, height, title, body)
 
 
-def build_report(rows: list[dict], out_dir: Path) -> dict[str, str]:
-    """Write summary.md, CSV tables and SVG figures; returns written paths."""
+def targets_section(assessment: dict, freeze: dict) -> str:
+    """Markdown for the assessment of a protocol freeze record's numerical targets."""
+    lines = [
+        "## Pre-registered targets",
+        "",
+        f"Targets of protocol {freeze.get('protocol_version')} (frozen on "
+        f"{freeze.get('frozen_on')}), set from the validation baseline before any test-split "
+        f"run. Rule: {assessment['rule']}",
+        "",
+    ]
+    rows = []
+    for row in assessment["arms"]:
+        sign = ">=" if row["kind"] == "floor" else "<="
+        measured = "not run" if row["rate"] is None else _pct(row["numerator"], row["denominator"])
+        met = {True: "met", False: "not met", None: "n/a"}[row["met"]]
+        rows.append(
+            [row["arm"], row["metric"], f"{sign} {100 * row['limit_rate']:.2f}%", measured, met]
+        )
+    lines += _table(["Arm", "Measure", "Target", "Measured", "Result"], rows)
+    lines += ["", "Expected directions (Holm-adjusted exact McNemar, alpha 0.05):", ""]
+    direction_rows = []
+    for item in assessment["comparisons"]:
+        first, second = item["comparison"].split(" vs ")
+        names = {"first": f"{first} accepts more", "second": f"{second} accepts more"}
+        names["none"] = "none"
+        observed = "not measured" if item["observed"] is None else names[item["observed"]]
+        direction_rows.append(
+            [item["comparison"], names[item["expected"]], observed, item["outcome"]]
+        )
+    lines += _table(["Comparison", "Expected", "Observed", "Result"], direction_rows)
+    return "\n".join(lines) + "\n"
+
+
+def build_report(rows: list[dict], out_dir: Path, freeze: dict | None = None) -> dict[str, str]:
+    """Write summary.md, CSV tables and SVG figures; returns written paths.
+
+    With a protocol freeze record (freeze), the report also assesses its numerical
+    targets (targets.csv, target_directions.csv, a summary section and report.json
+    "targets").
+    """
     meta = check_consistency(rows)
     metrics = arm_metrics(rows)
     paired = paired_comparisons(rows)
     by_source = breakdown(rows, "source")
+    summary = markdown_summary(meta, metrics, paired, by_source)
+    assessment = None
+    if freeze is not None:
+        if "targets" not in freeze:
+            raise ReportError("the protocol freeze record has no numerical targets")
+        assessment = frozen_targets.assess(freeze["targets"], metrics, paired)
+        summary += "\n" + targets_section(assessment, freeze)
     files = {
-        "summary.md": markdown_summary(meta, metrics, paired, by_source),
+        "summary.md": summary,
         "arm_metrics.csv": metrics_csv(metrics),
         "paired.csv": rows_csv(paired),
         "by_source.csv": rows_csv(by_source),
         "by_failure_type.csv": rows_csv(breakdown(rows, "failure_type")),
         "by_source_group.csv": rows_csv(breakdown(rows, "source_group")),
         "report.json": json.dumps(
-            {"meta": meta, "metrics": metrics, "paired": paired}, indent=2, sort_keys=True
+            {"meta": meta, "metrics": metrics, "paired": paired}
+            | ({"targets": assessment} if assessment is not None else {}),
+            indent=2,
+            sort_keys=True,
         )
         + "\n",
         "figures/outcome_rates.svg": outcome_figure(metrics, meta),
         "figures/latency.svg": latency_figure(rows, metrics, meta),
     }
+    if assessment is not None:
+        files["targets.csv"] = rows_csv(assessment["arms"])
+        files["target_directions.csv"] = rows_csv(assessment["comparisons"])
     written = {}
     for relative, text in files.items():
         path = out_dir / relative

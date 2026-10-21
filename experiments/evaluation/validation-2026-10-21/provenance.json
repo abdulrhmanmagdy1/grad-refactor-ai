@@ -1,0 +1,140 @@
+{
+  "what": "Validation baseline of protocol eval-v1: arms A, B, C and D on the 84 validation cases, run once on Kaggle with the evaluation harness. Copied byte for byte from the kernel outputs fetched to runs/evaluation/kaggle-grad-refactor-ai-eval-600603dc/ (Git-ignored).",
+  "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc",
+  "kaggle": {
+    "kernel": "grad-refactor-ai-eval-600603dc (private script kernel, version 1)",
+    "machine_shape": "NvidiaTeslaT4",
+    "pushed_at": "2026-10-21T08:44:54+00:00",
+    "kernel_started_at": "2026-10-21T08:44:58+00:00",
+    "kernel_finished_at": "2026-10-21T10:01:10+00:00",
+    "evaluate_seconds": 4511.9,
+    "final_status": "complete",
+    "job": {
+      "kind": "eval",
+      "name": "eval",
+      "split": "validation",
+      "bundle_sha256": "74a6ad84fbc5416dcf6425c6e73ae935d7af616c655e60f22b9bc16011b425fb",
+      "arms": "A,B,C,D",
+      "case_ids": [],
+      "run_id": "val-2026-10-21",
+      "adapter_id": "full-2026-10-21",
+      "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+      "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc"
+    }
+  },
+  "bundle": {
+    "dataset": "private Kaggle dataset grad-refactor-ai-bundle (training/kaggle/lane.py)",
+    "bundle_sha256": "74a6ad84fbc5416dcf6425c6e73ae935d7af616c655e60f22b9bc16011b425fb",
+    "zip_sha256": "65c4f1b1e502d01e4852815b4dd9995f9f44c3d0a40f97daead85f87ae05e798",
+    "files_verified_in_kernel": 88,
+    "git_head": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
+    "git_dirty": true,
+    "uploaded_at": "2026-10-21T08:44:50+00:00",
+    "code_identity": {
+      "method": "every non-adapter file of the uploaded bundle (runs/kaggle/stage/bundle.zip, checked against its manifest) compared with the same path in Git, CRLF read as LF",
+      "files_compared": 85,
+      "files_equal_to_ee87a11": 83,
+      "files_differing_from_ee87a11": {
+        "src/refactor_ai/verification/runner.py": "equals the version committed in f187b63",
+        "training/kaggle/kernel_template.py": "equals the version committed in 884a4cf"
+      }
+    },
+    "adapter_files": {
+      "README.md": "a5c62ab664346cf0ab084220d5409edfa63a9a46c493068c77bb442271e90584",
+      "adapter_config.json": "a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571",
+      "adapter_model.safetensors": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2"
+    }
+  },
+  "model": {
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "base_weights_sha256": "f9523886352217ded3aeeef552b381af79d568c6d49a4b9e423288cea56b0a44",
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "adapter_training_record": "experiments/training/full-2026-10-21.json",
+    "provider_detail": "Model loaded in 31.3 s on cuda:0 (Tesla T4) (float32); revision verified: True.",
+    "model_config": {
+      "python": "/usr/bin/python3",
+      "model_dir": "/tmp/grad/models/Qwen2.5-Coder-0.5B-Instruct",
+      "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+      "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+      "adapter_dir": "/tmp/grad/repo/adapter",
+      "adapter_id": "full-2026-10-21",
+      "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+      "device": "cuda",
+      "dtype": "float32",
+      "load_timeout_s": 600
+    }
+  },
+  "hardware": {
+    "python": "3.13.15",
+    "platform": "Linux-6.18.48+-x86_64-with-glibc2.39",
+    "cpu_count": 4,
+    "ram_total_kb": 32869452,
+    "nvidia_smi": "Tesla T4, 15360 MiB, 580.178.04, 7.5\nTesla T4, 15360 MiB, 580.178.04, 7.5",
+    "torch": {
+      "torch": "2.11.0+cu128",
+      "cuda": "12.8",
+      "device": "Tesla T4",
+      "capability": [
+        7,
+        5
+      ]
+    }
+  },
+  "packages": {
+    "transformers": "5.20.2",
+    "peft": "0.21.2",
+    "accelerate": "1.15.0",
+    "safetensors": "0.8.0",
+    "tokenizers": "0.23.3",
+    "huggingface-hub": "2.2.0",
+    "pydantic": "2.14.1",
+    "torch": "2.11.0+cu128"
+  },
+  "removed_packages": [
+    "torchao"
+  ],
+  "harness": {
+    "command": [
+      "python3",
+      "scripts/evaluate.py",
+      "--split",
+      "validation",
+      "--provider",
+      "local",
+      "--model-config",
+      "/tmp/grad/model.kaggle.json",
+      "--arms",
+      "A,B,C,D",
+      "--output-dir",
+      "/kaggle/working/evaluation",
+      "--evaluation-id",
+      "kaggle-grad-refactor-ai-eval-600603dc",
+      "--gpu-memory"
+    ],
+    "protocol_status_at_run": {
+      "version": "eval-v1",
+      "status": "draft",
+      "freeze_record": null
+    },
+    "arms_settings": "run.json 'arms' (identical to experiments/evaluation/protocol-freeze.json)",
+    "warm_up": "run.json 'warm_up': both adapter states reported the model identity above",
+    "runner": "enabled; every isolation self-check passed (run.json 'runner')",
+    "code_sha_in_records": "null: Kaggle has no Git checkout; the bundle commit above identifies the code"
+  },
+  "files": {
+    "manifest": "outputs-manifest.json (written by the kernel; SHA-256 of every output)",
+    "verified": "all 20 files match outputs-manifest.json (check_code_changes.py, which reads CRLF as LF because the repository has no eol rule for this folder)",
+    "not_copied": [
+      "grad-refactor-ai-eval-600603dc.log (Kaggle's empty kernel log, not in the manifest)"
+    ],
+    "sanitization": "searched every file for credentials, tokens, e-mail addresses and local user paths: none found. The only account name is the Kaggle handle in the bundle path of logs/kernel.log, already public in the repository (training/kaggle/lane.py), so nothing was removed and the copies stay byte-identical.",
+    "size_bytes": 2419239
+  },
+  "checks": {
+    "script": "check_code_changes.py",
+    "result": "code-change-check.json",
+    "summary": "The report code after e4d6f31 reproduces every table of the Kaggle report from these records (only one explanatory sentence of summary.md changed). Replaying every deterministic decision of the 336 records with the code of ee87a11 and with the current code changes no outcome of A, C and D and leaves three B outcomes undetermined (see protocol-freeze.json, validation_baseline)."
+  }
+}

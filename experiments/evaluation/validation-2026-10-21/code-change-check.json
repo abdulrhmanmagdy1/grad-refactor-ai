@@ -1,0 +1,119 @@
+{
+  "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc",
+  "manifest": {
+    "files": 20,
+    "mismatches": []
+  },
+  "report_with_current_code": {
+    "tables_compared": [
+      "arm_metrics.csv",
+      "by_failure_type.csv",
+      "by_source.csv",
+      "by_source_group.csv",
+      "paired.csv"
+    ],
+    "tables_differing": [],
+    "report_json_numbers_differing": []
+  },
+  "replay": {
+    "old_code": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
+    "new_code": "working tree at c3f0709fc73de41dd26f02da90fa7dd25a79e743",
+    "bundle_replay_reproduces_recorded_rubric": true,
+    "recorded_rubric_not_reproduced": [],
+    "validation_cases_with_different_input_check_or_static_findings": [],
+    "records_with_differences": [
+      {
+        "arm": "B",
+        "case_id": "gc1-blood-pressure-01",
+        "recorded": {
+          "disposition": "proposal_ready",
+          "proposal_ready": true,
+          "rubric": "pass"
+        },
+        "changes": [
+          "final proposal: rubric pass (failed checks: none) -> fail (failed checks: has_guard_clause)",
+          "call 1 (refactor): rubric pass (failed checks: none) -> fail (failed checks: has_guard_clause)"
+        ],
+        "outcome_determinable_under_new_code": false
+      },
+      {
+        "arm": "B",
+        "case_id": "gc1-blood-pressure-05",
+        "recorded": {
+          "disposition": "proposal_ready",
+          "proposal_ready": true,
+          "rubric": "pass"
+        },
+        "changes": [
+          "final proposal: rubric pass (failed checks: none) -> fail (failed checks: has_guard_clause)",
+          "call 1 (refactor): rubric pass (failed checks: none) -> fail (failed checks: has_guard_clause)"
+        ],
+        "outcome_determinable_under_new_code": false
+      },
+      {
+        "arm": "D",
+        "case_id": "gc1-card-checksum-06",
+        "recorded": {
+          "disposition": "uncertain",
+          "proposal_ready": false,
+          "rubric": "pass"
+        },
+        "changes": [
+          "call 2 (review): same outcome, different parse error text (\"no JSON object found (invalid JSON (Expecting ',' delimiter at line 1, column 266))\" -> 'verdict is missing')"
+        ],
+        "outcome_determinable_under_new_code": true
+      },
+      {
+        "arm": "B",
+        "case_id": "gc1-http-status-07",
+        "recorded": {
+          "disposition": "rejected",
+          "proposal_ready": false,
+          "rubric": "fail"
+        },
+        "changes": [
+          "final proposal: rubric fail (failed checks: nesting_reduced) -> fail (failed checks: has_guard_clause, nesting_reduced)",
+          "call 1 (refactor): rubric fail (failed checks: nesting_reduced) -> fail (failed checks: has_guard_clause, nesting_reduced)",
+          "call 3 (refactor): rubric fail (failed checks: nesting_reduced) -> fail (failed checks: has_guard_clause, nesting_reduced)"
+        ],
+        "outcome_determinable_under_new_code": false
+      },
+      {
+        "arm": "B",
+        "case_id": "gc1-income-tax-06",
+        "recorded": {
+          "disposition": "rejected",
+          "proposal_ready": false,
+          "rubric": "fail"
+        },
+        "changes": [
+          "call 2 (review): same outcome, different parse error text (\"no JSON object found (invalid JSON (Expecting ',' delimiter at line 1, column 126))\" -> 'verdict is missing')",
+          "call 4 (review): same outcome, different parse error text (\"no JSON object found (invalid JSON (Expecting ',' delimiter at line 1, column 126))\" -> 'verdict is missing')"
+        ],
+        "outcome_determinable_under_new_code": true
+      },
+      {
+        "arm": "B",
+        "case_id": "gc1-income-tax-07",
+        "recorded": {
+          "disposition": "rejected",
+          "proposal_ready": false,
+          "rubric": "fail"
+        },
+        "changes": [
+          "call 2 (review): same outcome, different parse error text (\"no JSON object found (invalid JSON (Expecting ',' delimiter at line 1, column 126))\" -> 'verdict is missing')",
+          "call 4 (review): same outcome, different parse error text (\"no JSON object found (invalid JSON (Expecting ',' delimiter at line 1, column 126))\" -> 'verdict is missing')"
+        ],
+        "outcome_determinable_under_new_code": true
+      }
+    ],
+    "undetermined_rule": "A record's outcome under the new code follows from its recorded model outputs when every decision the workflow acts on is unchanged: the parsed analysis, the parsed code, every rubric check, the test admission problems and the review verdict. Then every later prompt and the disposition are the same. When one of them changes (for example a rubric check, which decides whether a correction is requested and is quoted in the correction prompt), the later model outputs are unknown, so the outcome is undetermined until the arm is run again.",
+    "undetermined_records_by_arm": {
+      "B": [
+        "gc1-blood-pressure-01",
+        "gc1-blood-pressure-05",
+        "gc1-http-status-07"
+      ]
+    }
+  }
+}
