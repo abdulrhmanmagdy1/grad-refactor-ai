@@ -74,9 +74,13 @@ def repository_link(target: str) -> str:
 
 
 def embed_image(target: str) -> str:
+    """Embed an image of the repository; anything else stops the build."""
     path = (REPORT.parent / target).resolve()
+    suffix = path.suffix.lower()
+    if not path.is_relative_to(ROOT) or suffix not in IMAGE_TYPES or not path.is_file():
+        raise SystemExit(f"Refusing image outside the repository or of another type: {target}")
     data = base64.b64encode(path.read_bytes()).decode("ascii")
-    return f"data:{IMAGE_TYPES[path.suffix.lower()]};base64,{data}"
+    return f"data:{IMAGE_TYPES[suffix]};base64,{data}"
 
 
 def rewrite_links(text: str) -> str:

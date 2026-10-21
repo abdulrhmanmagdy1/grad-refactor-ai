@@ -28,7 +28,7 @@ The eight Python skips are the real-GPU provider tests, which run only with `REF
 
 ## GitHub Actions
 
-Every push to `main` from `d2d2f0b` on triggered the CI workflow, and every run succeeded. The `checks` job runs on Ubuntu and Windows; the `frontend` job exists from `5549a77` on. Results were read with `gh run view` on 2026-10-21.
+Every push to `main` from `d2d2f0b` on triggered the CI workflow, and every run succeeded. The commits after `74daf25` changed documentation, records, the slides and their build scripts only; they were checked with the link checker and ruff before the push and by CI. The `checks` job runs on Ubuntu and Windows; the `frontend` job exists from `5549a77` on. Results were read with `gh run view` on 2026-10-21.
 
 | Commit | Run | Jobs |
 |---|---|---|
@@ -47,5 +47,9 @@ Every push to `main` from `d2d2f0b` on triggered the CI workflow, and every run 
 | `dd1b0fa` | 39598269185 | checks (Ubuntu, Windows), frontend success |
 | `90462d3` | 39598461950 | checks (Ubuntu, Windows), frontend success |
 | `74daf25` | 39600170341 | checks (Ubuntu, Windows), frontend success |
+| `3d761cc` | 39602686994 | checks (Ubuntu, Windows), frontend success |
+| `196f4f3` | 39604005416 | checks (Ubuntu, Windows), frontend success |
+| `57310a4` | 39604357058 | checks (Ubuntu, Windows), frontend success |
+| `6b35e48` | 39604491756 | checks (Ubuntu, Windows), frontend success |
 
 At `74daf25` the Ubuntu job reported 1,550 passed and 9 skipped and the Windows job 1,551 passed and 8 skipped; the extra Ubuntu skip is the Windows-only launcher test in `tests/test_local_provider.py`. The Ubuntu job runs as the unprivileged `runner` user, so from `a546f84` on it also covers the runner tests (`tests/test_runner.py`, `tests/test_runner_child.py`) on Linux after the root-user change; the root path itself is covered by the isolation self-checks in the Kaggle runs.
