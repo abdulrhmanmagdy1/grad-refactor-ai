@@ -21,6 +21,8 @@ ENV_RUNNER = "REFACTOR_AI_RUNNER"
 ENV_MAX_PENDING = "REFACTOR_AI_MAX_PENDING"
 ENV_RETENTION = "REFACTOR_AI_RETENTION"
 ENV_REFACTOR_USE_ADAPTER = "REFACTOR_AI_REFACTOR_USE_ADAPTER"
+ENV_PROJECT_MODEL_CONFIG = "REFACTOR_AI_PROJECT_MODEL_CONFIG"
+ENV_PROJECT_TESTS = "REFACTOR_AI_PROJECT_TESTS"
 
 PROVIDERS = ("fake", "local")
 RUNNER_MODES = ("auto", "disabled")
@@ -46,8 +48,11 @@ class Settings:
     not_run. max_pending bounds unfinished runs (waiting plus the one running).
     retention caps stored runs. refactor_use_adapter runs the refactoring role with the
     provider's LoRA adapter (arms C/D); without a configured adapter runs fail instead of
-    using the base model. frontend_dist and shutdown_grace_s have no environment
-    variables.
+    using the base model. project_model_config is the GGUF model of the project review mode
+    (used with provider=local when the file exists). project_tests allows a project review to
+    run the uploaded project's own tests when the person asks for it; it is off by default
+    because those tests execute the uploaded code on this machine. frontend_dist and
+    shutdown_grace_s have no environment variables.
     """
 
     provider: str = "fake"
@@ -59,6 +64,8 @@ class Settings:
     frontend_dist: Path | None = Path("frontend/dist")
     refactor_use_adapter: bool = False
     shutdown_grace_s: float = 10.0
+    project_model_config: Path = Path("configs/model.project.local.json")
+    project_tests: bool = False
 
     def __post_init__(self) -> None:
         if self.provider not in PROVIDERS:
@@ -67,7 +74,11 @@ class Settings:
             raise ConfigError(f"{ENV_RUNNER} must be 'auto' or 'disabled', got {self.runner!r}")
         _check_int(ENV_MAX_PENDING, self.max_pending, *MAX_PENDING_RANGE)
         _check_int(ENV_RETENTION, self.retention, *RETENTION_RANGE)
-        for name, env in (("local_model_config", ENV_MODEL_CONFIG), ("db_path", ENV_DB)):
+        for name, env in (
+            ("local_model_config", ENV_MODEL_CONFIG),
+            ("db_path", ENV_DB),
+            ("project_model_config", ENV_PROJECT_MODEL_CONFIG),
+        ):
             value = getattr(self, name)
             if not str(value).strip():
                 raise ConfigError(f"{env} must not be empty")
@@ -76,6 +87,8 @@ class Settings:
             object.__setattr__(self, "frontend_dist", Path(self.frontend_dist))
         if not isinstance(self.refactor_use_adapter, bool):
             raise ConfigError(f"{ENV_REFACTOR_USE_ADAPTER} must be true or false")
+        if not isinstance(self.project_tests, bool):
+            raise ConfigError(f"{ENV_PROJECT_TESTS} must be true or false")
         if not 0 <= float(self.shutdown_grace_s) <= 600:
             raise ConfigError("shutdown_grace_s must be between 0 and 600 seconds")
 
@@ -98,7 +111,21 @@ class Settings:
             values["retention"] = _parse_int(ENV_RETENTION, value)
         if (value := _get(env, ENV_REFACTOR_USE_ADAPTER)) is not None:
             values["refactor_use_adapter"] = _parse_bool(ENV_REFACTOR_USE_ADAPTER, value)
+        if (value := _get(env, ENV_PROJECT_MODEL_CONFIG)) is not None:
+            values["project_model_config"] = Path(value)
+        if (value := _get(env, ENV_PROJECT_TESTS)) is not None:
+            values["project_tests"] = _parse_bool(ENV_PROJECT_TESTS, value)
         return cls(**values)
+
+    @property
+    def projects_db_path(self) -> Path:
+        """Project review records, next to the run history."""
+        return self.db_path.with_name("projects.sqlite3")
+
+    @property
+    def projects_dir(self) -> Path:
+        """Uploaded project files, one folder per review."""
+        return self.db_path.parent / "projects"
 
 
 def _get(env: Mapping[str, str], name: str) -> str | None:

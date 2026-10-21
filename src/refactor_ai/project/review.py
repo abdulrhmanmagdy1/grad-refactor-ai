@@ -654,6 +654,7 @@ class ProjectReviewer:
         fixed: list[Finding] = []
         notes: list[str] = []
         failures: dict[str, list[str]] = {"syntax": [], "static": []}
+        imports: list[str] = []
         explanations: list[str] = []
         for finding_group, proposed, explanation in steps or self._fixer_steps(
             function, actionable, state
@@ -680,6 +681,7 @@ class ProjectReviewer:
                 continue
             state.source, state.span = applied.patched, applied.span_after
             fixed.extend(finding_group)
+            imports.extend(line for line in proposal.imports if line not in imports)
             if explanation:
                 explanations.append(explanation)
         if not fixed:
@@ -698,6 +700,7 @@ class ProjectReviewer:
             return fix
         fix.finding_ids = [f.id for f in fixed]
         fix.proposed = fixes.function_text(state.source, state.span)
+        fix.imports = imports
         fix.diff = fixes.unified_diff(source, state.source, function.file)
         fix.explanation = " ".join(explanations) or None
         fix.syntax = FixCheck(status="pass", detail="The patched file parses.")

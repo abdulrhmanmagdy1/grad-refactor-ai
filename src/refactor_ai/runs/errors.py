@@ -37,6 +37,10 @@ class ErrorCode(StrEnum):
     SERVICE_UNAVAILABLE = "service_unavailable"
     INTERNAL_ERROR = "internal_error"
     HTTP_ERROR = "http_error"
+    PROJECT_NOT_FOUND = "project_not_found"
+    INVALID_PROJECT = "invalid_project"
+    FIX_NOT_FOUND = "fix_not_found"
+    FIX_UNAVAILABLE = "fix_unavailable"
 
 
 class RunErrorCode(StrEnum):
@@ -219,3 +223,22 @@ def internal_error() -> ApiError:
 
 def cors_rejected(failures: str) -> ApiError:
     return ApiError(400, ErrorCode.CORS_REJECTED, f"Cross-origin request rejected ({failures}).")
+
+
+MAX_PROJECT_BYTES = 5_000_000
+
+
+def project_not_found() -> ApiError:
+    return ApiError(404, ErrorCode.PROJECT_NOT_FOUND, "No project review with this id exists.")
+
+
+def invalid_project(code: str, message: str) -> ApiError:
+    return ApiError(422, ErrorCode.INVALID_PROJECT, message, details=[{"reason": code}])
+
+
+def fix_not_found() -> ApiError:
+    return ApiError(404, ErrorCode.FIX_NOT_FOUND, "This project review has no fix with this id.")
+
+
+def fix_unavailable(reason: str) -> ApiError:
+    return ApiError(409, ErrorCode.FIX_UNAVAILABLE, reason)

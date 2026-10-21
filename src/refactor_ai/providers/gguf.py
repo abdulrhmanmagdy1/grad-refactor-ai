@@ -198,3 +198,7 @@ class PooledProvider:
 
     def close(self) -> None:
         self.inner.close()
+
+    def __getattr__(self, name: str):
+        """Everything else (worker_pid, settings, ...) is the inner provider's."""
+        return getattr(self.inner, name)

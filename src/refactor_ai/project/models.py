@@ -81,6 +81,7 @@ class Fix(Record):
     line_end: int
     original: str
     proposed: str | None = None
+    imports: list[str] = Field(default_factory=list)
     explanation: str | None = None
     diff: str | None = None
     produced_by: str

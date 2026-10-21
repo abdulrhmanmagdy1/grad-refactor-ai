@@ -75,6 +75,23 @@ All endpoints are local. Errors use `ErrorResponse`: `{"error": {"code": ..., "m
 
 A submission with a `reference_case_id` must contain exactly that case's code (line endings normalized), otherwise 422 `reference_case_mismatch`. The service never writes proposals to host files; download happens only after the person inspects the result.
 
+### Project review API
+
+The project review mode ([design](project-review.md)) has its own endpoints. Records are `ProjectRecord` objects ([project/models.py](../../src/refactor_ai/project/models.py)) stored in `projects.sqlite3` next to the run history, with the uploaded files under `projects/<project_id>/`.
+
+| Method and path | Result |
+|---|---|
+| GET /api/v1/projects/info | Whether reviews use a model (its identity and state), the upload limit and whether the project's tests may run |
+| POST /api/v1/projects?name=&run_tests= | The raw request body is the zip (up to 5 MB). 202 with `project_id`, `status` and `poll_url`; 422 `invalid_project` with the intake reason (`empty`, `not_a_zip`, `too_large`, `too_many_files`, `no_python_files`, `unsafe_entry`); 413 `payload_too_large`; 503 `busy` when two reviews are unfinished |
+| GET /api/v1/projects | Short records, newest first, bounded `limit` (default 20, maximum 50) |
+| GET /api/v1/projects/{project_id} | `ProjectRecord` with status, progress, summary, architecture, findings, fixes, model calls and warnings; 404 `project_not_found` |
+| POST /api/v1/projects/{project_id}/fixes/{fix_id}/decision | Records `accepted` or `rejected` for one fix; 404 `fix_not_found`; 409 `fix_unavailable` before the review finished or for a fix without a proposal |
+| GET /api/v1/projects/{project_id}/patch | The accepted fixes as one unified diff; 409 `fix_unavailable` when none is accepted |
+| GET /api/v1/projects/{project_id}/download | A zip of the project with the accepted fixes applied; 409 as above |
+| DELETE /api/v1/projects/{project_id} | 204; removes the record and the uploaded files |
+
+Reviews run on their own worker thread, one at a time. Like runs, a review left unfinished when the service stops becomes `failed` with error code `interrupted` at the next start, and the oldest finished reviews beyond the retention limit are deleted. A request to run the project's tests is ignored, with a warning in the record, unless the service was started with `REFACTOR_AI_PROJECT_TESTS=true`.
+
 Runs are processed by one worker thread through a bounded queue, so model inference is serialized. SQLite stores each `RunRecord` atomically. On startup, stored non-terminal runs become `failed` with error code `interrupted` and are not rerun. Stored runs are capped by a retention limit and can be deleted.
 
 ## Configuration
@@ -88,6 +105,8 @@ Runs are processed by one worker thread through a bounded queue, so model infere
 | REFACTOR_AI_MAX_PENDING | `4` | Bounded queue size |
 | REFACTOR_AI_RETENTION | `200` | Maximum stored runs |
 | REFACTOR_AI_REFACTOR_USE_ADAPTER | `false` | `true` runs the refactoring role with the configured LoRA adapter (arms C/D behavior); analysis and review always use the base model |
+| REFACTOR_AI_PROJECT_MODEL_CONFIG | `configs/model.project.local.json` | The GGUF model of the project review mode; used with `REFACTOR_AI_PROVIDER=local` when the file exists, otherwise project reviews use the static checks only |
+| REFACTOR_AI_PROJECT_TESTS | `false` | `true` lets a project review run the uploaded project's own tests when the person asks for it; off by default because those tests execute the uploaded code on this machine |
 
 The local web interface is served from the same FastAPI process when `frontend/dist` exists. During frontend development, CORS allows only `http://127.0.0.1:5173` and `http://localhost:5173`.
 

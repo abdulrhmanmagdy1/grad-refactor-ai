@@ -1,9 +1,11 @@
 """HTTP API of the refactoring service.
 
-GET /health, POST /api/v1/analyze (static heuristics), GET /api/v1/reference-cases and
-the queued run API under /api/v1/runs. The API never executes submitted or generated
-code: it parses input with ast only, and the workflow and the separate reference runner
-own everything else. Every error body is an ErrorResponse.
+GET /health, POST /api/v1/analyze (static heuristics), GET /api/v1/reference-cases, the
+queued run API under /api/v1/runs and the project review API under /api/v1/projects. The
+API never executes submitted or generated code: it parses input with ast only, and the
+workflow and the separate reference runner own everything else (a project's own tests run
+only when the person asks for it, in project/testrun.py). Every error body is an
+ErrorResponse.
 
 Run the service with `uvicorn refactor_ai.api:app`; its lifespan reads the
 REFACTOR_AI_* settings, starts the run worker and closes the provider on shutdown.
@@ -50,6 +52,10 @@ from refactor_ai.contracts import (
     RunList,
     RunRecord,
 )
+from refactor_ai.project.models import ProjectRecord
+from refactor_ai.project.runtime import pair_providers, project_model_info
+from refactor_ai.project.service import ProjectBusy, ProjectService, ProjectStore, record_summary
+from refactor_ai.project.workspace import IntakeError
 from refactor_ai.providers.base import Provider
 from refactor_ai.runs import errors
 from refactor_ai.runs.components import (
@@ -125,6 +131,8 @@ class Runtime:
     warmup: ProviderWarmup
     frontend: StaticFiles | None
     frontend_dir: Path | None
+    projects: ProjectService | None = None
+    project_provider: Provider | None = None
 
 
 def _is_reserved(name: str) -> bool:
@@ -162,6 +170,7 @@ def _close_provider(provider: Provider) -> None:
 def _build_runtime(overrides: _Overrides) -> Runtime:
     settings = overrides.settings if overrides.settings is not None else Settings.from_env()
     provider = overrides.provider if overrides.provider is not None else build_provider(settings)
+    provider, project_provider = pair_providers(settings, provider)
     try:
         if settings.runner == "disabled":
             runner: ReferenceRunner | None = DisabledRunner(RUNNER_DISABLED_REASON)
@@ -205,6 +214,14 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
     runner_monitor.wait(RUNNER_STARTUP_WAIT_S)
     if settings.refactor_use_adapter and (problem := adapter_problem(provider)) is not None:
         logger.warning(problem)
+    project_store = ProjectStore(settings.projects_db_path, settings.retention)
+    projects = ProjectService(
+        project_store,
+        settings.projects_dir,
+        provider_factory=lambda: project_provider,
+        tests_allowed=settings.project_tests,
+    )
+    projects.start()
     frontend_dir = settings.frontend_dist.resolve() if settings.frontend_dist else None
     frontend = (
         _FrontendFiles(directory=frontend_dir, html=True, check_dir=False) if frontend_dir else None
@@ -216,7 +233,17 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
         settings.max_pending,
         settings.retention,
     )
-    return Runtime(settings, service, registry, runner_monitor, warmup, frontend, frontend_dir)
+    return Runtime(
+        settings,
+        service,
+        registry,
+        runner_monitor,
+        warmup,
+        frontend,
+        frontend_dir,
+        projects,
+        project_provider,
+    )
 
 
 def _shutdown(runtime: Runtime) -> None:
@@ -224,6 +251,11 @@ def _shutdown(runtime: Runtime) -> None:
     service = runtime.service
     grace = runtime.settings.shutdown_grace_s
     stopped = False
+    if runtime.projects is not None:
+        if runtime.project_provider is not None:
+            _close_provider(runtime.project_provider)  # ends a review's model call at once
+        runtime.projects.stop(timeout=grace)
+        runtime.projects.store.close()
     try:
         stopped = service.stop(timeout=grace)
         if not stopped:
@@ -494,6 +526,178 @@ def delete_run(run_id: str, runtime: RuntimeDep) -> Response:
     return Response(status_code=204)
 
 
+# --- Project reviews -------------------------------------------------------------------
+
+PROJECT_LIST_MAX = 50
+
+
+def _projects(runtime: Runtime) -> ProjectService:
+    if runtime.projects is None:
+        raise errors.service_unavailable()
+    return runtime.projects
+
+
+def _load_project(runtime: Runtime, project_id: str) -> ProjectRecord:
+    if not is_valid_run_id(project_id):
+        raise errors.project_not_found()
+    record = _projects(runtime).get(project_id)
+    if record is None:
+        raise errors.project_not_found()
+    return record
+
+
+@_route("GET", "/api/v1/projects/info", responses=_documented_errors(503))
+def project_info(runtime: RuntimeDep) -> dict:
+    """Whether project reviews use a model, and its identity and state."""
+    info = project_model_info(runtime.project_provider)
+    if info.get("detail"):
+        info["detail"] = redact_host_paths(info["detail"])
+    return {
+        **info,
+        "max_zip_bytes": errors.MAX_PROJECT_BYTES,
+        "tests_allowed": runtime.settings.project_tests,
+    }
+
+
+@_route(
+    "POST",
+    "/api/v1/projects",
+    status_code=202,
+    responses=_documented_errors(413, 422, 503),
+)
+async def create_project(
+    request: Request,
+    response: Response,
+    runtime: RuntimeDep,
+    name: Annotated[str, Query(max_length=120)] = "project",
+    run_tests: bool = False,
+) -> dict:
+    """Upload a project as a zip (the raw request body) and queue its review. The files
+    are only parsed; the project's own tests run only when run_tests=true."""
+    data = await request.body()
+    if not data:
+        raise errors.invalid_project("empty", "The request body must be a zip file.")
+    projects = _projects(runtime)
+    try:
+        record = await anyio.to_thread.run_sync(projects.submit, data, name, run_tests)
+    except IntakeError as exc:
+        raise errors.invalid_project(exc.code, exc.message) from None
+    except ProjectBusy:
+        raise errors.busy(projects.max_pending) from None
+    poll_url = f"/api/v1/projects/{record.project_id}"
+    response.headers["Location"] = poll_url
+    return {"project_id": record.project_id, "status": record.status.value, "poll_url": poll_url}
+
+
+@_route("GET", "/api/v1/projects", responses=_documented_errors(422, 503))
+def list_projects(
+    runtime: RuntimeDep,
+    limit: Annotated[int, Query(ge=1, le=PROJECT_LIST_MAX)] = RUN_LIST_DEFAULT,
+) -> dict:
+    """Project reviews, newest first (short form)."""
+    return {
+        "projects": [record_summary(r) for r in _projects(runtime).list(limit)],
+        "limit": limit,
+    }
+
+
+@_route(
+    "GET",
+    "/api/v1/projects/{project_id}",
+    response_model=ProjectRecord,
+    responses=_documented_errors(404, 503),
+)
+def get_project(project_id: str, runtime: RuntimeDep) -> ProjectRecord:
+    return _load_project(runtime, project_id)
+
+
+@_route(
+    "POST",
+    "/api/v1/projects/{project_id}/fixes/{fix_id}/decision",
+    response_model=ProjectRecord,
+    responses=_documented_errors(404, 409, 422, 503),
+)
+def decide_fix(
+    project_id: str, fix_id: str, body: DecisionRequest, runtime: RuntimeDep
+) -> ProjectRecord:
+    """Accept or reject one fix; only accepted fixes go into the patch and the download."""
+    _load_project(runtime, project_id)
+    try:
+        return _projects(runtime).decide(project_id, fix_id, body.decision)
+    except KeyError as exc:
+        if exc.args and exc.args[0] == "fix":
+            raise errors.fix_not_found() from None
+        raise errors.project_not_found() from None
+    except LookupError as exc:
+        raise errors.fix_unavailable(str(exc)) from None
+
+
+def _attachment(content: bytes, media_type: str, filename: str) -> Response:
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@_route(
+    "GET",
+    "/api/v1/projects/{project_id}/patch",
+    response_class=Response,
+    responses={
+        200: {"content": {"text/x-diff": {}}, "description": "The accepted fixes"},
+        **_documented_errors(404, 409, 503),
+    },
+)
+def download_patch(project_id: str, runtime: RuntimeDep) -> Response:
+    """The accepted fixes as one unified diff."""
+    record = _load_project(runtime, project_id)
+    try:
+        patch = _projects(runtime).patch(project_id)
+    except LookupError as exc:
+        raise errors.fix_unavailable(str(exc)) from None
+    return _attachment(
+        patch.encode("utf-8"), "text/x-diff; charset=utf-8", f"{record.project_id}.patch"
+    )
+
+
+@_route(
+    "GET",
+    "/api/v1/projects/{project_id}/download",
+    response_class=Response,
+    responses={
+        200: {"content": {"application/zip": {}}, "description": "The project with fixes"},
+        **_documented_errors(404, 409, 503),
+    },
+)
+def download_project(project_id: str, runtime: RuntimeDep) -> Response:
+    """The project as a zip with the accepted fixes applied."""
+    _load_project(runtime, project_id)
+    try:
+        filename, data = _projects(runtime).download(project_id)
+    except LookupError as exc:
+        raise errors.fix_unavailable(str(exc)) from None
+    return _attachment(data, "application/zip", filename)
+
+
+@_route(
+    "DELETE",
+    "/api/v1/projects/{project_id}",
+    status_code=204,
+    response_class=Response,
+    responses=_documented_errors(404, 503),
+)
+def delete_project(project_id: str, runtime: RuntimeDep) -> Response:
+    """Delete the review and the uploaded files."""
+    _load_project(runtime, project_id)
+    _projects(runtime).delete(project_id)
+    return Response(status_code=204)
+
+
 # --- Errors and middleware -----------------------------------------------------------
 
 
@@ -595,7 +799,8 @@ class _JsonCORSMiddleware(CORSMiddleware):
 
 
 class _BodySizeLimit:
-    """Reject request bodies above max_bytes with 413 before they are parsed."""
+    """Reject request bodies above max_bytes with 413 before they are parsed (a project
+    upload to POST /api/v1/projects may be up to MAX_PROJECT_BYTES)."""
 
     def __init__(self, app: ASGIApp, max_bytes: int) -> None:
         self.app = app
@@ -605,9 +810,12 @@ class _BodySizeLimit:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+        limit = self.max_bytes
+        if scope.get("method") == "POST" and scope.get("path") == "/api/v1/projects":
+            limit = errors.MAX_PROJECT_BYTES
         declared = Headers(scope=scope).get("content-length", "")
-        if declared.isdigit() and int(declared) > self.max_bytes:
-            await _error_response(errors.payload_too_large(self.max_bytes))(scope, receive, send)
+        if declared.isdigit() and int(declared) > limit:
+            await _error_response(errors.payload_too_large(limit))(scope, receive, send)
             return
         received = 0
 
@@ -616,7 +824,7 @@ class _BodySizeLimit:
             message = await receive()
             if message["type"] == "http.request":
                 received += len(message.get("body", b""))
-                if received > self.max_bytes:
+                if received > limit:
                     raise StarletteHTTPException(status_code=413)
             return message
 

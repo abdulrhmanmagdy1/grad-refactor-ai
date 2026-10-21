@@ -55,6 +55,8 @@ On Linux or macOS use `REFACTOR_AI_PROVIDER=local uv run uvicorn refactor_ai.api
 | REFACTOR_AI_MAX_PENDING | `4` | Unfinished runs allowed at once (waiting plus running), 1 to 100 |
 | REFACTOR_AI_RETENTION | `200` | Stored runs kept, 1 to 100,000; the oldest finished runs are deleted first |
 | REFACTOR_AI_REFACTOR_USE_ADAPTER | `false` | `true` runs the refactoring role with the configured LoRA adapter; accepts `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off` |
+| REFACTOR_AI_PROJECT_MODEL_CONFIG | `configs/model.project.local.json` | The GGUF model of the project review mode; used with `REFACTOR_AI_PROVIDER=local` when the file exists, otherwise project reviews use the static checks only |
+| REFACTOR_AI_PROJECT_TESTS | `false` | `true` lets a project review run the uploaded project's own tests when the person asks for it; off by default because those tests execute the uploaded code on this machine |
 
 An invalid value stops startup with a message that names the variable; an empty value means the default.
 
