@@ -1,0 +1,34 @@
+{
+  "record": "Feasibility of Qwen2.5-Coder-3B-Instruct (GGUF q4_k_m, llama.cpp) on the demonstration laptop for the project review mode (docs/architecture/project-review.md); not an evaluation",
+  "recorded_at": "2026-10-21",
+  "hardware": "experiments/hardware/2026-10-20-demonstration-laptop.json (NVIDIA RTX 2050, 4 GB)",
+  "model": {
+    "repo_id": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
+    "revision": "f74adce6aa16316c625447af059dbebe4983757c",
+    "file": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+    "bytes": 2104932800,
+    "sha256": "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7",
+    "sha256_matches_hub": true,
+    "license": "Qwen Research License Agreement (non-commercial research use; LICENSE file at the revision)"
+  },
+  "runtime": {
+    "provider": "refactor_ai.providers.gguf.GgufProvider with gguf_worker.py",
+    "llama_cpp_python": "0.3.4 (prebuilt CUDA 12.4 wheel, CUDA runtime from .venv-train torch/lib)",
+    "context_tokens": 8192,
+    "gpu_layers": "all",
+    "decoding": "greedy (temperature 0, top_k 1), repeat penalty off"
+  },
+  "measurements": {
+    "load_s": 10.4,
+    "gpu_memory_used_before_load_mib": 1179,
+    "gpu_memory_used_peak_mib": 3641,
+    "calls": [
+      {"prompt_tokens": 313, "completion_tokens": 400, "elapsed_s": 11.8, "finish_reason": "length"},
+      {"prompt_tokens": 313, "completion_tokens": 400, "elapsed_s": 10.8, "finish_reason": "length"}
+    ],
+    "tokens_per_second": [34.0, 37.2],
+    "note": "GPU memory is the whole card as reported by nvidia-smi every 0.5 s, including about 1.2 GB used by other programs; the two calls returned the same text (greedy decoding)."
+  },
+  "observation": "Asked without constraints to list the bugs of the trap function in the sample project (the function a team member tried on 2026-10-21), the model returned JSON that named lines which do not hold the claimed code and repeated an invented 'potential infinite loop' finding until the 400-token limit; none of the five real defects was named. The deterministic scan of the same file found all five (ruff B006 and B023, and the project rules iterated-list-mutated, identity-comparison-of-computed-value and value-never-used).",
+  "consequence": "The project review mode keeps the deterministic scan as its primary source of findings. Model findings must quote the code line they are about, are dropped when the quote does not match the file, and are reviewed by a second agent; model fixes are accepted only after the syntax check, the static re-scan, the project's tests (when enabled) and the review."
+}

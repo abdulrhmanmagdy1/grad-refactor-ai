@@ -11,6 +11,7 @@ Pilot measurements on the demonstration laptop (RTX 2050 4 GB, 7.8 GB RAM). They
 | [2026-10-20-local-provider-gpu-tests.json](2026-10-20-local-provider-gpu-tests.json) | Results of the real-model LocalProvider tests |
 | [2026-10-20-prompt-format-selection.md](2026-10-20-prompt-format-selection.md) | Validation-only selection of the refactoring prompt format (v1 to v4) on 24 validation records, with raw outputs in the matching JSON |
 | [2026-10-20-prompt-format-token-lengths.json](2026-10-20-prompt-format-token-lengths.json) | Curated train and validation record lengths under the formats |
+| [2026-10-21-gguf-3b-feasibility.json](2026-10-21-gguf-3b-feasibility.json) | Qwen2.5-Coder-3B-Instruct (GGUF q4_k_m, llama.cpp) on the laptop for the project review mode: load time, speed, GPU memory and one unconstrained bug-review attempt |
 
 ## Candidate
 

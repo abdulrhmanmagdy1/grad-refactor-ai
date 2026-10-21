@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.11.*"
 
 [[package]]
@@ -83,6 +83,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "ruff" },
     { name = "uvicorn" },
 ]
 
@@ -90,12 +91,12 @@ dependencies = [
 dev = [
     { name = "httpx" },
     { name = "pytest" },
-    { name = "ruff" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115,<1" },
+    { name = "ruff", specifier = ">=0.9,<1" },
     { name = "uvicorn", specifier = ">=0.30,<1" },
 ]
 
@@ -103,7 +104,6 @@ requires-dist = [
 dev = [
     { name = "httpx", specifier = ">=0.27,<1" },
     { name = "pytest", specifier = ">=8,<10" },
-    { name = "ruff", specifier = ">=0.9,<1" },
 ]
 
 [[package]]

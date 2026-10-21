@@ -1,0 +1,18 @@
+{
+  "_comment": "GgufProvider settings (src/refactor_ai/providers/gguf.py) for the project review mode (docs/architecture/project-review.md): a 4-bit GGUF model served by llama.cpp. Copy to configs/model.project.local.json, which Git ignores. Relative paths resolve against this file's directory. Keys starting with an underscore are comments.",
+  "_python": "Training-environment interpreter with llama-cpp-python installed (training/requirements-llm.txt); on Linux use ../.venv-train/bin/python.",
+  "python": "../.venv-train/Scripts/python.exe",
+  "_model_dir": "Folder holding the GGUF file, downloaded at exactly model_revision with training/download_model.py --include (see its docstring).",
+  "model_dir": "../models/Qwen2.5-Coder-3B-Instruct-GGUF",
+  "model_id": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
+  "model_revision": "f74adce6aa16316c625447af059dbebe4983757c",
+  "gguf_file": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+  "gguf_sha256": "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7",
+  "_context_tokens": "llama.cpp context window: prompt plus generated tokens.",
+  "context_tokens": 8192,
+  "_gpu_layers": "-1 puts every layer on the GPU; lower it if the GPU runs out of memory.",
+  "gpu_layers": -1,
+  "device": "cuda",
+  "dtype": "float16",
+  "load_timeout_s": 300
+}

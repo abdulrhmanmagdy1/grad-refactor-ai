@@ -7,6 +7,15 @@ Run with the training environment from the repository root, for example:
         --revision ea3f2471cf1b1f0db85067f1ef93848e38e88c25 \
         --local-dir models/Qwen2.5-Coder-0.5B-Instruct
 
+For a repository with several quantizations, --include limits the download to matching
+files, for example:
+
+    .venv-train/Scripts/python.exe training/download_model.py \
+        --repo-id Qwen/Qwen2.5-Coder-3B-Instruct-GGUF \
+        --revision f74adce6aa16316c625447af059dbebe4983757c \
+        --local-dir models/Qwen2.5-Coder-3B-Instruct-GGUF \
+        --include "*q4_k_m.gguf" --include LICENSE
+
 The revision must be an exact 40-character commit. Files are written straight into
 --local-dir (huggingface_hub keeps only small metadata under <local-dir>/.cache), Xet
 downloads are disabled so no second chunk-cache copy is created, and every file whose
@@ -23,6 +32,7 @@ os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
 os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 
 import argparse  # noqa: E402
+import fnmatch  # noqa: E402
 import hashlib  # noqa: E402
 import json  # noqa: E402
 import re  # noqa: E402
@@ -51,6 +61,12 @@ def main() -> int:
         default=1.5,
         help="refuse to start if free disk after the download would drop below this",
     )
+    parser.add_argument(
+        "--include",
+        action="append",
+        default=None,
+        help="download only files matching this glob (repeatable); default: every file",
+    )
     args = parser.parse_args()
     if not re.fullmatch(r"[0-9a-f]{40}", args.revision):
         raise SystemExit("--revision must be an exact 40-character commit SHA, not a branch")
@@ -60,8 +76,14 @@ def main() -> int:
     info = HfApi().model_info(args.repo_id, revision=args.revision, files_metadata=True)
     if info.sha != args.revision:
         raise SystemExit(f"the hub resolved {args.revision} to {info.sha}")
-    expected = {s.rfilename: s for s in info.siblings}
-    total = sum(s.size or 0 for s in info.siblings)
+    expected = {
+        s.rfilename: s
+        for s in info.siblings
+        if args.include is None or any(fnmatch.fnmatch(s.rfilename, p) for p in args.include)
+    }
+    if not expected:
+        raise SystemExit("no repository file matches --include")
+    total = sum(s.size or 0 for s in expected.values())
     args.local_dir.mkdir(parents=True, exist_ok=True)
     free = shutil.disk_usage(args.local_dir).free
     if free - total < args.min_free_gb * 1e9:
@@ -70,7 +92,12 @@ def main() -> int:
             f"at least {args.min_free_gb} GB must stay free"
         )
     started = time.perf_counter()
-    snapshot_download(args.repo_id, revision=args.revision, local_dir=args.local_dir)
+    snapshot_download(
+        args.repo_id,
+        revision=args.revision,
+        local_dir=args.local_dir,
+        allow_patterns=args.include,
+    )
     elapsed = time.perf_counter() - started
 
     files = {}
