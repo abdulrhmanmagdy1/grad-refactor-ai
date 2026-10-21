@@ -1,4 +1,4 @@
-"""Prompts and output parsers of the project review agents (prompt version project-v2).
+"""Prompts and output parsers of the project review agents (prompt version project-v3).
 
 Six model roles, each with its own prompt and a strict parser:
 
@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from refactor_ai.contracts import ChatMessage
 from refactor_ai.task_format import parse_refactor_output
 
-PROMPT_VERSION = "project-v2"
+PROMPT_VERSION = "project-v3"
 # How much of the project README the finders see as the description of intended behavior.
 MAX_DESCRIPTION = 800
 SEVERITIES = ("high", "medium", "low")
@@ -75,6 +75,12 @@ def _description(description: str | None) -> str:
     return f"Project description (from its README):\n{text}\n\n"
 
 
+ELSEWHERE = (
+    "Names the code uses but that are not shown (functions, classes, constants, imports) are "
+    "defined elsewhere in the project: never report them as undefined or missing."
+)
+
+
 def _known(known: list[str]) -> str:
     if not known:
         return "Already reported: nothing."
@@ -88,7 +94,7 @@ def bug_messages(
     user = (
         f"{_description(description)}"
         f"Find real bugs in the Python function `{qualname}`. File line numbers are on the left.\n"
-        f"Look for:\n{patterns}\n{_known(known)}\n\n"
+        f"Look for:\n{patterns}\n{ELSEWHERE}\n{_known(known)}\n\n"
         'Return JSON: {"findings": [{"line": <line number>, "code": "<the exact code on that '
         'line>", "problem": "<one sentence>", "severity": "high|medium|low"}]}\n'
         'Report at most 3 bugs. If there is no real bug, return {"findings": []}. Do not report '
@@ -115,7 +121,7 @@ def quality_messages(
         "ownership check, unsafe deserialization, disabled certificate checks.\n"
         "Quality: functions doing several unrelated things, copy-pasted logic, error handling "
         "that hides failures, magic numbers that should be named, misleading names.\n"
-        f"{_known(known)}\n\n"
+        f"{ELSEWHERE}\n{_known(known)}\n\n"
         'Return JSON: {"findings": [{"line": <line number>, "code": "<the exact code on that '
         'line>", "category": "security|quality", "problem": "<one sentence>", '
         '"recommendation": "<one sentence>", "severity": "high|medium|low"}]}\n'
@@ -148,10 +154,12 @@ def architecture_messages(project_map: str, known: list[str]) -> list[ChatMessag
 def check_messages(title: str, problem: str, code: str, first_line: int) -> list[ChatMessage]:
     user = (
         f"A reviewer claims this problem: {title}. {problem}\n"
-        "Is it a real problem in the code below? Answer not_a_problem if the claim is wrong, "
-        "is about code that is not shown, or is only a matter of style.\n\n"
+        "Is it a real problem in the code below? First compare what the code does with what "
+        "its docstring and names say it should do, then decide. Answer not_a_problem if the "
+        "claim is wrong, is about code that is not shown, or is only a matter of style.\n\n"
         f"```python\n{numbered(code, first_line)}\n```\n\n"
-        'Return JSON: {"verdict": "real|not_a_problem|unsure", "reason": "<one sentence>"}'
+        'Return JSON: {"reason": "<what the code does and what it should do, one or two '
+        'sentences>", "verdict": "real|not_a_problem|unsure"}'
     )
     return [
         ChatMessage(role="system", content=REVIEWER_SYSTEM),
@@ -166,7 +174,7 @@ def architecture_check_messages(title: str, problem: str, project_map: str) -> l
         "not_a_problem if the claim is wrong, generic, about standard-library imports, or "
         "about modules that are small and simple.\n\n"
         f"{project_map}\n\n"
-        'Return JSON: {"verdict": "real|not_a_problem|unsure", "reason": "<one sentence>"}'
+        'Return JSON: {"reason": "<one sentence>", "verdict": "real|not_a_problem|unsure"}'
     )
     return [
         ChatMessage(role="system", content=REVIEWER_SYSTEM),
@@ -200,7 +208,7 @@ def fix_review_messages(title: str, explanation: str, diff: str) -> list[ChatMes
         "function does for other inputs. Reject if it does not fix the problem, adds new "
         "behavior, removes or changes a condition, check or output that the problem does not "
         "mention, moves an import, or breaks callers.\n"
-        'Return JSON: {"verdict": "accept|reject|uncertain", "reasons": ["<one sentence>"]}'
+        'Return JSON: {"reasons": ["<one sentence>"], "verdict": "accept|reject|uncertain"}'
     )
     return [
         ChatMessage(role="system", content=REVIEWER_SYSTEM),

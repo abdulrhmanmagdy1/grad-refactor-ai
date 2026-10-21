@@ -73,29 +73,54 @@ class Proposal:
 
     function: str
     imports: tuple[str, ...] = ()
+    # Other classes and functions the model wrote around the function, which are ignored.
+    dropped: tuple[str, ...] = ()
+
+
+_DEFINITIONS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
 
 
 def check_proposal(proposed: str, name: str) -> Proposal:
-    """Exactly one function named `name`, optionally preceded by import statements."""
+    """One function named `name`, with any import statements it needs.
+
+    Models often wrap the function in its class or add stand-in definitions of the names it
+    uses; those other classes and functions are dropped (the static re-check then reports
+    anything the function really needed from them). Other module-level code is refused.
+    """
     text = textwrap.dedent(proposed)
     try:
         tree = ast.parse(text)
     except (SyntaxError, ValueError, RecursionError) as exc:
         raise FixError(f"The proposed function does not parse: {exc}") from exc
-    functions = [n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
-    others = [n for n in tree.body if not isinstance(n, (ast.Import, ast.ImportFrom))]
-    if len(functions) != 1 or others != functions or tree.body[-1] is not functions[0]:
-        raise FixError("The proposal must be one function, optionally preceded by imports.")
-    if functions[0].name != name:
-        raise FixError(f"The proposal renames the function to {functions[0].name}.")
+    shape = "The proposal must be one function, optionally preceded by imports."
+    imports = [n for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))]
+    if any(not isinstance(n, (*_DEFINITIONS, ast.Import, ast.ImportFrom)) for n in tree.body):
+        raise FixError(shape)
+    candidates = [
+        n for n in tree.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ] or [
+        child
+        for n in tree.body
+        if isinstance(n, ast.ClassDef)
+        for child in n.body
+        if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+    ]
+    named = [n for n in candidates if n.name == name]
+    if len(named) > 1:
+        raise FixError(shape)
+    if not named:
+        if candidates:
+            raise FixError(f"The proposal renames the function to {candidates[0].name}.")
+        raise FixError(shape)
+    target = named[0]
     lines = text.splitlines()
-    imports = tuple(
-        " ".join(ast.get_source_segment(text, node).split())
-        for node in tree.body
-        if isinstance(node, (ast.Import, ast.ImportFrom))
+    function = textwrap.dedent("\n".join(lines[target.lineno - 1 : target.end_lineno]) + "\n")
+    dropped = tuple(n.name for n in tree.body if isinstance(n, _DEFINITIONS) and n is not target)
+    return Proposal(
+        function,
+        tuple(" ".join(ast.get_source_segment(text, node).split()) for node in imports),
+        dropped,
     )
-    function = "\n".join(lines[functions[0].lineno - 1 : functions[0].end_lineno]) + "\n"
-    return Proposal(function, imports)
 
 
 def _import_position(tree: ast.Module) -> int:

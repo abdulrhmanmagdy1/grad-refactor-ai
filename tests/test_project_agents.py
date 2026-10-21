@@ -46,7 +46,18 @@ def test_finders_see_the_project_description_shortened():
         user = messages[1].content
         assert user.startswith("Project description (from its README):\nFines start the day")
         assert "x" * agents.MAX_DESCRIPTION not in user and "x" * 700 in user
-    assert agents.PROMPT_VERSION == "project-v2"
+    assert agents.PROMPT_VERSION == "project-v3"
+    assert agents.ELSEWHERE in messages[1].content
+
+
+def test_judges_give_their_reason_before_the_verdict():
+    for messages in (
+        agents.check_messages("t", "p", "x = 1\n", 1),
+        agents.architecture_check_messages("t", "p", "map"),
+        agents.fix_review_messages("t", "p", "--- a\n+++ b\n"),
+    ):
+        user = messages[1].content
+        assert user.index('"reason') < user.index('"verdict"')
 
 
 # --- parsing --------------------------------------------------------------------------
@@ -214,12 +225,33 @@ def test_function_span_and_text():
         ("def other():\n    pass\n", "renames"),
         ("x = 1\ndef total():\n    pass\n", "one function"),
         ("def total():\n    pass\nprint(1)\n", "one function"),
-        ("def total():\n    pass\ndef total2():\n    pass\n", "one function"),
+        ("def total():\n    pass\n\n\ndef total():\n    return 1\n", "one function"),
+        ("class Cart:\n    def other(self):\n        pass\n", "renames"),
+        ("import os\n", "one function"),
     ],
 )
 def test_check_proposal_rejects(proposal, message):
     with pytest.raises(fixes.FixError, match=message):
         fixes.check_proposal(proposal, "total")
+
+
+def test_check_proposal_drops_stand_in_definitions_and_unwraps_a_class():
+    # Models add stand-ins for the names the function uses; only the function is kept.
+    proposal = fixes.check_proposal(
+        "from typing import List\n\nclass Book:\n    pass\n\n\n"
+        "def total(items: List[Book]):\n    return len(items)\n\n\ndef helper():\n    pass\n",
+        "total",
+    )
+    assert proposal.function == "def total(items: List[Book]):\n    return len(items)\n"
+    assert proposal.imports == ("from typing import List",) and proposal.dropped == (
+        "Book",
+        "helper",
+    )
+    method = fixes.check_proposal(
+        "class Cart:\n    @property\n    def total(self):\n        return 1\n", "total"
+    )
+    assert method.function == "def total(self):\n    return 1\n"
+    assert method.dropped == ("Cart",)
 
 
 def test_check_proposal_keeps_imports_and_drops_decorators():
