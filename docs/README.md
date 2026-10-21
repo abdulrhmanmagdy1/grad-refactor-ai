@@ -47,6 +47,7 @@ These documents describe the Multi-Agent Refactoring for Python project: what it
 | [Kaggle lane](../training/kaggle/README.md) | Running training and validation evaluations on Kaggle's free GPU with checksummed results |
 | [Model card](data-and-training/model-card.md) | Model and adapter provenance, checksums, intended use, test results and limitations |
 | [Evaluation protocol](evaluation/protocol.md) | Arms A to D, measures, statistics and the freezing procedure |
+| [Project review benchmark](evaluation/project-benchmark.md) | Seeded projects, scoring rules and freeze for the whole-project mode |
 | [Experiment records](../experiments/README.md) | Committed records: [hardware](../experiments/hardware/2026-10-20-demonstration-laptop.json), [data](../experiments/data/manual-inspection-2026-10-20.md), [models](../experiments/models/README.md), [training](../experiments/training/README.md), the [test-split evaluation](../experiments/evaluation/test-2026-10-21/targets-report/summary.md) and the [clean-clone reproduction](../experiments/qa/2026-10-21-clean-clone-reproduction.md) |
 
 ## Report material

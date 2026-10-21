@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "name": "library",
+  "description": "A lending desk for a small library: catalog, loans, fines, reports and JSON exports.",
+  "author": "harness developer (dev split)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "state-not-updated",
+      "file": "library/loans.py",
+      "lines": [42, 49],
+      "anchor": "loan.returned = today",
+      "symbol": "LoanDesk.give_back",
+      "description": "Returning a book never removes the loan from the member's list, so the loan limit counts returned books and a member at the limit can never borrow again.",
+      "fix_hint": "Remove loan_id from the member's loans when the loan is closed.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_a_returned_book_frees_the_loan_slot"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "library/loans.py",
+      "lines": [54, 54],
+      "anchor": "today >= loan.due",
+      "symbol": "LoanDesk.is_overdue",
+      "description": "The docstring says a loan is overdue from the day after its due date, but the check already counts the due date itself.",
+      "fix_hint": "Use today > loan.due.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_not_overdue_on_the_due_date"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "library/fines.py",
+      "lines": [16, 16],
+      "anchor": "(end - loan.borrowed).days",
+      "symbol": "days_late",
+      "description": "Days late are counted from the day the book was borrowed instead of the due date, so a book returned on time is fined.",
+      "fix_hint": "Subtract loan.due, not loan.borrowed.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B3_no_fine_when_returned_on_time",
+        "test_B3_days_late_counts_from_the_due_date"
+      ]
+    },
+    {
+      "id": "B4",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "library/catalog.py",
+      "lines": [23, 29],
+      "anchor": "found: list[Book] = []",
+      "symbol": "Catalog.search",
+      "description": "The default result list is created once and shared, so every search without an explicit list adds to the results of the earlier searches.",
+      "fix_hint": "Default to None and create a new list inside the function.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B4_searches_do_not_share_results"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "library/storage.py",
+      "lines": [22, 22],
+      "anchor": "return self.folder / f\"{name}.json\"",
+      "symbol": "ExportStore.export_path",
+      "description": "The export name is joined to the folder unchecked, so a name like ../../x reads or writes files outside the export folder.",
+      "fix_hint": "Resolve the path and refuse names that leave the export folder.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_export_names_cannot_leave_the_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "library/loans.py",
+      "lines": [9, 9],
+      "anchor": "from library.reports import receipt",
+      "modules": ["library.loans", "library.reports"],
+      "other_locations": [{"file": "library/reports.py", "lines": [24, 24]}],
+      "description": "loans imports reports for the receipt and reports imports loans (inside a function) for LOAN_DAYS, so the two modules depend on each other.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "library/reports.py",
+      "lines": [22, 37],
+      "anchor": "if loan.isbn in titles:",
+      "symbol": "overdue_summary",
+      "description": "Four nested conditions inside the loop where guard clauses (continue) would read flat.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "duplicated-logic",
+      "file": "library/reports.py",
+      "lines": [16, 19],
+      "anchor": "def lateness(loan: Loan, today: date) -> int:",
+      "symbol": "lateness",
+      "other_locations": [{"file": "library/fines.py", "lines": [13, 16]}],
+      "description": "reports.lateness re-implements fines.days_late; the two copies have already drifted apart.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "library/catalog.py",
+      "lines": [35, 39],
+      "anchor": "for isbn in list(self.books):",
+      "why_it_is_fine": "It iterates over a copy of the keys, so deleting from the dictionary inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "library/storage.py",
+      "lines": [42, 42],
+      "anchor": "hashlib.md5(data, usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is used as a fingerprint to tell exports apart, not for security, and is marked so."
+    }
+  ]
+}

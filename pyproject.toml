@@ -23,6 +23,8 @@ testpaths = ["tests"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
+# Benchmark projects contain seeded problems on purpose.
+extend-exclude = ["datasets/project_bench"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]

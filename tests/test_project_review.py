@@ -218,6 +218,8 @@ def test_full_review_with_agents_tests_and_fixes(workspace):
         "Uses external libraries",
         "Too many responsibilities",
     ]
+    [unquoted] = outcome.dropped  # kept for evaluation, with the agent's raw item
+    assert unquoted["agent"] == "bug_finder" and unquoted["item"]["problem"] == "invented"
     division = next(f for f in outcome.findings if f.source == "agent:bug_finder")
     assert division.category is Category.BUG and division.line_start == 5
     assert division.also_reported_by == ["agent:finding_checker"] and division.fixable
@@ -293,6 +295,20 @@ def test_untested_function_and_review_doubt_make_a_fix_uncertain(tmp_path):
     assert average.disposition is Disposition.UNCERTAIN
     reasons = " ".join(average.disposition_reasons)
     assert "tests_not_available" in reasons and "review_uncertain" in reasons
+
+
+def test_findings_the_checker_drops_are_recorded(workspace):
+    provider = ScriptedProvider(
+        {"A reviewer claims this problem": '{"verdict": "not_a_problem", "reason": "fine"}'}
+    )
+    outcome = ProjectReviewer(workspace, provider, ReviewSettings(max_findings_checked=0)).run()
+    assert outcome.summary["model_findings"]["dropped_by_checker"] == 1
+    assert [entry.get("reason") for entry in outcome.dropped] == [None, "not_checked"]
+    outcome = ProjectReviewer(workspace, ScriptedProvider(provider.answers)).run()
+    dropped = [entry for entry in outcome.dropped if "finding" in entry]
+    assert [entry["reason"] for entry in dropped] == ["checker:not_a_problem"]
+    assert dropped[0]["finding"]["line_start"] == 5
+    assert not any(f.source == "agent:bug_finder" for f in outcome.findings)
 
 
 def test_failed_calls_and_the_call_budget(workspace):
@@ -389,6 +405,17 @@ def test_runner_timeouts_no_tests_and_replacements_outside(tmp_path):
     assert ProjectTestRunner().run(empty).status == "no_tests"
     with pytest.raises(ValueError, match="outside"):
         ProjectTestRunner().run(empty, {"../evil.py": "x = 1\n"})
+    with pytest.raises(ValueError, match="outside"):
+        ProjectTestRunner().run(empty, targets=("../other",))
+
+
+def test_runner_can_run_selected_test_files(workspace):
+    extra = "def test_extra():\n    assert True\n"
+    report = ProjectTestRunner().run(
+        workspace.root, {"test_extra.py": extra}, targets=("test_extra.py",)
+    )
+    assert report.status == "ran" and report.passed == {"test_extra::test_extra"}
+    assert not (workspace.root / "test_extra.py").exists()
 
 
 def test_compare_statuses():

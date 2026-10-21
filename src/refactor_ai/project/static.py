@@ -77,7 +77,7 @@ HUB_FAN_OUT = 8
 def classify_ruff(code: str | None) -> tuple[Category, Severity]:
     if code is None:
         return Category.BUG, Severity.HIGH  # a syntax error
-    if code.startswith("S"):
+    if code[:1] == "S" and code[1:2].isdigit():  # bandit (S101...), not simplify (SIM...)
         if code in HIGH_RULES:
             return Category.SECURITY, Severity.HIGH
         if code in LOW_SECURITY_RULES:

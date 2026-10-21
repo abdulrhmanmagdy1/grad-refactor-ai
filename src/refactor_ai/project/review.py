@@ -126,6 +126,8 @@ class ReviewOutcome:
     warnings: list[str] = field(default_factory=list)
     baseline_tests: dict | None = None
     model: ModelReference | None = None
+    # Model findings that were not kept, with the reason (for evaluation; not stored).
+    dropped: list[dict] = field(default_factory=list)
 
 
 ProgressCallback = Callable[[ProjectStatus, str], None]
@@ -406,6 +408,9 @@ class ProjectReviewer:
                 line = agents.quote_matches(item["code"], lines, item["line"])
                 if line is None or not function.line_start <= line <= function.line_end:
                     counts["dropped_unquoted"] += 1
+                    self.outcome.dropped.append(
+                        {"agent": "bug_finder", "target": function.file, "item": item}
+                    )
                     continue
                 candidates.append(
                     Finding(
@@ -475,6 +480,9 @@ class ProjectReviewer:
                 line = agents.quote_matches(item["code"], lines, item["line"])
                 if line is None or not begin <= line <= end:
                     counts["dropped_unquoted"] += 1
+                    self.outcome.dropped.append(
+                        {"agent": "quality_security", "target": file, "item": item}
+                    )
                     continue
                 function = static.enclosing_function(index, file, line)
                 candidates.append(
@@ -522,7 +530,14 @@ class ProjectReviewer:
                 kept.append(finding)
             else:
                 counts["dropped_by_checker"] += 1
-        counts["dropped_by_checker"] += max(0, len(candidates) - self.settings.max_findings_checked)
+                self.outcome.dropped.append(
+                    {"finding": finding.model_dump(mode="json"), "reason": f"checker:{verdict}"}
+                )
+        for finding in candidates[self.settings.max_findings_checked :]:
+            counts["dropped_by_checker"] += 1
+            self.outcome.dropped.append(
+                {"finding": finding.model_dump(mode="json"), "reason": "not_checked"}
+            )
         counts["kept"] = len(kept)
         return kept
 

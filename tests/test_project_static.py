@@ -300,6 +300,8 @@ def test_value_never_used_rule_cases():
         ("S324", (Category.SECURITY, Severity.MEDIUM)),
         ("E722", (Category.QUALITY, Severity.MEDIUM)),
         ("F401", (Category.QUALITY, Severity.LOW)),
+        # flake8-simplify codes start with S too; they are not security rules.
+        ("SIM102", (Category.QUALITY, Severity.LOW)),
     ],
 )
 def test_classify_ruff(rule, expected):

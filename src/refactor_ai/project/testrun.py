@@ -29,11 +29,13 @@ CPU_S = 150.0
 MEMORY_MB = 1536
 REPORT_FILE = "pytest-report.xml"
 
-# Runs inside the test process before pytest. argv[1] is the project copy.
+# Runs inside the test process before pytest. argv[1] is the project copy; any further
+# arguments are test paths inside it (default: the whole copy).
 BOOTSTRAP = (
     r"""
 import os, sys
 ROOT = os.path.realpath(sys.argv[1])
+TARGETS = [os.path.join(ROOT, target) for target in sys.argv[2:]] or [ROOT]
 BLOCKED = ("socket.connect", "socket.connect_ex", "socket.bind", "socket.sendto",
            "socket.getaddrinfo", "subprocess.Popen", "os.system", "os.exec", "os.posix_spawn",
            "os.spawn", "os.startfile", "os.fork", "os.forkpty", "ctypes.dlopen")
@@ -83,7 +85,7 @@ sys.addaudithook(hook)
 os.chdir(ROOT)
 sys.path.insert(0, ROOT)
 sys.exit(pytest.main(["-q", "-p", "no:cacheprovider", "-o", "addopts=", "--rootdir", ROOT,
-                      "--junitxml", os.path.join(ROOT, "__REPORT__"), ROOT]))
+                      "--junitxml", os.path.join(ROOT, "__REPORT__"), *TARGETS]))
 """
 ).replace("__REPORT__", REPORT_FILE)
 
@@ -197,20 +199,26 @@ class ProjectTestRunner:
         self.cpu_s = cpu_s
         self.memory_mb = memory_mb
 
-    def run(self, root: Path, replacements: dict[str, str] | None = None) -> TestReport:
-        """Copy `root`, write `replacements` (relative path -> text) into the copy, run tests."""
+    def run(
+        self,
+        root: Path,
+        replacements: dict[str, str] | None = None,
+        targets: tuple[str, ...] = (),
+    ) -> TestReport:
+        """Copy `root`, write `replacements` (relative path -> text) into the copy, run tests
+        (only the `targets`, relative test paths, when given)."""
         with tempfile.TemporaryDirectory(prefix="project-tests-") as temp:
             copy = Path(temp) / "project"
             shutil.copytree(root, copy)
+            for relative in (*(replacements or {}), *targets):
+                if not (copy / relative).resolve().is_relative_to(copy.resolve()):
+                    raise ValueError(f"path outside the project: {relative}")
             for relative, text in (replacements or {}).items():
-                target = (copy / relative).resolve()
-                if not target.is_relative_to(copy.resolve()):
-                    raise ValueError(f"replacement outside the project: {relative}")
-                target.write_text(text, encoding="utf-8", newline="")
-            return self._run_copy(copy)
+                (copy / relative).write_text(text, encoding="utf-8", newline="")
+            return self._run_copy(copy, targets)
 
-    def _run_copy(self, copy: Path) -> TestReport:
-        command = [sys.executable, "-X", "utf8", "-c", BOOTSTRAP, str(copy)]
+    def _run_copy(self, copy: Path, targets: tuple[str, ...] = ()) -> TestReport:
+        command = [sys.executable, "-X", "utf8", "-c", BOOTSTRAP, str(copy), *targets]
         started = time.monotonic()
         try:
             exit_code, timed_out, output = self._execute(command, copy)
@@ -256,7 +264,9 @@ class ProjectTestRunner:
                     stderr=subprocess.PIPE,
                     cwd=copy,
                     env=environment,
-                    creationflags=_winjob.CREATE_SUSPENDED | _winjob.DETACHED_PROCESS,
+                    # A console without a window: a detached process would make the
+                    # launcher's child open a new, visible console window.
+                    creationflags=_winjob.CREATE_SUSPENDED | subprocess.CREATE_NO_WINDOW,
                 )
                 try:
                     job.assign(process.pid)
