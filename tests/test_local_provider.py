@@ -82,16 +82,20 @@ STUB_WORKER = textwrap.dedent(
         sys.stdout.buffer.write(b"not json at all\n")
         sys.stdout.buffer.flush()
         time.sleep(60)
-    adapter_sha = None
+    adapter_sha = config_sha = None
     if LOAD["adapter_dir"]:
         path = os.path.join(LOAD["adapter_dir"], "adapter_model.safetensors")
         with open(path, "rb") as fh:
             adapter_sha = hashlib.sha256(fh.read()).hexdigest()
+        if mode != "stub/no-config-sha":
+            with open(os.path.join(LOAD["adapter_dir"], "adapter_config.json"), "rb") as fh:
+                config_sha = hashlib.sha256(fh.read()).hexdigest()
     revision = "f" * 40 if mode == "stub/wrong-identity" else LOAD["model_revision"]
     send({
         "type": "ready", "protocol": 1, "model_id": LOAD["model_id"],
         "model_revision": revision, "adapter_id": LOAD["adapter_id"],
-        "adapter_sha256": adapter_sha, "device": "stub-device", "dtype": LOAD["dtype"],
+        "adapter_sha256": adapter_sha, "adapter_config_sha256": config_sha,
+        "device": "stub-device", "dtype": LOAD["dtype"],
         "load_s": 0.01, "revision_verified": mode != "stub/unverified",
         "versions": {}, "pid": os.getpid(),
     })
@@ -130,6 +134,20 @@ STUB_WORKER = textwrap.dedent(
             continue
         if content == "UNKNOWN_CODE":
             send({"type": "error", "id": request_id, "code": "weird", "message": "x"})
+            continue
+        if content == "LIST_CODE":
+            send({"type": "error", "id": request_id, "code": ["x"], "message": "x"})
+            continue
+        if content == "DICT_CODE":
+            send({"type": "error", "id": request_id, "code": {"a": 1}, "message": "x"})
+            continue
+        if content in ("CUDA_FATAL", "FATAL_NO_EXIT"):
+            send({"type": "error", "id": request_id, "code": "generation_error",
+                  "message": "RuntimeError: CUDA error: unspecified launch failure",
+                  "fatal": True})
+            if content == "CUDA_FATAL":
+                log("fatal-exit")
+                sys.exit(4)
             continue
         if content == "FLIP_ADAPTER":
             send({"type": "result", "id": request_id, "text": "x", "prompt_tokens": 1,
@@ -368,7 +386,8 @@ def test_worker_crash_is_reported_and_restarted(stub):
 
 
 @pytest.mark.parametrize(
-    "content", ["GARBAGE", "WRONG_ID", "BAD_FIELDS", "UNKNOWN_CODE", "FLIP_ADAPTER"]
+    "content",
+    ["GARBAGE", "WRONG_ID", "BAD_FIELDS", "UNKNOWN_CODE", "LIST_CODE", "DICT_CODE", "FLIP_ADAPTER"],
 )
 def test_malformed_worker_output_is_a_protocol_error(stub, content):
     with make_provider(stub) as provider:
@@ -482,12 +501,16 @@ def test_adapter_requested_without_adapter_is_unavailable_and_starts_nothing(stu
         assert provider.worker_starts == 0 and stub_log(stub) == []
 
 
-def test_adapter_identity_and_per_call_switch(stub, tmp_path):
+def make_adapter(tmp_path, weights=b"pretend adapter weights", config=b'{"r": 8, "alpha": 16}'):
     adapter = tmp_path / "adapter"
     adapter.mkdir()
-    weights = b"pretend adapter weights"
     (adapter / "adapter_model.safetensors").write_bytes(weights)
-    digest = hashlib.sha256(weights).hexdigest()
+    (adapter / "adapter_config.json").write_bytes(config)
+    return adapter, hashlib.sha256(weights).hexdigest(), hashlib.sha256(config).hexdigest()
+
+
+def test_adapter_identity_and_per_call_switch(stub, tmp_path):
+    adapter, digest, config_digest = make_adapter(tmp_path)
     with make_provider(stub, adapter_dir=adapter, adapter_id="pilot-adapter") as provider:
         on = provider.generate(request("x", use_adapter=True))
         off = provider.generate(request("x", use_adapter=False))
@@ -497,13 +520,51 @@ def test_adapter_identity_and_per_call_switch(stub, tmp_path):
             assert result.model.adapter_id == "pilot-adapter"
             assert result.model.adapter_sha256 == digest
             assert result.model.use_adapter is active
-        assert provider.info().adapter_sha256 == digest
+        info = provider.info()
+        assert info.adapter_sha256 == digest
+        assert digest in info.detail and config_digest in info.detail
+
+
+def test_adapter_config_checksum_is_verified(stub, tmp_path):
+    """Same weights with another adapter_config.json (e.g. lora_alpha) must not pass."""
+    adapter, digest, config_digest = make_adapter(tmp_path)
+    good = make_provider(
+        stub,
+        adapter_dir=adapter,
+        adapter_id="pilot-adapter",
+        adapter_sha256=digest,
+        adapter_config_sha256=config_digest,
+    )
+    assert good.generate(request("x", use_adapter=True)).error is None
+    good.close()
+    (adapter / "adapter_config.json").write_bytes(b'{"r": 8, "alpha": 32}')
+    changed = make_provider(
+        stub,
+        adapter_dir=adapter,
+        adapter_id="pilot-adapter",
+        adapter_sha256=digest,
+        adapter_config_sha256=config_digest,
+    )
+    result = changed.generate(request("x", use_adapter=True))
+    assert result.error.code is ProviderErrorCode.MODEL_LOAD_ERROR
+    assert "adapter_config_sha256" in result.error.message
+    assert changed.generate(request("x")).error.code is ProviderErrorCode.MODEL_LOAD_ERROR
+    changed.close()
+
+
+def test_worker_must_report_the_adapter_config_checksum(stub, tmp_path):
+    adapter, _, _ = make_adapter(tmp_path)
+    provider = make_provider(
+        stub, model_id="stub/no-config-sha", adapter_dir=adapter, adapter_id="pilot-adapter"
+    )
+    result = provider.generate(request("x", use_adapter=True))
+    assert result.error.code is ProviderErrorCode.MODEL_LOAD_ERROR
+    assert "adapter config checksum" in result.error.message
+    provider.close()
 
 
 def test_adapter_checksum_mismatch_is_a_load_error(stub, tmp_path):
-    adapter = tmp_path / "adapter"
-    adapter.mkdir()
-    (adapter / "adapter_model.safetensors").write_bytes(b"weights")
+    adapter, _, _ = make_adapter(tmp_path, weights=b"weights")
     provider = make_provider(
         stub, adapter_dir=adapter, adapter_id="pilot-adapter", adapter_sha256="0" * 64
     )
@@ -589,6 +650,51 @@ def test_close_during_a_call_stops_the_worker_promptly(stub):
     assert outcome[0].error.code is ProviderErrorCode.GENERATION_ERROR
 
 
+def test_close_during_warm_up_stops_the_loading_worker(stub):
+    """API shutdown during the model load must not leave an orphan worker behind."""
+    provider = make_provider(stub, model_id="stub/load-hang", load_timeout_s=180)
+    loader = threading.Thread(target=provider.warm_up, daemon=True)
+    loader.start()
+    deadline = time.monotonic() + 20
+    while not [e for e in stub_log(stub) if e["event"] == "start"]:
+        assert time.monotonic() < deadline, "the stub never started"
+        time.sleep(0.05)
+    time.sleep(0.5)  # the worker has sent 'starting' and is now "loading"
+    loading = provider._loading
+    assert loading is not None and provider._worker is None
+    started = time.monotonic()
+    provider.close()
+    assert time.monotonic() - started < 10
+    assert loading.process.poll() is not None
+    pid = [e["pid"] for e in stub_log(stub) if e["event"] == "start"][0]
+    stopped = time.monotonic() + 10
+    while pid_alive(pid) and time.monotonic() < stopped:
+        time.sleep(0.1)
+    assert not pid_alive(pid)
+    loader.join(timeout=10)
+    assert not loader.is_alive()
+    assert provider._loading is None and provider._worker is None
+    info = provider.info()
+    assert info.ready is False and info.detail == "Provider closed."
+    assert provider.generate(request("x")).error.code is ProviderErrorCode.UNAVAILABLE
+
+
+@pytest.mark.parametrize("content", ["CUDA_FATAL", "FATAL_NO_EXIT"])
+def test_fatal_device_error_restarts_the_worker(stub, content):
+    """After a CUDA error the worker is not trusted: it is replaced on the next call."""
+    with make_provider(stub) as provider:
+        assert provider.generate(request("warm")).error is None
+        old_worker = provider._worker
+        result = provider.generate(request(content))
+        assert result.error.code is ProviderErrorCode.GENERATION_ERROR
+        assert "CUDA error" in result.error.message
+        assert "will restart" in result.error.message
+        assert provider._worker is None
+        assert old_worker.process.poll() is not None  # exited by itself or was stopped
+        after = provider.generate(request("after"))
+        assert after.error is None and provider.worker_starts == 2
+
+
 # --- configuration --------------------------------------------------------------------
 
 
@@ -612,10 +718,37 @@ def test_from_config_resolves_paths_relative_to_the_file(tmp_path):
     )
     provider = LocalProvider.from_config(config)
     settings = provider.settings
-    assert settings.python == (tmp_path / ".venv-train" / "Scripts" / "python.exe").resolve()
-    assert settings.model_dir == (tmp_path / "models" / "m").resolve()
-    assert settings.adapter_dir == (tmp_path / "runs" / "adapter").resolve()
+    expected = Path(os.path.abspath(tmp_path))
+    assert settings.python == expected / ".venv-train" / "Scripts" / "python.exe"
+    assert settings.model_dir == expected / "models" / "m"
+    assert settings.adapter_dir == expected / "runs" / "adapter"
     assert settings.device == "cuda" and settings.dtype == "bfloat16"
+
+
+def test_from_config_keeps_a_symlinked_interpreter(tmp_path):
+    """A venv's python is often a symlink; following it would leave the venv."""
+    target = tmp_path / "base" / "python.exe"
+    target.parent.mkdir()
+    target.write_bytes(b"")
+    link = tmp_path / "venv" / "bin" / "python.exe"
+    link.parent.mkdir(parents=True)
+    try:
+        link.symlink_to(target)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symbolic links are not available here: {exc}")
+    config_dir = tmp_path / "configs"
+    config_dir.mkdir()
+    config = write_config(
+        config_dir / "model.local.json",
+        python="../venv/bin/python.exe",
+        model_dir="../models/m",
+        model_id="org/model",
+        model_revision=REVISION,
+    )
+    settings = LocalModelSettings.from_file(config)
+    assert settings.python == Path(os.path.abspath(link))
+    assert settings.python.is_symlink()
+    assert settings.python != target
 
 
 @pytest.mark.parametrize(
@@ -626,6 +759,8 @@ def test_from_config_resolves_paths_relative_to_the_file(tmp_path):
         {"adapter_dir": "adapter"},
         {"adapter_id": "adapter"},
         {"adapter_sha256": "0" * 64},
+        {"adapter_config_sha256": "0" * 64},
+        {"adapter_dir": "a", "adapter_id": "a", "adapter_config_sha256": "not-a-sha"},
         {"device": "tpu"},
         {"load_timeout_s": 0},
     ],
@@ -681,6 +816,12 @@ class FakeBackend:
             raise model_worker.WorkerError("input_too_long", "prompt has 9 tokens")
         if content == "explode":
             raise RuntimeError("backend bug")
+        if content == "cuda":
+            raise RuntimeError("CUDA error: unspecified launch failure")
+        if content == "oom":
+            raise RuntimeError("CUDA out of memory. Tried to allocate 56.00 MiB")
+        if content == "fatal-worker-error":
+            raise model_worker.WorkerError("generation_error", "device lost", fatal=True)
         return {"text": content.upper(), "use_adapter": request.use_adapter}
 
 
@@ -819,6 +960,45 @@ def test_serve_typed_errors_and_recovery():
 def test_worker_error_codes_are_restricted():
     with pytest.raises(ValueError):
         model_worker.WorkerError("timeout", "parents own timeouts")
+
+
+@pytest.mark.parametrize("content", ["cuda", "fatal-worker-error"])
+def test_serve_stops_after_a_fatal_device_error(content):
+    lines = [load_line(), generate_line("r1"), generate_line("r2", content=content)]
+    code, replies = run_serve([*lines, generate_line("r3")])
+    assert code == model_worker.FATAL_ERROR_EXIT_CODE
+    fatal = replies[-1]
+    assert fatal["id"] == "r2" and fatal["code"] == "generation_error"
+    assert fatal["fatal"] is True
+    assert [r.get("id") for r in replies[2:]] == ["r1", "r2"]  # r3 was never served
+
+
+@pytest.mark.parametrize("content", ["explode", "oom"])
+def test_serve_keeps_running_after_ordinary_errors(content):
+    code, replies = run_serve([load_line(), generate_line("r1", content=content), generate_line()])
+    assert code == 0
+    assert replies[2]["code"] == "generation_error" and "fatal" not in replies[2]
+    assert replies[3]["type"] == "result"
+
+
+def test_fatal_device_error_classification():
+    fatal = model_worker.is_fatal_device_error
+    assert fatal(RuntimeError("CUDA error: CUBLAS_STATUS_EXECUTION_FAILED when calling x"))
+    assert fatal(RuntimeError("cuDNN error: CUDNN_STATUS_INTERNAL_ERROR"))
+    assert fatal(RuntimeError("CUDA error: an illegal memory access was encountered"))
+    assert not fatal(RuntimeError("CUDA out of memory. Tried to allocate 56.00 MiB"))
+    assert not fatal(RuntimeError("backend bug"))
+    assert not fatal(ValueError("CUDA error: wrong type of exception"))
+
+
+def test_parse_load_accepts_an_optional_adapter_config_checksum():
+    assert model_worker.parse_load(load_line()).adapter_config_sha256 is None
+    settings = model_worker.parse_load(
+        load_line(adapter_dir="a", adapter_id="a", adapter_config_sha256="c" * 64)
+    )
+    assert settings.adapter_config_sha256 == "c" * 64
+    with pytest.raises(ValueError):
+        model_worker.parse_load(load_line(adapter_config_sha256=5))
 
 
 def test_verify_revision_reads_download_metadata(tmp_path):

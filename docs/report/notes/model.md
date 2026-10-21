@@ -1,15 +1,18 @@
 # Models and training notes
 
-Workstream: models and training (owner Abdelrahman Adel). Wave-1 tasks: T04 model benchmark, T05 LoRA feasibility pilot, T12 local model provider. Written on 2026-10-20 from the records under `experiments/` and the tests. The pilot functions in `training/pilot/functions.py` are pilot material written for this workstream, not the curated dataset, and nothing in these notes is an evaluation result.
+Workstream: models and training (owner Abdelrahman Adel). Tasks: T04 model benchmark, T05 LoRA feasibility pilot, T12 local model provider, T17 training run, T22 validation-only model selection (with the prompt-format study before it). Written on 2026-10-20 and updated on 2026-10-21 from the records under `experiments/` and the tests. The pilot functions in `training/pilot/functions.py` are pilot material written for this workstream, not the curated dataset, and nothing in these notes is an evaluation result.
 
-## Status on 2026-10-20
+## Status on 2026-10-21
 
 | Item | Status |
 |---|---|
 | Training environment | Installed in `.venv-train` and locked in `training/requirements-cuda.txt` |
 | T04 benchmark | Done for Qwen2.5-Coder-0.5B-Instruct (two runs); the 1.5B candidate was not measured because of the disk limit |
+| Prompt format | refactor-v2 (code first) selected on 24 validation records before any training |
 | T05 LoRA pilot | Done: trained, saved, reloaded in a fresh process, interrupted and resumed; training budget measured |
-| T12 local provider | Implemented; 64 core tests pass without PyTorch; 8 real-GPU tests pass |
+| T17 training run | Done on Kaggle after a failed attempt on the laptop |
+| T22 selection | Adapter adopted for the refactoring role (arm C 69 of 84 `proposal_ready` against arm A 6 of 84 on validation) |
+| T12 local provider | Implemented and hardened after review; 80 core tests (plus 4 for the training helpers) pass without PyTorch; 8 real-GPU tests pass on the laptop with the trained adapter |
 
 ## Model choice
 
@@ -32,10 +35,14 @@ Run 2 is representative (2.2 GB of RAM free at the start); run 1 ran while the l
 - Load 17.6 s with a warm file cache (88.1 s for a cold first load, 76 to 116 s under memory pressure). The model process uses about 1.0 GB of GPU memory, 942 MiB of it allocated by PyTorch; the peak for a 910-token prompt plus 1,024 generated tokens is 993 MiB.
 - Decode speed 13.8 to 26.1 tokens per second on the pilot prompts (median 24.5); 1,024 generated tokens after a 910-token prompt take 55.4 s (101 s under memory pressure).
 - Greedy decoding is verified: over 64 steps the processed scores equal the raw logits and every chosen token is the argmax. The repository's `generation_config.json` enables sampling (temperature 0.7, top_p 0.8, top_k 20, repetition penalty 1.05); the worker replaces it at load time so only the requested settings apply. Outputs were byte-identical across the two runs and in repeated calls.
-- With prompt refactor-v1 the base model returned only an `Explanation:` paragraph without a code block for all 8 pilot functions and the long input (0 of 9 parseable). Sampling with temperature 0.7 and top_p 0.8 over three seeds gave 1 parseable output in 24, an unchanged copy of the input that failed the rubric. The base model therefore produced no valid refactoring of any pilot function, which meets the revisit condition of ADR12; the untuned arms A and B would score no proposals on such inputs.
+- With prompt refactor-v1 the base model returned only an `Explanation:` paragraph without a code block for all 8 pilot functions and the long input (0 of 9 parseable). Sampling with temperature 0.7 and top_p 0.8 over three seeds gave 1 parseable output in 24, an unchanged copy of the input that failed the rubric. This met the revisit condition of ADR12 and led to the prompt-format study below.
 - Token lengths for inputs of exactly 3,000 characters: realistic code 769 tokens (prompt 910, with findings 1,027, reference completion 602); a digit-dense literal 2,896 tokens; Arabic text 1,461 tokens. The prompt adds 141 tokens. Byte-level BPE gives at most one token per UTF-8 byte, so the character limit does not bound tokens tightly.
 
 Recommended per-role limits: refactoring `max_input_tokens` 2,048, `max_new_tokens` 1,024, `timeout_s` 120; analysis 2,048, 384, 60; review 4,096 (if its prompt carries both versions), 384 or 768 with a full correction, 90; `load_timeout_s` 180. The current refactoring default of 768 new tokens can cut off the longest realistic functions. The service should call `LocalProvider.warm_up()` at startup so the first run does not pay the model load.
+
+## Prompt format
+
+A validation-only study ([record](../../../experiments/models/2026-10-20-prompt-format-selection.md)) compared four refactoring-prompt formats on 24 validation records with the base model, with the selection rule stated first (most records passing syntax, rubric and reference tests; ties by parse rate, then shorter prompt). Putting the fenced code first and the `Explanation:` line after it raised parsing from 2 of 24 to 24 of 24; the base model then mostly returned the input unchanged (2 of 24 passed everything). The code-first format became refactor-v2, and the curated records were regenerated in it (no record exceeds 1,024 tokens).
 
 ## Provider design (T12)
 
@@ -45,10 +52,11 @@ Recommended per-role limits: refactoring `max_input_tokens` 2,048, `max_new_toke
 - Calls are serialized by a lock; a call that cannot get it within its `timeout_s` returns `busy`.
 - `timeout_s` bounds each request. On timeout the parent terminates its own worker process and the next call starts a new one; model loading is bounded separately by `load_timeout_s`. On Windows the venv's `python.exe` is a launcher whose child is the real interpreter; terminating the launcher terminates that child (verified), and the parent also holds a handle to the PID the worker reported and terminates that process if it is still running (covered by a test that simulates such a process).
 - Worker crashes, malformed lines, replies for another request, invalid fields and unknown error codes become `generation_error` and restart the worker; load failures, load timeouts and identity mismatches become `model_load_error`. The input-token limit is enforced by the worker (`input_too_long`); `max_new_tokens` is enforced by generation (`finish_reason="length"`).
-- `use_adapter=true` without a configured adapter returns `unavailable` without starting a worker. A configured adapter that cannot load, has a checksum different from `adapter_sha256`, or has only zero LoRA B matrices is a `model_load_error`; the base model is never served instead. `use_adapter=false` with an adapter loaded runs PEFT's `disable_adapter()`, and its outputs were identical to the base model's.
+- `use_adapter=true` without a configured adapter returns `unavailable` without starting a worker. A configured adapter that cannot load, has a weights checksum different from `adapter_sha256` or a config checksum different from `adapter_config_sha256` (the config sets the LoRA scaling), or has only zero LoRA B matrices is a `model_load_error`; the base model is never served instead. Results report the weights checksum in `ModelReference.adapter_sha256`; `info()` shows both. `use_adapter=false` with an adapter loaded runs PEFT's `disable_adapter()`, and its outputs were identical to the base model's.
 - Decoding is exactly what `GenerationConfig` asks for: greedy at temperature 0, otherwise temperature and top_p sampling seeded with `seed`. Decoding never "cleans up" spaces, so code text is returned as generated.
 - Error messages never contain host paths: configured paths and the home directory are replaced by placeholders before they reach run records.
-- Tests: `tests/test_local_provider.py` (64 tests, no PyTorch) covers success, UTF-8 round trips, unencodable text, the token limits, timeout with kill and restart, crashes, five kinds of malformed output, load errors, load crashes, load timeouts, identity mismatches, adapter misuse, adapter identity and checksum, serialization without cross-talk, `busy`, closing, configuration validation, the real worker started without PyTorch, and the worker's protocol loop. `tests/test_local_provider_gpu.py` (8 tests, `REFACTOR_AI_GPU_TESTS=1`) passed on the laptop, including a 0.5 s timeout that stopped the GPU worker followed by a restart, and adapter switching with the pilot adapter ([record](../../../experiments/models/2026-10-20-local-provider-gpu-tests.json)).
+- Review fixes (2026-10-21), each with a regression test that fails when the fix is reverted: `close()` now stops a worker that is still loading the model (an API shutdown during warm-up left it running); config paths are made absolute without following symbolic links, so a symlinked venv interpreter stays in its environment; CUDA, cuBLAS and cuDNN errors are fatal for the worker, which replies, exits and is restarted on the next call instead of failing every later call; an error reply whose `code` is not a string is a protocol error instead of an exception; the adapter config is checksummed as well; and the training helpers return `None` when `nvidia-smi` or `git` hangs.
+- Tests: `tests/test_local_provider.py` (80 tests, no PyTorch) covers success, UTF-8 round trips, unencodable text, the token limits, timeout with kill and restart, crashes, five kinds of malformed output, load errors, load crashes, load timeouts, identity mismatches, adapter misuse, adapter identity and checksum, serialization without cross-talk, `busy`, closing, configuration validation, the real worker started without PyTorch, and the worker's protocol loop. `tests/test_local_provider_gpu.py` (8 tests, `REFACTOR_AI_GPU_TESTS=1`) passed on the laptop, including a 0.5 s timeout that stopped the GPU worker followed by a restart, and adapter switching, first with the pilot adapter and on 2026-10-21 with the trained adapter in bfloat16 ([record](../../../experiments/models/2026-10-20-local-provider-gpu-tests.json)).
 
 ## LoRA training (T05)
 
@@ -58,8 +66,24 @@ Pilot results ([records](../../../experiments/training/README.md)): 16 steps on 
 
 Budget for the training run (T17), from the memory probe: about 3.2 GB of GPU memory is free with the desktop running, and beyond it the Windows driver spills into system RAM (one 1,280-token step without checkpointing took 28 s). With gradient checkpointing a 1,024-token record needs 2.8 GB and 0.87 s, so the budget is `max_length` 1,024 with checkpointing, batch size 1, at most 60 minutes per job, and `save_total_limit` 1. Curated records must fit in 1,024 tokens; a realistic 3,000-character function makes a record of about 1,512 tokens.
 
+## Training run (T17) and the Kaggle lane
+
+`configs/training.full.json` (rank 8, alpha 16, the seven projections, learning rate 2e-4 with cosine decay and 12 warmup steps, 3 epochs, `max_length` 1,024 with gradient checkpointing, best epoch by validation loss) first ran on the laptop and stopped after 22 steps with `CUBLAS_STATUS_EXECUTION_FAILED`: Windows logged a low-virtual-memory event naming the training process as the largest consumer (7.6 GB), as the GPU memory spilled into system RAM while the other workstreams were running ([record](../../../experiments/training/full-2026-10-20-local-attempt1-failed.json)). The user then moved heavy GPU runs to Kaggle's free GPU.
+
+The private Kaggle lane ([training/kaggle/](../../../training/kaggle/README.md)) uploads a checksummed code bundle as a private dataset, pushes private script kernels that verify the bundle, install the pinned libraries next to Kaggle's own PyTorch, download the model at the pinned revision and check its SHA-256, and brings the outputs back with per-file checksums. Two fixes by the coordinator made it work: the kernel removes Kaggle's torchao 0.10, which made PEFT 0.21 fail to import, and the reference runner drops to an unprivileged user under root.
+
+On Kaggle (two T4 GPUs, fp32 because the T4 has no native bf16) the run took 1,144 s, 20.5 GPU minutes in all. The Trainer used both GPUs, so the effective batch was 16 records per optimizer step and the run had 120 steps instead of about 237. Validation loss after the three epochs was 0.0361, 0.0388 and 0.0360, and epoch 3 was kept. The adapter's weights SHA-256 is `dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2` and its config SHA-256 `a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571` ([record](../../../experiments/training/full-2026-10-21.json)).
+
+## Validation-only selection (T22)
+
+The rule, written before any comparison, adopts the adapter if arm C has more `proposal_ready` cases than arm A on the full validation split. The four arms ran on the 84 validation cases with the shared harness on Kaggle (float32, 76.2 GPU minutes): A 6/84, B 3/84, C 69/84, D 46/84 `proposal_ready`; rubric pass A 17, B 16, C 84, D 84; reference tests pass A 66, B 69, C 69, D 69. On the same cases 65 were accepted only by C and 2 only by A. The adapter was therefore adopted for the refactoring role ([record](../../../experiments/training/validation-selection-2026-10-20.json)), and `configs/model.local.json` points at it on the laptop.
+
+Failure patterns: all 15 arm C cases that were not accepted kept the guard-clause shape and failed reference tests, so the adapter sometimes changes behavior (five of the twelve validation families); arm D accepted fewer cases than C mainly because the base model's reviews were often unparseable (27 review errors, 23 uncertain). On the laptop, in bfloat16, the adapter decodes at about half the speed of the base model (median 7.2 against 14.6 tokens per second on pilot functions), because the LoRA layers are applied separately on every projection.
+
 ## Open issues
 
-- The base model's format compliance on the pilot functions is 0 of 9 with greedy decoding (ADR12 revisit condition).
-- Curated training records longer than 1,024 tokens do not fit the measured GPU budget.
+- The adapter changes behavior on some cases that pass the rubric (15 of 84 on validation); only reference tests catch them.
+- Kaggle results were computed in float32 on a T4, while the laptop serves the adapter in bfloat16.
+- The trained adapter used an effective batch of 16 because the Kaggle session exposed two GPUs; reruns must pin the GPU count to reproduce it.
+- Curated training records longer than 1,024 tokens do not fit the laptop's measured GPU budget.
 - Performance numbers depend on how much memory other programs leave free; close GPU-heavy applications before a demonstration or training run.

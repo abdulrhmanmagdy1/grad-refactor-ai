@@ -67,7 +67,7 @@ def git_state() -> dict:
             result = subprocess.run(
                 ["git", *args], cwd=ROOT, capture_output=True, text=True, timeout=30, check=False
             )
-        except OSError:
+        except (OSError, subprocess.SubprocessError):  # missing git, or a hung one (timeout)
             return None
         return result.stdout.strip() if result.returncode == 0 else None
 
@@ -87,7 +87,9 @@ def nvidia_smi(query: str) -> str | None:
             timeout=20,
             check=False,
         )
-    except OSError:  # e.g. the system cannot start another process under memory pressure
+    except (OSError, subprocess.SubprocessError):
+        # OSError: no process could be started (e.g. memory pressure);
+        # SubprocessError: nvidia-smi hung past the timeout (e.g. a wedged driver).
         return None
     return result.stdout.strip() if result.returncode == 0 else None
 
@@ -108,12 +110,17 @@ class GpuSampler:
         self.interval_s = interval_s
         self.peak: int | None = None
         self.samples = 0
+        self.failures = 0
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
 
     def _run(self) -> None:
         while not self._stop.is_set():
-            used = gpu_used_mib()
+            try:
+                used = gpu_used_mib()
+            except Exception:  # a failed sample must not end the sampling thread
+                self.failures += 1
+                used = None
             if used is not None:
                 self.samples += 1
                 self.peak = used if self.peak is None else max(self.peak, used)

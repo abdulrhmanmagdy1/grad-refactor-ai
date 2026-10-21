@@ -21,7 +21,7 @@ Guarantees (docs/architecture/contracts.md, "Model provider"):
   model load (which also adds a warning); token counts come from the worker.
 
 Configuration file keys (configs/model.example.json): python, model_dir, model_id,
-model_revision, adapter_dir, adapter_id, adapter_sha256, device, dtype,
+model_revision, adapter_dir, adapter_id, adapter_sha256, adapter_config_sha256, device, dtype,
 load_timeout_s. Relative paths are resolved against the directory of the config file.
 Keys starting with "_" are comments.
 """
@@ -82,6 +82,7 @@ class LocalModelSettings(BaseModel):
     adapter_dir: Path | None = None
     adapter_id: str | None = Field(default=None, min_length=1)
     adapter_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    adapter_config_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     device: Literal["cuda", "cpu"] = "cuda"
     dtype: Literal["bfloat16", "float16", "float32"] = "bfloat16"
     load_timeout_s: float = Field(default=180.0, gt=0.0, le=3600.0)
@@ -92,24 +93,28 @@ class LocalModelSettings(BaseModel):
             raise ValueError("adapter_dir and adapter_id must be set together")
         if self.adapter_sha256 is not None and self.adapter_dir is None:
             raise ValueError("adapter_sha256 requires adapter_dir")
+        if self.adapter_config_sha256 is not None and self.adapter_dir is None:
+            raise ValueError("adapter_config_sha256 requires adapter_dir")
         return self
 
     @classmethod
     def from_file(cls, path: str | os.PathLike[str]) -> LocalModelSettings:
-        """Read a JSON config; relative paths are resolved against the file's directory."""
+        """Read a JSON config; relative paths are resolved against the file's directory.
+
+        Paths are made absolute without following symbolic links: a virtual
+        environment's interpreter is often a link to the base interpreter, and only
+        the link's own location makes Python use the environment's packages.
+        """
         config_path = Path(path)
         data = json.loads(config_path.read_text(encoding="utf-8"))
         if not isinstance(data, dict):
             raise ValueError(f"{config_path.name} must contain a JSON object")
         data = {key: value for key, value in data.items() if not key.startswith("_")}
-        base = config_path.resolve().parent
+        base = Path(os.path.abspath(config_path)).parent
         for key in _PATH_KEYS:
             value = data.get(key)
             if isinstance(value, str) and value:
-                candidate = Path(value)
-                data[key] = str(
-                    (candidate if candidate.is_absolute() else base / candidate).resolve()
-                )
+                data[key] = os.path.abspath(base / value)  # base / absolute == absolute
         return cls.model_validate(data)
 
 
@@ -190,6 +195,10 @@ class _WorkerProcess:
         self.pid = process.pid
         self.interpreter_pid: int | None = None
         self._interpreter: _WindowsProcessHandle | None = None
+        # close() may stop a loading worker from another thread while the loading
+        # thread also stops it; this lock makes kill() and attach_interpreter() safe.
+        self._kill_lock = threading.Lock()
+        self._killed = False
         self._lines: queue.Queue[bytes | None] = queue.Queue()
         self._stderr_tail: deque[str] = deque(maxlen=40)
         self._readers = [
@@ -223,9 +232,12 @@ class _WorkerProcess:
 
     def attach_interpreter(self, pid: int) -> None:
         """Remember the PID the worker reported for itself (see the class docstring)."""
-        self.interpreter_pid = pid
-        if os.name == "nt" and pid != self.pid and self._interpreter is None:
-            self._interpreter = _WindowsProcessHandle(pid)
+        with self._kill_lock:
+            self.interpreter_pid = pid
+            if self._killed:  # stopped already; its launcher took the interpreter with it
+                return
+            if os.name == "nt" and pid != self.pid and self._interpreter is None:
+                self._interpreter = _WindowsProcessHandle(pid)
 
     def stderr_tail(self) -> list[str]:
         return list(self._stderr_tail)
@@ -286,6 +298,11 @@ class _WorkerProcess:
 
     def kill(self) -> None:
         """Terminate this worker process only (by its own handle), then release pipes."""
+        with self._kill_lock:
+            self._killed = True
+            self._kill_locked()
+
+    def _kill_locked(self) -> None:
         if self.process.poll() is None:
             try:
                 self.process.kill()
@@ -344,6 +361,7 @@ class LocalProvider:
         self._call_lock = threading.Lock()
         self._state_lock = threading.Lock()
         self._worker: _WorkerProcess | None = None
+        self._loading: _WorkerProcess | None = None  # a worker that has not reported ready
         self._ready: dict | None = None
         self._last_error: str | None = None
         self._closed = False
@@ -389,6 +407,11 @@ class LocalProvider:
                 f"Model loaded in {ready['load_s']:.1f} s on {ready['device']} "
                 f"({ready['dtype']}); revision verified: {ready['revision_verified']}."
             )
+            if ready.get("adapter_sha256"):
+                detail += (
+                    f" Adapter weights sha256 {ready['adapter_sha256']}, adapter config "
+                    f"sha256 {ready.get('adapter_config_sha256')}."
+                )
         elif last_error:
             detail = f"Model not loaded: {last_error}"
         else:
@@ -427,12 +450,20 @@ class LocalProvider:
             self._call_lock.release()
 
     def close(self) -> None:
-        """Stop the worker. Idempotent; later calls return unavailable."""
+        """Stop the worker, including one that is still loading. Idempotent.
+
+        Later calls return unavailable. A worker that is still loading the model is
+        killed at once (the loading call then fails); a ready worker gets a graceful
+        shutdown unless a generation is still running, in which case it is killed.
+        """
         got_lock = self._call_lock.acquire(timeout=CLOSE_LOCK_WAIT_S)
         try:
             with self._state_lock:
                 self._closed = True
                 worker, self._worker, self._ready = self._worker, None, None
+                loading, self._loading = self._loading, None
+            if loading is not None:
+                loading.kill()
             if worker is not None:
                 if got_lock:
                     worker.shutdown()
@@ -531,9 +562,18 @@ class LocalProvider:
         if reply.get("id") != request_id:
             raise _ProtocolError("the reply does not belong to this request.")
         if reply["type"] == "error":
-            code = _WORKER_ERRORS.get(reply.get("code"))
+            raw_code = reply.get("code")
+            code = _WORKER_ERRORS.get(raw_code) if isinstance(raw_code, str) else None
             if code is None or not isinstance(reply.get("message"), str):
                 raise _ProtocolError("the worker sent an error without a known code and message.")
+            if reply.get("fatal") is True:  # e.g. a CUDA error that leaves the device unusable
+                self._discard_worker("the worker reported a fatal device error")
+                return self._failed(
+                    code,
+                    f"{reply['message']} The model worker was stopped and will restart on the "
+                    "next call.",
+                    started,
+                )
             return self._failed(code, reply["message"], started)
         if reply["type"] != "result":
             raise _ProtocolError(f"unexpected message type {reply['type']!r}.")
@@ -611,6 +651,23 @@ class LocalProvider:
             return self._load_failed(None, f"could not start the model worker: {exc}")
         worker = _WorkerProcess(process)
         logger.info("started model worker pid %s", worker.pid)
+        with self._state_lock:  # close() can now stop this worker while it loads
+            closed = self._closed
+            if not closed:
+                self._loading = worker
+        if closed:
+            worker.kill()
+            return None, "The provider is closed."
+        try:
+            return self._load(worker)
+        finally:
+            with self._state_lock:
+                if self._loading is worker:
+                    self._loading = None
+
+    def _load(self, worker: _WorkerProcess) -> tuple[_WorkerProcess | None, str]:
+        """Send the load message and wait for the worker to report ready."""
+        settings = self._settings
         load = {
             "type": "load",
             "protocol": PROTOCOL_VERSION,
@@ -620,6 +677,7 @@ class LocalProvider:
             "adapter_dir": None if settings.adapter_dir is None else str(settings.adapter_dir),
             "adapter_id": settings.adapter_id,
             "adapter_sha256": settings.adapter_sha256,
+            "adapter_config_sha256": settings.adapter_config_sha256,
             "device": settings.device,
             "dtype": settings.dtype,
         }
@@ -656,6 +714,7 @@ class LocalProvider:
             closed = self._closed
             if not closed:
                 self._worker, self._ready, self._last_error = worker, reply, None
+                self._loading = None
         if closed:  # close() ran while this worker was loading
             worker.kill()
             return None, "The provider is closed."
@@ -698,6 +757,17 @@ class LocalProvider:
             return "the model worker did not report the adapter checksum"
         elif settings.adapter_sha256 is not None and sha != settings.adapter_sha256:
             return "the loaded adapter checksum does not match adapter_sha256"
+        config_sha = reply.get("adapter_config_sha256")
+        if settings.adapter_dir is None:
+            if config_sha is not None:
+                return "the model worker reported an adapter config although none is configured"
+        elif not isinstance(config_sha, str) or not re.fullmatch(r"[0-9a-f]{64}", config_sha):
+            return "the model worker did not report the adapter config checksum"
+        elif (
+            settings.adapter_config_sha256 is not None
+            and config_sha != settings.adapter_config_sha256
+        ):
+            return "the loaded adapter config checksum does not match adapter_config_sha256"
         if (
             not isinstance(reply.get("load_s"), (int, float))
             or isinstance(reply.get("load_s"), bool)
@@ -711,6 +781,8 @@ class LocalProvider:
     def _load_failed(self, worker: _WorkerProcess | None, message: str) -> tuple[None, str]:
         if worker is not None:
             worker.kill()
+        if self._closed:  # close() stopped the load
+            return None, "The provider is closed."
         message = self._redact(message)
         with self._state_lock:
             self._last_error = message

@@ -9,7 +9,228 @@
     "validation_split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
     "validation_cases": 84
   },
-  "candidate_adapter": "pending: produced by configs/training.full.json (T17)",
-  "results": null,
-  "decision": null
+  "candidate_adapter": {
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "adapter_config_sha256": "a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571",
+    "training_record": "experiments/training/full-2026-10-21.json"
+  },
+  "results": {
+    "denominator": "every attempted validation case of the arm (84), failures included",
+    "arms": {
+      "A": {
+        "cases": 84,
+        "proposal_produced": "83/84",
+        "syntax_pass": "83/84",
+        "rubric_pass": "17/84",
+        "reference_tests_pass": "66/84",
+        "reference_tests_executed": "83/84",
+        "proposal_ready": "6/84",
+        "dispositions": {
+          "rejected": 77,
+          "proposal_ready": 6,
+          "failed": 1
+        },
+        "failure_types": {
+          "none": 83,
+          "unparseable_output": 1
+        },
+        "model_review": {
+          "not_run": 84
+        },
+        "calls_total": 84,
+        "calls_per_case_mean": 1.0,
+        "calls_by_role_and_adapter": {
+          "refactor:base": 84
+        },
+        "tokens_per_case_mean": 432.8,
+        "latency_s": {
+          "median_nearest_rank": 4.08,
+          "p90_nearest_rank": 5.15,
+          "mean": 4.34
+        }
+      },
+      "B": {
+        "cases": 84,
+        "proposal_produced": "84/84",
+        "syntax_pass": "84/84",
+        "rubric_pass": "16/84",
+        "reference_tests_pass": "69/84",
+        "reference_tests_executed": "84/84",
+        "proposal_ready": "3/84",
+        "dispositions": {
+          "proposal_ready": 3,
+          "rejected": 79,
+          "uncertain": 2
+        },
+        "failure_types": {
+          "none": 84
+        },
+        "model_review": {
+          "accept": 49,
+          "error": 35
+        },
+        "calls_total": 408,
+        "calls_per_case_mean": 4.86,
+        "calls_by_role_and_adapter": {
+          "analysis:base": 84,
+          "refactor:base": 163,
+          "review:base": 161
+        },
+        "tokens_per_case_mean": 2851.7,
+        "latency_s": {
+          "median_nearest_rank": 15.54,
+          "p90_nearest_rank": 32.85,
+          "mean": 20.3
+        }
+      },
+      "C": {
+        "cases": 84,
+        "proposal_produced": "84/84",
+        "syntax_pass": "84/84",
+        "rubric_pass": "84/84",
+        "reference_tests_pass": "69/84",
+        "reference_tests_executed": "84/84",
+        "proposal_ready": "69/84",
+        "dispositions": {
+          "proposal_ready": 69,
+          "rejected": 15
+        },
+        "failure_types": {
+          "none": 84
+        },
+        "model_review": {
+          "not_run": 84
+        },
+        "calls_total": 84,
+        "calls_per_case_mean": 1.0,
+        "calls_by_role_and_adapter": {
+          "refactor:adapter": 84
+        },
+        "tokens_per_case_mean": 485.6,
+        "latency_s": {
+          "median_nearest_rank": 9.74,
+          "p90_nearest_rank": 11.2,
+          "mean": 9.65
+        }
+      },
+      "D": {
+        "cases": 84,
+        "proposal_produced": "84/84",
+        "syntax_pass": "84/84",
+        "rubric_pass": "84/84",
+        "reference_tests_pass": "69/84",
+        "reference_tests_executed": "84/84",
+        "proposal_ready": "46/84",
+        "dispositions": {
+          "proposal_ready": 46,
+          "rejected": 15,
+          "uncertain": 23
+        },
+        "failure_types": {
+          "none": 84
+        },
+        "model_review": {
+          "accept": 57,
+          "error": 27
+        },
+        "calls_total": 282,
+        "calls_per_case_mean": 3.36,
+        "calls_by_role_and_adapter": {
+          "analysis:base": 84,
+          "refactor:adapter": 99,
+          "review:base": 99
+        },
+        "tokens_per_case_mean": 1850.8,
+        "latency_s": {
+          "median_nearest_rank": 15.81,
+          "p90_nearest_rank": 26.02,
+          "mean": 18.79
+        }
+      }
+    },
+    "paired_c_vs_a": {
+      "cases": 84,
+      "both_ready": 4,
+      "only_c": 65,
+      "only_a": 2,
+      "neither": 13,
+      "exact_mcnemar_p": "0.000000",
+      "holm_adjusted_p": "0.000000"
+    },
+    "arm_c_not_ready": {
+      "count": 15,
+      "reason": "all passed syntax and rubric and failed reference tests (behavior changed)",
+      "reference_tests": {
+        "fail": 15
+      },
+      "by_source_group": {
+        "tpl-garden-watering": 4,
+        "tpl-meeting-end": 2,
+        "tpl-parking-fee": 2,
+        "tpl-scholarship": 4,
+        "tpl-warehouse-bin": 3
+      }
+    },
+    "consistency_with_report": "per-arm counts, dispositions, calls and latency (nearest-rank median and p90, mean) recomputed from records.jsonl equal scripts/report_evaluation.py's report.json"
+  },
+  "decision": {
+    "outcome": "adopt the adapter for the refactoring role",
+    "applied_rule": "arm C proposal_ready 69/84 > arm A 6/84",
+    "decided_on": "validation split only; the test split was not read or evaluated",
+    "configuration": "configs/model.local.json points at the adapter (adapter_dir, adapter_id, adapter_sha256, adapter_config_sha256); analysis and review keep the base model (arm D wiring)",
+    "caveats": [
+      "Validation cases come from 12 template families written by the team; cases within a family are not independent.",
+      "Kaggle inference ran in float32 on a T4; the laptop serves the adapter in bfloat16, so outputs there can differ slightly.",
+      "The adapter was trained with an effective batch of 16 because the Kaggle session exposed two GPUs (see the training record).",
+      "Arm D accepted fewer cases than arm C mainly because the base-model review returned unparseable verdicts (model_review error on 27 cases, 23 of them uncertain).",
+      "Passing reference tests supports behavior preservation only on the tested inputs."
+    ]
+  },
+  "evaluation": {
+    "where": "Kaggle private script kernel grad-refactor-ai-eval-600603dc",
+    "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc",
+    "bundle_sha256": "74a6ad84fbc5416dcf6425c6e73ae935d7af616c655e60f22b9bc16011b425fb",
+    "bundle_git_head": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
+    "bundle_working_tree_dirty": true,
+    "protocol": {
+      "version": "eval-v1",
+      "status": "draft",
+      "freeze_record": null
+    },
+    "split": "validation",
+    "split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
+    "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+    "cases": 84,
+    "attempts": 336,
+    "hardware": {
+      "gpus_visible": [
+        "Tesla T4, 15360 MiB, 580.178.04, 7.5",
+        "Tesla T4, 15360 MiB, 580.178.04, 7.5"
+      ],
+      "model_device": "cuda:0 (Tesla T4)",
+      "inference_dtype": "float32",
+      "torch": "2.11.0+cu128",
+      "cuda": "12.8",
+      "python": "3.13.15",
+      "cpu_count": 4,
+      "ram_total_kb": 32869452,
+      "model_load": "Model loaded in 31.3 s on cuda:0 (Tesla T4) (float32); revision verified: True."
+    },
+    "runner": {
+      "enabled": true,
+      "all_isolation_checks_pass": true
+    },
+    "started_at": "2026-10-21T08:45:59+00:00",
+    "finished_at": "2026-10-21T10:01:10+00:00",
+    "kaggle_gpu_minutes": 76.2,
+    "outputs_verified": "20 files against the kernel's outputs-manifest.json",
+    "evidence": {
+      "records": "runs/evaluation/kaggle-grad-refactor-ai-eval-600603dc/evaluation/kaggle-grad-refactor-ai-eval-600603dc/records.jsonl (ignored by Git)",
+      "records_sha256": "121007ca7205e463897fda346e9169ed9a32e59e192c6a69f7fabf88ee7c2027",
+      "run_manifest_sha256": "d0515dc64afd8837e30f73e91d1e72799aa91d795ff84c05e75a6fb8bf3432ad",
+      "report": "runs/evaluation/kaggle-grad-refactor-ai-eval-600603dc/report/kaggle-grad-refactor-ai-eval-600603dc/summary.md",
+      "report_summary_sha256": "983061b22520674e9cd717f1c4aebf018cf91e0c7cf6d131f3b92f3a8cd7666c"
+    }
+  }
 }

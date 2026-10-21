@@ -1,0 +1,394 @@
+{
+  "record": "Trained adapter through the LocalProvider on the demonstration laptop (pilot functions; not an evaluation)",
+  "recorded_at": "2026-10-21T10:01:12+00:00",
+  "command": "python.exe training/laptop_adapter_check.py --out experiments/models/2026-10-21-laptop-adapter-check.json",
+  "prompt_version": "refactor-v2",
+  "provider_info": {
+    "provider_mode": "local_model",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "device": "cuda:0 (NVIDIA GeForce RTX 2050)",
+    "ready": true,
+    "detail": "Model loaded in 25.2 s on cuda:0 (NVIDIA GeForce RTX 2050) (bfloat16); revision verified: True. Adapter weights sha256 dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2, adapter config sha256 a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571."
+  },
+  "decoding": {
+    "max_new_tokens": 768,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "seed": 42,
+    "max_input_tokens": 2048,
+    "timeout_s": 120.0
+  },
+  "summary": {
+    "adapter": {
+      "outputs": 8,
+      "provider_errors": 0,
+      "parsed": 8,
+      "syntax_pass": 8,
+      "rubric_pass": 8,
+      "same_as_reference": 6,
+      "median_elapsed_s": 18.725
+    },
+    "base": {
+      "outputs": 8,
+      "provider_errors": 0,
+      "parsed": 8,
+      "syntax_pass": 8,
+      "rubric_pass": 4,
+      "same_as_reference": 0,
+      "median_elapsed_s": 5.76
+    }
+  },
+  "items": [
+    {
+      "case_id": "bench-01",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 15.75,
+      "completion_tokens": 107,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef shipping_cost(weight, express):\n    if weight <= 0:\n        raise ValueError(\"weight must be positive\")\n    if express:\n        return 10 + weight * 2\n    return 5 + weight\n```\nExplanation: Turned 2 if/else conditionals into guard clauses: `weight <= 0` raises ValueError and `express` returns 10 + weight * 2. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-01",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 10.96,
+      "completion_tokens": 162,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef shipping_cost(weight, express):\n    if weight <= 0:\n        raise ValueError(\"weight must be positive\")\n    \n    if express:\n        return 10 + weight * 2\n    else:\n        return 5 + weight\n```\n\nExplanation:\n- The function `shipping_cost` is refactored to use guard clauses.\n- The first guard checks if the weight is positive. If not, it raises a `ValueError`.\n- The second guard checks if the express flag is `True`. If it is, it calculates the shipping cost as `10 + weight * 2`.\n- If the express flag is `False`, it calculates the shipping cost as `5 + weight`.\n- The function returns the appropriate shipping cost based on the weight and express flag.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-02",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 15.56,
+      "completion_tokens": 137,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef describe_user(user):\n    if user is None:\n        return \"No user\"\n    if not user.get(\"active\"):\n        return \"Inactive user\"\n    name = user.get(\"name\", \"unknown\")\n    return \"Active user: \" + name\n```\nExplanation: Turned 3 if/else conditionals into guard clauses: `user is None` returns \"No user\", `not user.get(\"active\")` returns \"Inactive user\" and `name = user.get(\"name\", \"unknown\")` returns \"Active user: \" + name. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-02",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 3.29,
+      "completion_tokens": 60,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef describe_user(user):\n    if user is None:\n        return \"No user\"\n    \n    if user.get(\"active\"):\n        name = user.get(\"name\", \"unknown\")\n        return \"Active user: \" + name\n    else:\n        return \"Inactive user\"\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-03",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 19.08,
+      "completion_tokens": 156,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef letter_grade(score):\n    if not 0 <= score <= 100:\n        raise ValueError(\"score out of range\")\n    if score >= 90:\n        return \"A\"\n    if score >= 80:\n        return \"B\"\n    if score >= 70:\n        return \"C\"\n    return \"F\"\n```\nExplanation: Turned 5 if/else conditionals into guard clauses: `not 0 <= score <= 100` raises ValueError, `score >= 90` returns \"A\", `score >= 80` returns \"B\" and 1 more check exits early. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-03",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 4.85,
+      "completion_tokens": 81,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef letter_grade(score):\n    if score < 0 or score > 100:\n        raise ValueError(\"score out of range\")\n    \n    if score >= 90:\n        return \"A\"\n    elif score >= 80:\n        return \"B\"\n    elif score >= 70:\n        return \"C\"\n    else:\n        return \"F\"\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-04",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 19.0,
+      "completion_tokens": 140,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef apply_discount(prices, rate):\n    \"\"\"Return the prices after applying a discount rate.\"\"\"\n    if not prices:\n        return []\n    if not 0 < rate < 1:\n        raise ValueError(\"rate must be between 0 and 1\")\n    result = []\n    for price in prices:\n        result.append(round(price * (1 - rate), 2))\n    return result\n```\nExplanation: Turned 2 if/else conditionals into guard clauses: `not prices` returns [] and `not 0 < rate < 1` raises ValueError. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-04",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 5.57,
+      "completion_tokens": 80,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef apply_discount(prices, rate):\n    \"\"\"Return the prices after applying a discount rate.\"\"\"\n    if prices:\n        if 0 < rate < 1:\n            return [round(price * (1 - rate), 2) for price in prices]\n        else:\n            raise ValueError(\"rate must be between 0 and 1\")\n    else:\n        return []\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "fail",
+      "rubric_reasons": [
+        "No guard clause (an if without else that returns or raises) was found."
+      ],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-05",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 19.12,
+      "completion_tokens": 136,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef parse_port(text):\n    if not text:\n        raise ValueError(\"port is required\")\n    if not text.isdigit():\n        raise ValueError(\"port must be numeric\")\n    port = int(text)\n    if 0 < port < 65536:\n        return port\n    raise ValueError(\"port out of range\")\n```\nExplanation: Turned 3 if/else conditionals into guard clauses: `not text` raises ValueError, `not text.isdigit()` raises ValueError and `0 < port < 65536` returns port. The remaining logic is dedented, reducing the maximum nesting depth from 2 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-05",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 5.95,
+      "completion_tokens": 81,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef parse_port(text):\n    if text:\n        try:\n            port = int(text)\n            if 0 < port < 65536:\n                return port\n            else:\n                raise ValueError(\"port out of range\")\n        except ValueError as e:\n            raise ValueError(f\"Invalid port: {e}\")\n    else:\n        raise ValueError(\"port is required\")\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "fail",
+      "rubric_reasons": [
+        "try and with blocks are outside the supported scope.",
+        "Nesting depth did not decrease (3 -> 3).",
+        "No guard clause (an if without else that returns or raises) was found."
+      ],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-06",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 15.74,
+      "completion_tokens": 99,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef withdraw(balance, amount):\n    if amount <= 0:\n        raise ValueError(\"amount must be positive\")\n    if amount > balance:\n        raise ValueError(\"insufficient funds\")\n    return balance - amount\n```\nExplanation: Turned 2 if/else conditionals into guard clauses: `amount <= 0` raises ValueError and `amount > balance` raises ValueError. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-06",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 4.57,
+      "completion_tokens": 53,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef withdraw(balance, amount):\n    if amount > 0:\n        if amount <= balance:\n            return balance - amount\n        else:\n            raise ValueError(\"insufficient funds\")\n    else:\n        raise ValueError(\"amount must be positive\")\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "fail",
+      "rubric_reasons": [
+        "Nesting depth did not decrease (2 -> 2).",
+        "No guard clause (an if without else that returns or raises) was found."
+      ],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-07",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 18.45,
+      "completion_tokens": 130,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef classify_temperature(celsius, unit):\n    if unit != \"C\":\n        return \"unknown unit\"\n    if celsius < 0:\n        return \"freezing\"\n    if celsius < 20:\n        return \"cold\"\n    return \"warm\"\n```\nExplanation: Turned 3 if/else conditionals into guard clauses: `unit != \"C\"` returns \"unknown unit\", `celsius < 0` returns \"freezing\" and `celsius < 20` returns \"cold\". The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": true
+    },
+    {
+      "case_id": "bench-07",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 7.02,
+      "completion_tokens": 109,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef classify_temperature(celsius, unit):\n    if unit == \"C\":\n        if celsius < 0:\n            return \"freezing\"\n        elif celsius < 20:\n            return \"cold\"\n        else:\n            return \"warm\"\n    elif unit == \"F\":\n        if celsius < 32:\n            return \"freezing\"\n        elif celsius < 86:\n            return \"cold\"\n        else:\n            return \"warm\"\n    else:\n        return \"unknown unit\"\n```",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "fail",
+      "rubric_reasons": [
+        "Nesting depth did not decrease (2 -> 2).",
+        "No guard clause (an if without else that returns or raises) was found."
+      ],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-08",
+      "use_adapter": true,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": true
+      },
+      "elapsed_s": 22.5,
+      "completion_tokens": 162,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef average_positive(values):\n    if values is None:\n        raise TypeError(\"values must not be None\")\n    if len(values) <= 0:\n        return 0.0\n    total = 0\n    count = 0\n    for value in values:\n        if value <= 0:\n            return 0.0\n        total += value\n        count += 1\n    if count == 0:\n        return 0.0\n    return total / count\n```\nExplanation: Turned 2 if/else conditionals into guard clauses: `values is None` raises TypeError and `len(values) <= 0` returns 0.0. The remaining logic is dedented, reducing the maximum nesting depth from 3 to 1.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    },
+    {
+      "case_id": "bench-08",
+      "use_adapter": false,
+      "error": null,
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "use_adapter": false
+      },
+      "elapsed_s": 12.59,
+      "completion_tokens": 176,
+      "finish_reason": "stop",
+      "raw_output": "```python\ndef average_positive(values):\n    if values is None:\n        raise TypeError(\"values must not be None\")\n    \n    if not values:\n        return 0.0\n    \n    total = 0\n    count = 0\n    \n    for value in values:\n        if value > 0:\n            total += value\n            count += 1\n    \n    if count == 0:\n        return 0.0\n    \n    return total / count\n```\n\nExplanation:\n- The function `average_positive` is refactored to use guard clauses. The first guard checks if `values` is `None`, raising a `TypeError` if it is. The second guard checks if `values` is empty, returning `0.0` if it is. The rest of the logic is the same as the original function, except for the nested conditionals.",
+      "parse_error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "rubric_reasons": [],
+      "same_as_reference": false
+    }
+  ]
+}

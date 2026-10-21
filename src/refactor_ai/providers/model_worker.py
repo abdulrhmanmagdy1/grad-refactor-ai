@@ -11,7 +11,8 @@ Protocol version 1. Every message is one JSON object on one UTF-8 line.
 
 Parent to worker:
     {"type": "load", "protocol": 1, "model_dir", "model_id", "model_revision",
-     "adapter_dir", "adapter_id", "adapter_sha256", "device", "dtype"}     (first line)
+     "adapter_dir", "adapter_id", "adapter_sha256", "adapter_config_sha256" (optional),
+     "device", "dtype"}                                                     (first line)
     {"type": "generate", "id", "messages", "max_new_tokens", "temperature", "top_p",
      "seed", "max_input_tokens", "use_adapter"}
     {"type": "shutdown"}
@@ -21,13 +22,16 @@ Worker to parent:
         pid is this interpreter's own PID, which differs from the launcher's PID when a
         Windows virtual environment's python.exe starts the real interpreter)
     {"type": "ready", "protocol": 1, "model_id", "model_revision", "adapter_id",
-     "adapter_sha256", "device", "dtype", "load_s", "revision_verified", "versions"}
+     "adapter_sha256" (adapter_model.safetensors), "adapter_config_sha256"
+     (adapter_config.json), "device", "dtype", "load_s", "revision_verified", "versions"}
     {"type": "load_error", "message"}                        (the worker then exits 3)
     {"type": "result", "id", "text", "prompt_tokens", "completion_tokens",
      "finish_reason" ("stop" or "length"), "generation_s", "use_adapter",
      "peak_vram_mb"}
     {"type": "error", "id", "code", "message"}
-        code is one of input_too_long, unavailable, generation_error.
+        code is one of input_too_long, unavailable, generation_error. An error with
+        "fatal": true (a CUDA, cuBLAS or cuDNN error that can leave the device unusable)
+        is the worker's last message: it exits with code 4 and the parent restarts it.
 
 Decoding is exactly what the request asks for: temperature 0 is greedy decoding, any
 other temperature samples with that temperature and top_p (no top-k) after seeding
@@ -51,7 +55,19 @@ from typing import BinaryIO, Protocol
 
 PROTOCOL_VERSION = 1
 LOAD_ERROR_EXIT_CODE = 3
+FATAL_ERROR_EXIT_CODE = 4
 ADAPTER_WEIGHTS_FILE = "adapter_model.safetensors"
+ADAPTER_CONFIG_FILE = "adapter_config.json"
+# Messages of device errors after which a CUDA context is not trusted any more.
+FATAL_DEVICE_MARKERS = (
+    "CUDA error",
+    "CUBLAS_STATUS",
+    "CUDNN_STATUS",
+    "cuDNN error",
+    "device-side assert",
+    "illegal memory access",
+    "unspecified launch failure",
+)
 ERROR_CODES = frozenset({"input_too_long", "unavailable", "generation_error"})
 DTYPES = ("bfloat16", "float16", "float32")
 DEVICES = ("cuda", "cpu")
@@ -61,12 +77,18 @@ MAX_ERROR_CHARS = 500
 class WorkerError(Exception):
     """An expected per-request failure reported to the parent with a typed code."""
 
-    def __init__(self, code: str, message: str) -> None:
+    def __init__(self, code: str, message: str, *, fatal: bool = False) -> None:
         if code not in ERROR_CODES:
             raise ValueError(f"unknown worker error code {code!r}")
         super().__init__(message)
         self.code = code
         self.message = message
+        self.fatal = fatal
+
+
+def is_fatal_device_error(exc: BaseException) -> bool:
+    """True for CUDA/cuBLAS/cuDNN failures after which the worker must not keep serving."""
+    return isinstance(exc, RuntimeError) and any(m in str(exc) for m in FATAL_DEVICE_MARKERS)
 
 
 class LoadError(Exception):
@@ -83,6 +105,7 @@ class LoadSettings:
     adapter_sha256: str | None
     device: str
     dtype: str
+    adapter_config_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -142,6 +165,11 @@ def parse_load(message: dict) -> LoadSettings:
         adapter_dir=None if adapter_dir is None else Path(adapter_dir),
         adapter_id=adapter_id,
         adapter_sha256=_require(message, "adapter_sha256", str, nullable=True),
+        adapter_config_sha256=(
+            _require(message, "adapter_config_sha256", str, nullable=True)
+            if "adapter_config_sha256" in message
+            else None
+        ),
         device=device,
         dtype=dtype,
     )
@@ -281,7 +309,10 @@ def serve(
             continue
         if message is None or message.get("type") == "shutdown":
             return 0
-        _write_message(stdout, handle_generate(backend, message))
+        reply = handle_generate(backend, message)
+        _write_message(stdout, reply)
+        if reply.get("fatal") is True:  # the device may be unusable: stop serving
+            return FATAL_ERROR_EXIT_CODE
 
 
 def handle_generate(backend: Backend, message: dict) -> dict:
@@ -305,9 +336,15 @@ def handle_generate(backend: Backend, message: dict) -> dict:
     try:
         result = backend.generate(request)
     except WorkerError as exc:
-        return error(exc.code, exc.message)
-    except Exception as exc:  # report unexpected failures for this request and keep serving
-        return error("generation_error", _short(exc))
+        reply = error(exc.code, exc.message)
+        if exc.fatal:
+            reply["fatal"] = True
+        return reply
+    except Exception as exc:  # report unexpected failures; device errors end the worker
+        reply = error("generation_error", _short(exc))
+        if is_fatal_device_error(exc):
+            reply["fatal"] = True
+        return reply
     return {"type": "result", "id": request.id, **result}
 
 
@@ -356,6 +393,7 @@ class TorchBackend:
         )
         model.eval()
         self.adapter_sha256 = None
+        self.adapter_config_sha256 = None
         self.has_adapter = settings.adapter_dir is not None
         versions = {
             "python": sys.version.split()[0],
@@ -367,11 +405,25 @@ class TorchBackend:
             weights = settings.adapter_dir / ADAPTER_WEIGHTS_FILE
             if not weights.is_file():
                 raise LoadError(f"adapter_dir has no {ADAPTER_WEIGHTS_FILE}")
+            config = settings.adapter_dir / ADAPTER_CONFIG_FILE
+            if not config.is_file():
+                raise LoadError(f"adapter_dir has no {ADAPTER_CONFIG_FILE}")
+            # The weights alone are not the adapter: the config sets the LoRA scaling
+            # (lora_alpha / r, rsLoRA) and layer type, so both files are identified.
             self.adapter_sha256 = sha256_file(weights)
+            self.adapter_config_sha256 = sha256_file(config)
             if settings.adapter_sha256 and settings.adapter_sha256 != self.adapter_sha256:
                 raise LoadError(
                     f"adapter checksum {self.adapter_sha256} does not match the configured "
                     f"adapter_sha256 {settings.adapter_sha256}"
+                )
+            if (
+                settings.adapter_config_sha256
+                and settings.adapter_config_sha256 != self.adapter_config_sha256
+            ):
+                raise LoadError(
+                    f"adapter config checksum {self.adapter_config_sha256} does not match the "
+                    f"configured adapter_config_sha256 {settings.adapter_config_sha256}"
                 )
             import peft
             from peft import PeftModel
@@ -419,6 +471,7 @@ class TorchBackend:
             "model_revision": self.settings.model_revision,
             "adapter_id": self.settings.adapter_id,
             "adapter_sha256": self.adapter_sha256,
+            "adapter_config_sha256": self.adapter_config_sha256,
             "device": self.device_label,
             "dtype": self.settings.dtype,
             "load_s": round(self.load_s, 3),

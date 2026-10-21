@@ -1,0 +1,339 @@
+{
+  "status": "completed",
+  "run_id": "full-2026-10-21",
+  "code_sha": {
+    "git_head": "a546f8494acdd22582f2b0bf897467541f416812",
+    "working_tree_dirty": true,
+    "bundle_sha256": "46acfc0ae53375d80c19d615a76762a068606c2b03f6d64343c86dfdd69e035f",
+    "train_script_sha256": "172affe4aae69a10c5e8a7af60648d2ceb1bd921ce90c6c0e8d60aa99f28bbfc",
+    "note": "Kaggle has no Git checkout; the bundle SHA-256 identifies the exact code (85 files verified in the kernel)."
+  },
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+  "split_manifest": {
+    "train": 627,
+    "validation": 84,
+    "test_excluded": 88,
+    "train_split_sha256": "b6a7fc0240c33aba0e06c984f073a94f2056d1e1721c52dd0dd0d29c05e236da",
+    "validation_split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
+    "test_split_sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633",
+    "note": "Only split train was trained on and validation evaluated; the 88 test records never reached the Trainer."
+  },
+  "hardware": {
+    "where": "Kaggle private script kernel grad-refactor-ai-train-11708b80 (machine shape NvidiaTeslaT4)",
+    "gpus": [
+      "Tesla T4, 15360 MiB, 580.178.04, 7.5",
+      "Tesla T4, 15360 MiB, 580.178.04, 7.5"
+    ],
+    "gpu_count_visible": 2,
+    "compute_capability": [
+      7,
+      5
+    ],
+    "cpu_count": 4,
+    "ram_total_kb": 32869452,
+    "python": "3.13.15",
+    "platform": "Linux-6.18.48+-x86_64-with-glibc2.39"
+  },
+  "dependency_lock": {
+    "file": "training/requirements-cuda.txt",
+    "sha256": "99ce0f70911d6fa7750b1f15731d23e4b48244e8e3f78d1573166dad110e8eeb",
+    "installed_pins_checked_with_python_-I": {
+      "transformers": "5.20.2",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3",
+      "huggingface-hub": "2.2.0",
+      "pydantic": "2.14.1",
+      "torch": "2.11.0+cu128"
+    },
+    "torch": "Kaggle's own build, not the lock's 2.14.1+cu126: 2.11.0+cu128",
+    "cuda": "12.8",
+    "removed_from_kaggle_image": [
+      "torchao"
+    ],
+    "note": "torchao 0.10 from the Kaggle image made peft 0.21 raise ImportError, so the kernel uninstalls it."
+  },
+  "config": {
+    "run_id": "full-2026-10-21",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "seed": 42,
+    "max_length": 1024,
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "learning_rate": 0.0002,
+    "epochs": 3,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "warmup_steps": 12,
+    "lr_scheduler_type": "cosine",
+    "weight_decay": 0.0,
+    "logging_steps": 5,
+    "eval_steps": null,
+    "save_steps": null,
+    "save_total_limit": 1,
+    "max_steps": -1,
+    "gradient_checkpointing": true,
+    "precision": "fp32",
+    "load_best_model_at_end": true,
+    "max_runtime_minutes": 200.0,
+    "precision_resolved": "fp32"
+  },
+  "config_source": "configs/training.full.json with the paths changed and precision fp32 (the T4 has no native bf16); max_runtime_minutes raised to 200 on Kaggle",
+  "effective_batch": {
+    "records_per_optimizer_step": 16,
+    "optimizer_steps": 120,
+    "steps_per_epoch": 40,
+    "explanation": "Inferred from the step count: 627 train records gave 40 optimizer steps per epoch (the first log line at step 5 is epoch 0.1274), i.e. 16 records per step. The session exposed two T4 GPUs, and the Hugging Face Trainer splits each batch over all visible GPUs with DataParallel when it is not launched as a distributed job, so the effective batch was 2 GPUs x 1 x 8 accumulation = 16 instead of the 8 configured for one GPU. Peak memory below is from cuda:0 only."
+  },
+  "seed": 42,
+  "duration_seconds": 1144.2,
+  "train_runtime_seconds": 1124.3,
+  "kaggle_session": {
+    "started_at": "2026-10-21T08:21:55+00:00",
+    "finished_at": "2026-10-21T08:42:26+00:00",
+    "steps": [
+      {
+        "step": "hardware",
+        "seconds": 9.0,
+        "ok": true
+      },
+      {
+        "step": "bundle",
+        "seconds": 7.8,
+        "ok": true
+      },
+      {
+        "step": "install",
+        "seconds": 28.6,
+        "ok": true
+      },
+      {
+        "step": "model",
+        "seconds": 10.9,
+        "ok": true
+      },
+      {
+        "step": "train",
+        "seconds": 1174.9,
+        "ok": true
+      }
+    ],
+    "gpu_minutes": 20.5
+  },
+  "step_seconds": {
+    "mean": 8.88,
+    "max": 10.466
+  },
+  "peak_memory_mb": {
+    "torch_peak_allocated_per_step_max": 5969.6,
+    "torch_peak_reserved_per_step_max": 11652.0,
+    "torch_peak_allocated_evaluation": 2971.9,
+    "gpu_used_all_processes_before_load": 3,
+    "gpu_used_all_processes_peak_sampled": 12263
+  },
+  "precision": "fp32",
+  "trainable_parameters": 4399104,
+  "total_parameters": 498431872,
+  "trainable_parameter_dtypes": [
+    "torch.float32"
+  ],
+  "data": {
+    "records": {
+      "train": 627,
+      "validation": 84,
+      "test_excluded": 88
+    },
+    "max_tokens": {
+      "train": 695,
+      "validation": 580
+    },
+    "mean_tokens": {
+      "train": 481.9,
+      "validation": 483.1
+    },
+    "end_of_turn_token": "<|im_end|>",
+    "end_of_turn_id": 151645,
+    "revision_verified": true
+  },
+  "train_loss_history": [
+    [
+      1,
+      0.68857
+    ],
+    [
+      5,
+      0.67276
+    ],
+    [
+      10,
+      0.48404
+    ],
+    [
+      15,
+      0.21153
+    ],
+    [
+      20,
+      0.09765
+    ],
+    [
+      25,
+      0.05591
+    ],
+    [
+      30,
+      0.04348
+    ],
+    [
+      35,
+      0.02962
+    ],
+    [
+      40,
+      0.02288
+    ],
+    [
+      45,
+      0.02247
+    ],
+    [
+      50,
+      0.01953
+    ],
+    [
+      55,
+      0.01791
+    ],
+    [
+      60,
+      0.0171
+    ],
+    [
+      65,
+      0.01579
+    ],
+    [
+      70,
+      0.01589
+    ],
+    [
+      75,
+      0.01395
+    ],
+    [
+      80,
+      0.01263
+    ],
+    [
+      85,
+      0.01464
+    ],
+    [
+      90,
+      0.01183
+    ],
+    [
+      95,
+      0.01037
+    ],
+    [
+      100,
+      0.01117
+    ],
+    [
+      105,
+      0.01075
+    ],
+    [
+      110,
+      0.01084
+    ],
+    [
+      115,
+      0.01096
+    ],
+    [
+      120,
+      0.01269
+    ]
+  ],
+  "validation_loss_per_epoch": [
+    {
+      "epoch": 1,
+      "step": 40,
+      "eval_loss": 0.03611
+    },
+    {
+      "epoch": 2,
+      "step": 80,
+      "eval_loss": 0.03884
+    },
+    {
+      "epoch": 3,
+      "step": 120,
+      "eval_loss": 0.03596
+    }
+  ],
+  "best_epoch": {
+    "selected_by": "validation loss only (load_best_model_at_end, metric eval_loss)",
+    "checkpoint": "checkpoint-120",
+    "eval_loss": 0.03596
+  },
+  "validation_metrics": {
+    "eval_loss": 0.03596,
+    "note": "teacher-forced loss on the 84 validation records; not a refactoring metric"
+  },
+  "test_metrics": null,
+  "failures": [],
+  "previous_attempts": [
+    "experiments/training/full-2026-10-20-local-attempt1-failed.json (laptop, CUBLAS_STATUS_EXECUTION_FAILED under low virtual memory after 22 steps)"
+  ],
+  "artifact_url": null,
+  "artifact_path": "runs/training/kaggle-grad-refactor-ai-train-11708b80/training/full-2026-10-21/adapter (ignored by Git)",
+  "artifact_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+  "adapter_config_sha256": "a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571",
+  "adapter_files_sha256": {
+    "README.md": "a5c62ab664346cf0ab084220d5409edfa63a9a46c493068c77bb442271e90584",
+    "adapter_config.json": "a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571",
+    "adapter_model.safetensors": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2"
+  },
+  "adapter_bytes": 17640136,
+  "checkpoints_sha256": {
+    "checkpoint-120": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2"
+  },
+  "kernel_log": [
+    "[08:21:55] == hardware",
+    "[08:22:04] == bundle",
+    "[08:22:12] bundle tree at /kaggle/input/datasets/abdelrhmanadel208/grad-refactor-ai-bundle/bundle",
+    "[08:22:12] == install",
+    "[08:22:13] $ /usr/bin/python3 -m pip install --quiet -c /tmp/grad/constraints.txt accelerate==1.15.0 huggingface-hub==2.2.0 peft==0.21.2 safetensors==0.8.0 tokenizers==0.23.3 transformers==5.20.2 pydantic==2.14.1",
+    "[08:22:38] pip-install: exit 0 after 24.1 s",
+    "[08:22:38] $ /usr/bin/python3 -m pip uninstall --yes --quiet torchao",
+    "[08:22:39] pip-uninstall-torchao: exit 0 after 1.1 s",
+    "[08:22:39] $ /usr/bin/python3 -m pip freeze",
+    "[08:22:40] pip-freeze: exit 0 after 1.8 s",
+    "[08:22:40] == model",
+    "[08:22:51] == train",
+    "[08:22:51] $ /usr/bin/python3 -X utf8 training/train_lora.py --config /tmp/grad/training.kaggle.json --record /kaggle/working/training/full-2026-10-21.json",
+    "[08:42:26] train: exit 0 after 1174.9 s"
+  ],
+  "outputs_verified": {
+    "files": 14,
+    "against": "outputs-manifest.json written by the kernel"
+  },
+  "evaluator": null
+}
