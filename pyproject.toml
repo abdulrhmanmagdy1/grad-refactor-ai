@@ -3,11 +3,12 @@ name = "grad-refactor-ai"
 version = "0.1.0"
 description = "Python multi-agent refactoring graduation project foundation"
 requires-python = ">=3.11,<3.12"
-# ruff is a runtime dependency: the project review mode runs it on uploaded projects.
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "ruff>=0.9,<1"]
+# ruff and pytest are runtime dependencies: the project review mode runs ruff on uploaded
+# projects and, when the user enables it, the projects' own tests with pytest.
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "ruff>=0.9,<1", "pytest>=8,<10"]
 
 [dependency-groups]
-dev = ["pytest>=8,<10", "httpx>=0.27,<1"]
+dev = ["httpx>=0.27,<1"]
 
 [build-system]
 requires = ["hatchling"]

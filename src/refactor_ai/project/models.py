@@ -71,10 +71,10 @@ class FixCheck(Record):
 
 
 class Fix(Record):
-    """A proposed change to one function that addresses one finding."""
+    """A proposed change to one function that addresses its fixable findings."""
 
     id: str
-    finding_id: str
+    finding_ids: list[str]
     file: str
     symbol: str
     line_start: int
