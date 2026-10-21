@@ -40,16 +40,16 @@ export function buildSteps(
   const correcting = status === "generating" && hasCorrection(trail);
   const labels: Record<ActiveStatus, string> = {
     queued: "Queued",
-    analyzing: "Analysis",
-    generating: correcting ? "Refactoring (correction)" : "Refactoring",
-    verifying: mode === "single_role" ? "Verification" : "Verification and review",
+    analyzing: "Find",
+    generating: correcting ? "Rewrite (retry)" : "Rewrite",
+    verifying: mode === "single_role" ? "Check" : "Check and review",
   };
 
   let states: StepState[];
   let result: Step;
   if (status === "completed") {
     states = keys.map(() => "done");
-    result = { key: "result", label: "Completed", state: "done" };
+    result = { key: "result", label: "Done", state: "done" };
   } else if (status === "failed") {
     const failedAt = stepForStage(errorStage) ?? lastActiveStatus(trail);
     const index = failedAt ? keys.indexOf(failedAt) : -1;

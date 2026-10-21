@@ -2329,3 +2329,148 @@ td[data-flagged="true"] {
     height: 19rem;
   }
 }
+
+/* ---- Simple view: check chips, details drawer, status pill ---------------------------- */
+.checks {
+  display: grid;
+  gap: 6px;
+}
+
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.check-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--tone-neutral-line);
+  border-radius: var(--radius-pill);
+  background: var(--tone-neutral-bg);
+  color: var(--tone-neutral-fg);
+  font-size: var(--text-md);
+  line-height: 1.2;
+}
+
+.check-chip__name {
+  font-weight: 600;
+}
+
+.check-chip[data-tone="pass"] {
+  border-color: var(--tone-pass-line);
+  background: var(--tone-pass-bg);
+  color: var(--tone-pass-fg);
+}
+
+.check-chip[data-tone="fail"] {
+  border-color: var(--tone-fail-line);
+  background: var(--tone-fail-bg);
+  color: var(--tone-fail-fg);
+}
+
+.check-chip[data-tone="warn"] {
+  border-color: var(--tone-warn-line);
+  background: var(--tone-warn-bg);
+  color: var(--tone-warn-fg);
+}
+
+.check-chip[data-evidence="absent"] {
+  border-style: dashed;
+}
+
+.checks__note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.disposition__reason {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-md);
+}
+
+.details-drawer {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.details-drawer__summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-weight: 600;
+  list-style-position: inside;
+}
+
+.details-drawer__summary:focus-visible {
+  outline: 2px solid var(--tone-info-line, var(--color-border-strong));
+  outline-offset: 2px;
+}
+
+.details-drawer__body {
+  display: grid;
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+.failure__code {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.service__details {
+  position: relative;
+}
+
+.service__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border: 1px solid var(--tone-neutral-line);
+  border-radius: var(--radius-pill);
+  background: var(--tone-neutral-bg);
+  color: var(--tone-neutral-fg);
+  font-weight: 600;
+  font-size: var(--text-md);
+  list-style: none;
+}
+
+.service__pill::-webkit-details-marker {
+  display: none;
+}
+
+.service__pill::after {
+  content: "\25BE";
+  font-size: var(--text-xs);
+}
+
+.service__pill[data-tone="pass"] {
+  border-color: var(--tone-pass-line);
+  background: var(--tone-pass-bg);
+  color: var(--tone-pass-fg);
+}
+
+.service__pill[data-tone="warn"] {
+  border-color: var(--tone-warn-line);
+  background: var(--tone-warn-bg);
+  color: var(--tone-warn-fg);
+}
+
+.service__pill[data-tone="fail"] {
+  border-color: var(--tone-fail-line);
+  background: var(--tone-fail-bg);
+  color: var(--tone-fail-fg);
+}
+
+.service__details[open] .service__list {
+  margin-top: 10px;
+}

@@ -257,9 +257,7 @@ export function App() {
       </main>
       <footer className="app-footer">
         <p>
-          Everything runs on this machine. The web service parses submitted code without running it; reference tests
-          for demonstration cases run in a separate, isolated runner. Passing tests do not prove that a proposal is
-          equivalent for every input.
+          Runs on this machine. Your code is never executed by the web service.
         </p>
       </footer>
       <p className="visually-hidden" role="status" aria-live="polite">

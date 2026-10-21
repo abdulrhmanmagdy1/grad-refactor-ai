@@ -143,15 +143,15 @@ function entryFor(record: RunRecord): RunEntry {
 }
 
 const EXPECTED_TEXT: Record<string, RegExp> = {
-  "run_record_queued.json": /Waiting for the worker to start this run/,
-  "run_record_analyzing.json": /The analysis role is locating nested conditionals/,
-  "run_record_proposal_ready.json": /Proposal ready for your review/,
-  "run_record_uncertain.json": /Uncertain: the evidence is incomplete/,
-  "run_record_no_change.json": /No change proposed/,
-  "run_record_rejected.json": /Proposal rejected by verification/,
-  "run_record_failed.json": /The run failed/,
-  "run_record_interrupted.json": /The run failed/,
-  "run_record_adapter_unavailable.json": /The fine-tuned adapter was requested for the refactoring role/,
+  "run_record_queued.json": /Waiting to start/,
+  "run_record_analyzing.json": /Finding nested if statements/,
+  "run_record_proposal_ready.json": /Ready to use/,
+  "run_record_uncertain.json": /^Not sure$/,
+  "run_record_no_change.json": /Nothing to change/,
+  "run_record_rejected.json": /Not safe to use/,
+  "run_record_failed.json": /Something went wrong/,
+  "run_record_interrupted.json": /Something went wrong/,
+  "run_record_adapter_unavailable.json": /The fine-tuned model is missing/,
 };
 
 describe("run record examples render", () => {
@@ -177,7 +177,7 @@ describe("run record examples render", () => {
     expect(expected, `add the expected text for ${file}`).toBeDefined();
     expect(screen.getAllByText(expected!).length).toBeGreaterThan(0);
     if (record.provider_mode === "fake") {
-      expect(screen.getByText("This run used the fake test provider. Its output is not from a language model.")).toBeInTheDocument();
+      expect(screen.getByText("Demo mode: this result is not from the AI model.")).toBeInTheDocument();
     }
     if (record.diff) {
       const parsed = parseUnifiedDiff(record.diff);

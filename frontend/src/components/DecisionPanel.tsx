@@ -31,13 +31,12 @@ export function DecisionPanel({
       <div className="section-head">
         <h3 id={`${ids}-heading`}>Your decision</h3>
         <p className="section-head__note">
-          Recording a decision does not change your input or any file. Download or copy the proposal to use it.
+          Your files are never changed. Copy or download the new code to use it.
         </p>
       </div>
       {disposition !== null && disposition !== "proposal_ready" ? (
         <p className="notice" data-tone="warn">
-          Automated verification marked this proposal as {DISPOSITION_META[disposition].label.toLowerCase()}. Read the
-          evidence above before you accept it.
+          The checks say: {DISPOSITION_META[disposition].label}. Be careful before you accept.
         </p>
       ) : null}
       <div className="decision__buttons" role="group" aria-label="Decision on the proposal">

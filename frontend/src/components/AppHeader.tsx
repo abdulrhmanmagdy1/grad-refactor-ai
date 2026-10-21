@@ -88,7 +88,6 @@ export function AppHeader({ health, error, loading, onRetry }: AppHeaderProps) {
           <BrandMark />
           <div className="brand__text">
             <h1 className="brand__name">Multi-Agent Refactoring for Python</h1>
-            <p className="brand__tagline">Guard-clause proposals with separate verification</p>
           </div>
         </div>
         <section className="service" aria-label="Service status">
@@ -120,8 +119,17 @@ function HealthDetails({ health, stale }: { health: HealthResponse; stale: boole
   const weights = refactorWeights(health);
   const state = modelState(health);
   const stateText = MODEL_STATE_TEXT[state];
+  const pill = fake
+    ? { text: "Demo mode", tone: "warn" }
+    : state === "ready"
+      ? { text: health.refactor_use_adapter ? "Fine-tuned model ready" : "Base model ready", tone: "pass" }
+      : { text: stateText.label, tone: stateText.tone };
   return (
     <>
+      <details className="service__details">
+        <summary className="service__pill" data-tone={pill.tone}>
+          {pill.text}
+        </summary>
       <dl className="service__list" data-stale={stale ? "true" : undefined}>
         <div className="service__item">
           <dt>Provider</dt>
@@ -177,6 +185,7 @@ function HealthDetails({ health, stale }: { health: HealthResponse; stale: boole
           </dd>
         </div>
       </dl>
+      </details>
       {state !== "ready" ? (
         <p className="service__notice" data-tone={stateText.tone} role="status">
           <strong>{stateText.notice}.</strong> {provider.detail ?? "The service gave no reason."}
@@ -197,11 +206,7 @@ export function FakeProviderBanner() {
           </svg>
         </span>
         <p>
-          <strong>Fake provider: these are not language-model results.</strong>{" "}
-          <span className="fake-banner__detail">
-            The service is running its deterministic test provider, so every proposal, explanation and review here
-            comes from fixed rules. Do not present these results as AI output.
-          </span>
+          <strong>Demo mode: results come from a test stub, not the AI model.</strong>
         </p>
       </div>
     </div>

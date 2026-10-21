@@ -51,7 +51,7 @@ async function flush() {
 }
 
 const editor = () => screen.getByLabelText("Python function") as HTMLTextAreaElement;
-const submitButton = () => screen.getByRole("button", { name: "Propose refactoring" });
+const submitButton = () => screen.getByRole("button", { name: "Improve code" });
 const step = (key: string) => document.querySelector(`[data-step="${key}"]`);
 
 function typeCode(code: string) {
@@ -80,7 +80,7 @@ describe("service status header", () => {
     setupServer();
     await renderReady();
     const status = screen.getByRole("region", { name: "Service status" });
-    expect(within(status).getByText("Local model")).toBeInTheDocument();
+    expect(within(status).getByText("AI model")).toBeInTheDocument();
     expect(within(status).getByText(/example-org\/example-code-model/)).toBeInTheDocument();
     expect(within(status).getByText(/at revision 0123456789ab…/)).toBeInTheDocument();
     expect(within(status).getByText("Device cuda:0")).toBeInTheDocument();
@@ -99,10 +99,9 @@ describe("service status header", () => {
     setupServer({ mode: "fake" });
     await renderReady();
     const banner = screen.getByRole("note", { name: "Fake provider warning" });
-    expect(banner).toHaveTextContent("Fake provider: these are not language-model results.");
-    expect(banner).toHaveTextContent("Do not present these results as AI output.");
+    expect(banner).toHaveTextContent("Demo mode: results come from a test stub, not the AI model.");
     const status = screen.getByRole("region", { name: "Service status" });
-    expect(within(status).getByText("Fake provider (test only)")).toBeInTheDocument();
+    expect(within(status).getByText("Demo mode (no AI model)")).toBeInTheDocument();
     expect(within(status).getByText("Device none")).toBeInTheDocument();
     expect(within(status).getByText("Fixed rules (fake provider)")).toBeInTheDocument();
     expect(within(status).getByText("Runner disabled")).toBeInTheDocument();
@@ -129,7 +128,7 @@ describe("service status header", () => {
     server.onJson("GET", "/health", loading);
     await renderReady();
     const status = screen.getByRole("region", { name: "Service status" });
-    expect(within(status).getByText("Loading")).toHaveAttribute("data-tone", "progress");
+    expect(within(status).getAllByText("Loading")[0]).toHaveAttribute("data-tone", "progress");
     expect(within(status).getByRole("status")).toHaveTextContent(
       "The model is loading. The model is loading in the background since startup; runs wait until it is ready.",
     );
@@ -150,7 +149,7 @@ describe("service status header", () => {
     await renderReady();
     const status = screen.getByRole("region", { name: "Service status" });
     expect(within(status).getByText("Adapter requested, none configured")).toHaveAttribute("data-tone", "fail");
-    expect(within(status).getByText("Adapter missing")).toBeInTheDocument();
+    expect(within(status).getAllByText("Adapter missing")[0]).toBeInTheDocument();
     expect(within(status).getByRole("status")).toHaveTextContent(
       "The fine-tuned adapter is missing. REFACTOR_AI_REFACTOR_USE_ADAPTER=true, but the model provider has no LoRA adapter configured.",
     );
@@ -201,10 +200,10 @@ describe("input", () => {
     await renderReady();
     const task = screen.getByLabelText("Refactoring task");
     expect(within(task).getAllByRole("option").map((option) => option.textContent)).toEqual([
-      "Replace nested conditionals with guard clauses",
+      "Flatten nested if statements (guard clauses)",
     ]);
-    expect(screen.getByRole("radio", { name: /Multi-role/ })).toBeChecked();
-    expect(screen.getByRole("radio", { name: /Single-role/ })).not.toBeChecked();
+    expect(screen.getByRole("radio", { name: /With review/ })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /Fast/ })).not.toBeChecked();
   });
 });
 
@@ -235,10 +234,10 @@ describe("running a refactoring", () => {
       reference_case_id: null,
     });
     expect(submitButton()).toBeDisabled();
-    expect(screen.getByText(/A run is in progress/)).toBeInTheDocument();
+    expect(screen.getByText(/Wait for the current run to finish/)).toBeInTheDocument();
     expect(step("queued")).toHaveAttribute("data-state", "current");
     expect(screen.getByText("Run status: Queued.")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Run" })).toHaveFocus();
+    expect(screen.getByRole("heading", { name: "Result" })).toHaveFocus();
 
     await advance(750);
     expect(step("queued")).toHaveAttribute("data-state", "done");
@@ -253,9 +252,8 @@ describe("running a refactoring", () => {
     expect(screen.getByText("Elapsed 2 s")).toBeInTheDocument();
     await advance(750);
 
-    expect(step("result")).toHaveAttribute("data-state", "done");
-    expect(screen.getByText("Run completed: Proposal ready.")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Outcome: Proposal ready" })).toBeInTheDocument();
+    expect(screen.getByText("Run completed: Ready.")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Outcome: Ready" })).toBeInTheDocument();
     expect(screen.getByRole("table", { name: /Unified diff/ })).toBeInTheDocument();
     for (const name of ["Syntax", "Task rubric", "Reference tests", "Model review"]) {
       expect(screen.getByRole("article", { name })).toBeInTheDocument();
@@ -299,7 +297,7 @@ describe("running a refactoring", () => {
     serveRun(server, [pendingRecord("generating", { workflow_mode: "single_role" })]);
     render(<App />);
     await flush();
-    fireEvent.click(screen.getByRole("radio", { name: /Single-role/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Fast/ }));
     typeCode(ORIGINAL_CODE);
     fireEvent.click(submitButton());
     await flush();
@@ -333,7 +331,7 @@ describe("running a refactoring", () => {
     expect(screen.getByText(/Connection problem/)).toHaveTextContent("attempt 2");
     await advance(1688);
     expect(screen.queryByText(/Connection problem/)).toBeNull();
-    expect(screen.getByRole("region", { name: "Outcome: Proposal ready" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Outcome: Ready" })).toBeInTheDocument();
   });
 
   it("stops checking after the maximum wait and resumes on request", async () => {
@@ -359,7 +357,7 @@ describe("running a refactoring", () => {
     fireEvent.click(screen.getByRole("button", { name: "Check again" }));
     await advance(750);
     expect(server.calls("GET", `/api/v1/runs/${RUN_ID}`).length).toBe(polls + 1);
-    expect(screen.getByRole("region", { name: "Outcome: Proposal ready" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Outcome: Ready" })).toBeInTheDocument();
   });
 
   it("stops polling when the page is closed", async () => {
@@ -500,8 +498,8 @@ describe("demonstration cases", () => {
     expect(screen.getByRole("option", { name: "Shipping cost with nested validation (4 reference tests)" })).toBeInTheDocument();
     await loadCase();
     expect(editor().value).toBe(SHIPPING_CASE.code);
-    expect(screen.getByText(/Linked to the demonstration case/)).toHaveTextContent(
-      "Linked to the demonstration case Shipping cost with nested validation. Its 4 trusted reference tests will run against the proposal.",
+    expect(screen.getByText(/tests? will run\./)).toHaveTextContent(
+      "Demo case Shipping cost with nested validation: 4 tests will run.",
     );
     fireEvent.click(submitButton());
     await waitFor(() => expect(server.calls("POST", "/api/v1/runs")).toHaveLength(1));
@@ -515,9 +513,9 @@ describe("demonstration cases", () => {
     await renderReady();
     await loadCase();
     typeCode(SHIPPING_CASE.code.replace("weight * 3", "weight * 4"));
-    expect(screen.queryByText(/Linked to the demonstration case/)).toBeNull();
-    expect(screen.getByText(/You edited the code/)).toHaveTextContent(
-      "Reference tests apply only to the exact case code, so they will not run for this input.",
+    expect(screen.queryByText(/tests? will run\./)).toBeNull();
+    expect(screen.getByText(/You changed the demo code/)).toHaveTextContent(
+      "You changed the demo code, so the tests of Shipping cost with nested validation will not run.",
     );
     fireEvent.click(submitButton());
     await waitFor(() => expect(server.calls("POST", "/api/v1/runs")).toHaveLength(1));
@@ -531,7 +529,7 @@ describe("demonstration cases", () => {
     typeCode("def changed():\n    return 0\n");
     fireEvent.click(screen.getByRole("button", { name: "Restore the case code" }));
     expect(editor().value).toBe(SHIPPING_CASE.code);
-    expect(screen.getByText(/Linked to the demonstration case/)).toBeInTheDocument();
+    expect(screen.getByText(/tests? will run\./)).toBeInTheDocument();
   });
 
   it("offers the previous code back after loading a case over it", async () => {
@@ -542,7 +540,7 @@ describe("demonstration cases", () => {
     expect(editor().value).toBe(DISCOUNT_CASE.code);
     fireEvent.click(screen.getByRole("button", { name: "Restore previous code" }));
     expect(editor().value).toBe("def mine(x):\n    return x\n");
-    expect(screen.queryByText(/Linked to the demonstration case/)).toBeNull();
+    expect(screen.queryByText(/tests? will run\./)).toBeNull();
   });
 
   it("lets the person remove the link after reference_case_mismatch", async () => {
@@ -559,7 +557,7 @@ describe("demonstration cases", () => {
     expect(alert).toHaveTextContent("The code does not match the demonstration case");
     expect(editor().value).toBe(SHIPPING_CASE.code);
     fireEvent.click(within(alert).getByRole("button", { name: "Remove the case link" }));
-    expect(screen.queryByText(/Linked to the demonstration case/)).toBeNull();
+    expect(screen.queryByText(/tests? will run\./)).toBeNull();
   });
 
   it("reports when the cases cannot be loaded", async () => {
@@ -596,7 +594,7 @@ describe("history", () => {
     expect(items).toHaveLength(2);
     expect(items[0]).toHaveTextContent("20 Oct 2026, 09:09:00");
     expect(within(items[0]!).getByText("Failed")).toBeInTheDocument();
-    expect(within(items[1]!).getByText("Proposal ready")).toBeInTheDocument();
+    expect(within(items[1]!).getByText("Ready")).toBeInTheDocument();
     expect(within(items[1]!).getByText("Fake")).toBeInTheDocument();
     expect(within(items[1]!).getByText("Accepted by you")).toBeInTheDocument();
   });
@@ -608,13 +606,11 @@ describe("history", () => {
     serveRun(server, [pendingRecord("queued", { run_id: "f".repeat(32) })], "f".repeat(32));
     await renderReady();
     fireEvent.click(screen.getByRole("button", { name: "Open the run from 20 Oct 2026, 09:09:00" }));
-    const failure = await screen.findByRole("heading", { name: "The run failed" });
+    const failure = await screen.findByRole("heading", { name: "Something went wrong" });
     const section = failure.closest("section")!;
-    expect(section).toHaveTextContent("interrupted");
-    expect(section).toHaveTextContent("The service stopped before this run finished.");
     expect(section).toHaveTextContent("Runs are never restarted automatically.");
-    expect(section).toHaveTextContent("Stopped during: generating");
-    expect(screen.getByRole("region", { name: "Original input" })).toHaveTextContent("def shipping_cost(weight, express):");
+    expect(section).toHaveTextContent("Stopped while rewriting.");
+    expect(screen.getByRole("region", { name: "Your code" })).toHaveTextContent("def shipping_cost(weight, express):");
     expect(step("generating")).toHaveAttribute("data-state", "failed");
     expect(screen.queryByRole("button", { name: "Download proposal" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Accept proposal" })).toBeNull();
@@ -636,11 +632,11 @@ describe("history", () => {
     await renderReady();
     typeCode("def other():\n    return 2\n");
     fireEvent.click(screen.getByRole("button", { name: "Open the run from 20 Oct 2026, 09:09:00" }));
-    await screen.findByRole("heading", { name: "The run failed" });
+    await screen.findByRole("heading", { name: "Something went wrong" });
     fireEvent.click(screen.getAllByRole("button", { name: "Edit this input" })[0]!);
     expect(editor().value).toBe(ORIGINAL_CODE);
     expect(editor()).toHaveFocus();
-    expect(screen.getByText(/Linked to the demonstration case/)).toBeInTheDocument();
+    expect(screen.getByText(/tests? will run\./)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Restore previous code" }));
     expect(editor().value).toBe("def other():\n    return 2\n");
   });
@@ -708,7 +704,7 @@ describe("proposal controls", () => {
       }),
     );
     expect(screen.getByRole("region", { name: "Outcome: No change" })).toBeInTheDocument();
-    expect(screen.getByText("No proposal: the original code stays as it is.")).toBeInTheDocument();
+    expect(screen.getByText("Your code stays as it is.")).toBeInTheDocument();
     for (const name of ["Copy proposed code", "Download proposal", "Accept proposal", "Reject proposal"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
@@ -724,7 +720,7 @@ describe("proposal controls", () => {
       }),
     );
     expect(screen.getByRole("button", { name: "Download proposal" })).toBeInTheDocument();
-    expect(screen.getByText(/Automated verification marked this proposal as uncertain/)).toBeInTheDocument();
+    expect(screen.getByText(/The checks say: Not sure/)).toBeInTheDocument();
   });
 
   it("downloads the proposal through the service", async () => {
@@ -799,7 +795,7 @@ describe("proposal controls", () => {
 
   it("labels a fake-provider run inside the result even when the service now runs a model", async () => {
     await openRecord(runRecord({ provider_mode: "fake", model: null }));
-    expect(screen.getByText("This run used the fake test provider. Its output is not from a language model.")).toBeInTheDocument();
-    expect(screen.getByText("Fake provider output")).toBeInTheDocument();
+    expect(screen.getByText("Demo mode: this result is not from the AI model.")).toBeInTheDocument();
+    expect(screen.getByText("Demo")).toBeInTheDocument();
   });
 });

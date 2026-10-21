@@ -11,6 +11,7 @@ import {
   SYNTAX_STATUSES,
 } from "../api/contracts";
 import { DIFF_TEXT, ORIGINAL_CODE, PROPOSED_CODE, runRecord, verification } from "../test/fixtures";
+import { CheckRow } from "./CheckRow";
 import { DiffViewer } from "./DiffViewer";
 import { DispositionBanner } from "./DispositionBanner";
 import { buildSteps } from "./ProgressStepper";
@@ -42,11 +43,11 @@ function renderPanel(overrides: Parameters<typeof verification>[0] = {}, options
 
 describe("DispositionBanner", () => {
   const expectations: Record<Disposition, { title: RegExp; tone: string }> = {
-    proposal_ready: { title: /Proposal ready for your review/, tone: "pass" },
-    rejected: { title: /Proposal rejected by verification/, tone: "fail" },
-    uncertain: { title: /Uncertain: the evidence is incomplete/, tone: "warn" },
-    no_change: { title: /No change proposed/, tone: "neutral" },
-    failed: { title: /No proposal was produced/, tone: "fail" },
+    proposal_ready: { title: /Ready to use/, tone: "pass" },
+    rejected: { title: /Not safe to use/, tone: "fail" },
+    uncertain: { title: /^Not sure$/, tone: "warn" },
+    no_change: { title: /Nothing to change/, tone: "neutral" },
+    failed: { title: /Something went wrong/, tone: "fail" },
   };
 
   it.each(DISPOSITIONS.map((value) => [value]))("renders %s with its own title and tone", (disposition) => {
@@ -60,8 +61,13 @@ describe("DispositionBanner", () => {
     expect(region).toHaveAttribute("data-disposition", disposition);
     expect(region).toHaveAttribute("data-tone", expectations[disposition].tone);
     expect(within(region).getByRole("heading", { level: 3 })).toHaveTextContent(expectations[disposition].title);
-    expect(within(region).getByText("1 of 4 reference tests failed.")).toBeInTheDocument();
-    expect(within(region).queryByText(/Fake provider output/)).toBeNull();
+    // Reasons sit in the Details drawer; the banner shows at most one short reason.
+    if (disposition === "proposal_ready") {
+      expect(within(region).queryByText("1 of 4 reference tests failed.")).toBeNull();
+    } else {
+      expect(within(region).getByText("1 of 4 reference tests failed.")).toBeInTheDocument();
+    }
+    expect(within(region).queryByText(/^Demo$/)).toBeNull();
   });
 
   it("only proposal_ready uses the pass tone", () => {
@@ -69,7 +75,7 @@ describe("DispositionBanner", () => {
     expect(passing).toEqual(["proposal_ready"]);
   });
 
-  it("shows coded reasons with their code", () => {
+  it("shows the short reason without its code", () => {
     render(
       <DispositionBanner
         verification={verification({
@@ -80,18 +86,17 @@ describe("DispositionBanner", () => {
       />,
     );
     expect(screen.getByText(/No nested conditional can be flattened/)).toBeInTheDocument();
-    expect(screen.getByText("no_opportunity")).toHaveClass("code-tag");
+    expect(screen.queryByText("no_opportunity")).toBeNull();
   });
 
   it("labels fake-provider results so they cannot pass for model output", () => {
     render(<DispositionBanner verification={verification()} fake />);
-    expect(screen.getByText("Fake provider output")).toBeInTheDocument();
-    expect(screen.getByText(/not a language model/)).toBeInTheDocument();
+    expect(screen.getByText("Demo")).toBeInTheDocument();
   });
 
   it("says when no verification was recorded", () => {
     render(<DispositionBanner verification={null} fake={false} />);
-    expect(screen.getByRole("heading", { name: "No verification result was recorded" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No result saved" })).toBeInTheDocument();
   });
 });
 
@@ -109,7 +114,7 @@ describe("VerificationPanel", () => {
   it.each(SYNTAX_STATUSES.map((value) => [value]))("renders syntax %s", (status) => {
     renderPanel({ syntax: { status, error: status === "fail" ? "invalid syntax (line 3)" : null } });
     const badge = badgeOf("syntax");
-    expect(badge).toHaveTextContent({ pass: "Passed", fail: "Failed", not_run: "Not run" }[status]);
+    expect(badge).toHaveTextContent({ pass: "Passed", fail: "Failed", not_run: "Not checked" }[status]);
     expect(badge).toHaveAttribute("data-tone", { pass: "pass", fail: "fail", not_run: "neutral" }[status]);
     if (status === "fail") expect(card("syntax")).toHaveTextContent("invalid syntax (line 3)");
   });
@@ -137,9 +142,9 @@ describe("VerificationPanel", () => {
   const referenceExpectations: Record<ReferenceTestsStatus, { label: string; tone: string; evidence: string }> = {
     pass: { label: "Passed", tone: "pass", evidence: "present" },
     fail: { label: "Failed", tone: "fail", evidence: "present" },
-    not_available: { label: "Not available", tone: "neutral", evidence: "absent" },
-    not_run: { label: "Not run", tone: "neutral", evidence: "absent" },
-    error: { label: "Error", tone: "warn", evidence: "absent" },
+    not_available: { label: "No tests", tone: "neutral", evidence: "absent" },
+    not_run: { label: "Not checked", tone: "neutral", evidence: "absent" },
+    error: { label: "Could not check", tone: "warn", evidence: "absent" },
   };
 
   it.each(REFERENCE_TEST_STATUSES.map((value) => [value]))("renders reference tests %s", (status) => {
@@ -197,9 +202,9 @@ describe("VerificationPanel", () => {
   const reviewExpectations: Record<ModelReviewStatus, { label: string; tone: string }> = {
     accept: { label: "Accepted", tone: "pass" },
     reject: { label: "Rejected", tone: "fail" },
-    uncertain: { label: "Uncertain", tone: "warn" },
-    error: { label: "Error", tone: "warn" },
-    not_run: { label: "Not run", tone: "neutral" },
+    uncertain: { label: "Not sure", tone: "warn" },
+    error: { label: "Could not check", tone: "warn" },
+    not_run: { label: "Not checked", tone: "neutral" },
   };
 
   it.each(MODEL_REVIEW_STATUSES.map((value) => [value]))("renders model review %s", (status) => {
@@ -315,30 +320,30 @@ describe("buildSteps", () => {
   it("shows the analysis step only for multi-role runs", () => {
     expect(labels(buildSteps("multi_role", "analyzing", ["queued", "analyzing"], null))).toEqual([
       "Queued:done",
-      "Analysis:current",
-      "Refactoring:pending",
-      "Verification and review:pending",
+      "Find:current",
+      "Rewrite:pending",
+      "Check and review:pending",
       "Result:pending",
     ]);
     expect(labels(buildSteps("single_role", "generating", ["queued", "generating"], null))).toEqual([
       "Queued:done",
-      "Refactoring:current",
-      "Verification:pending",
+      "Rewrite:current",
+      "Check:pending",
       "Result:pending",
     ]);
   });
 
   it("labels the single correction attempt", () => {
     const steps = buildSteps("multi_role", "generating", ["queued", "analyzing", "generating", "verifying", "generating"], null);
-    expect(steps[2]).toMatchObject({ label: "Refactoring (correction)", state: "current" });
+    expect(steps[2]).toMatchObject({ label: "Rewrite (retry)", state: "current" });
   });
 
   it("marks every step done for a completed run", () => {
     expect(labels(buildSteps("single_role", "completed", [], null))).toEqual([
       "Queued:done",
-      "Refactoring:done",
-      "Verification:done",
-      "Completed:done",
+      "Rewrite:done",
+      "Check:done",
+      "Done:done",
     ]);
   });
 
@@ -346,17 +351,66 @@ describe("buildSteps", () => {
     const byStage = buildSteps("multi_role", "failed", [], "generation");
     expect(labels(byStage)).toEqual([
       "Queued:done",
-      "Analysis:done",
-      "Refactoring:failed",
-      "Verification and review:pending",
+      "Find:done",
+      "Rewrite:failed",
+      "Check and review:pending",
       "Failed:failed",
     ]);
     expect(labels(buildSteps("multi_role", "failed", [], "generating"))).toEqual(labels(byStage));
-    expect(labels(buildSteps("multi_role", "failed", ["queued", "analyzing"], null))[1]).toBe("Analysis:failed");
+    expect(labels(buildSteps("multi_role", "failed", ["queued", "analyzing"], null))[1]).toBe("Find:failed");
     expect(labels(buildSteps("multi_role", "failed", [], null)).slice(0, 4).every((label) => label.endsWith(":pending"))).toBe(true);
   });
 
   it("starts at the queued step before the first status arrives", () => {
     expect(buildSteps("multi_role", null, [], null)[0]!.state).toBe("current");
+  });
+});
+
+describe("CheckRow", () => {
+  const chip = (name: string) => screen.getByText(name).closest("li") as HTMLElement;
+
+  it("shows the four checks with counts, and missing evidence is never a pass", () => {
+    render(
+      <CheckRow
+        verification={verification({
+          reference_tests: { ...verification().reference_tests, status: "pass", total: 6, passed: 6 },
+        })}
+        mode="multi_role"
+        fake={false}
+      />,
+    );
+    expect(chip("Valid Python")).toHaveAttribute("data-tone", "pass");
+    expect(chip("Tests")).toHaveTextContent("6/6 passed");
+    expect(screen.getByText(/not every possible input/)).toBeInTheDocument();
+  });
+
+  it("marks tests that did not run as not checked, not passed", () => {
+    render(
+      <CheckRow
+        verification={verification({
+          reference_tests: { ...verification().reference_tests, status: "not_available", total: null, passed: null },
+        })}
+        mode="multi_role"
+        fake={false}
+      />,
+    );
+    expect(chip("Tests")).toHaveAttribute("data-evidence", "absent");
+    expect(chip("Tests")).not.toHaveAttribute("data-tone", "pass");
+    expect(chip("Tests")).toHaveTextContent("No tests");
+  });
+
+  it("never shows a fake review as accepted, and marks the skipped review in fast mode", () => {
+    const { unmount } = render(<CheckRow verification={verification()} mode="multi_role" fake />);
+    expect(chip("Review")).toHaveTextContent("Demo only");
+    expect(chip("Review")).not.toHaveAttribute("data-tone", "pass");
+    unmount();
+    render(
+      <CheckRow
+        verification={verification({ model_review: { status: "not_run", reasons: [], error: null } })}
+        mode="single_role"
+        fake={false}
+      />,
+    );
+    expect(chip("Review")).toHaveTextContent("Skipped (Fast)");
   });
 });

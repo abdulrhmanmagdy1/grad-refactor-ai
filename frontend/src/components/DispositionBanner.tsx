@@ -25,6 +25,14 @@ export function ReasonList({ reasons, className = "reasons" }: { reasons: string
   );
 }
 
+/** Shortest useful reason: the first service reason when it is brief, otherwise nothing. */
+function shortReason(reasons: string[]): string | null {
+  const first = reasons[0];
+  if (!first) return null;
+  const text = splitReason(first).text;
+  return text.split(/\s+/).length <= 16 ? text : null;
+}
+
 /** The overall outcome of a completed run, derived by the service from the separate checks. */
 export function DispositionBanner({
   verification,
@@ -43,13 +51,14 @@ export function DispositionBanner({
           <Icon name="dash" />
         </span>
         <div className="disposition__body">
-          <h3 className="disposition__title">No verification result was recorded</h3>
-          <p className="disposition__summary">The service stored no verification result for this run.</p>
+          <h3 className="disposition__title">No result saved</h3>
+          <p className="disposition__summary">The service saved no checks for this run.</p>
         </div>
       </section>
     );
   }
   const meta = DISPOSITION_META[verification.disposition];
+  const reason = verification.disposition === "proposal_ready" ? null : shortReason(verification.disposition_reasons);
   return (
     <section
       className="disposition"
@@ -63,21 +72,10 @@ export function DispositionBanner({
       <div className="disposition__body">
         <h3 className="disposition__title">
           {meta.title}
-          {fake ? <span className="tag tag--fake">Fake provider output</span> : null}
+          {fake ? <span className="tag tag--fake">Demo</span> : null}
         </h3>
         <p className="disposition__summary">{meta.summary}</p>
-        {fake ? (
-          <p className="disposition__fake">
-            This run used the deterministic test provider, not a language model. Its result is not evidence of
-            model behavior.
-          </p>
-        ) : null}
-        {verification.disposition_reasons.length > 0 ? (
-          <div className="disposition__reasons">
-            <p className="disposition__reasons-title">Reasons given by the service</p>
-            <ReasonList reasons={verification.disposition_reasons} />
-          </div>
-        ) : null}
+        {reason ? <p className="disposition__reason">{reason}</p> : null}
       </div>
       {aside ? <div className="disposition__aside">{aside}</div> : null}
     </section>

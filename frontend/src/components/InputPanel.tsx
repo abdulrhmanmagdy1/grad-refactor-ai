@@ -90,15 +90,14 @@ export function InputPanel({
   };
 
   let submitHint: string | null = null;
-  if (submitting) submitHint = "Sending the code to the service…";
-  else if (runActive) submitHint = "A run is in progress. You can keep editing; submit again when it finishes.";
+  if (submitting) submitHint = "Sending…";
+  else if (runActive) submitHint = "Wait for the current run to finish.";
   else if (overApiLimit) submitHint = "Shorten the code to submit it.";
 
   return (
     <section className="panel input-panel" aria-labelledby={`${ids}-heading`}>
       <div className="panel__head">
         <h2 id={`${ids}-heading`}>Input</h2>
-        <p className="panel__sub">One Python function, refactored by the local service</p>
       </div>
 
       <form className="input-form" onSubmit={submit} noValidate>
@@ -140,7 +139,7 @@ export function InputPanel({
             </button>
           </div>
           <p className="field__hint" id={`${ids}-case-help`}>
-            Cases come with trusted reference tests that run only when the code is submitted unchanged.
+            Demo cases come with tests.
           </p>
           {cases.error ? (
             <p className="field-message" data-tone="fail">
@@ -155,16 +154,13 @@ export function InputPanel({
         <div className="notices" aria-live="polite">
           {loadedCase && linked ? (
             <p className="notice" data-tone="info">
-              Linked to the demonstration case <strong>{caseTitle(loadedCase)}</strong>. Its{" "}
-              {plural(loadedCase.test_count, "trusted reference test")} will run against the proposal.
+              Demo case <strong>{caseTitle(loadedCase)}</strong>: {plural(loadedCase.test_count, "test")} will run.
             </p>
           ) : null}
           {loadedCase && !linked ? (
             <div className="notice" data-tone="warn">
               <p>
-                You edited the code, so it no longer matches the demonstration case{" "}
-                <strong>{caseTitle(loadedCase)}</strong> and the link was removed. Reference tests apply only to the
-                exact case code, so they will not run for this input.
+                You changed the demo code, so the tests of <strong>{caseTitle(loadedCase)}</strong> will not run.
               </p>
               <div className="notice__actions">
                 <button type="button" className="button button--small" onClick={() => dispatch({ type: "reset_case_code" })}>
@@ -235,7 +231,7 @@ export function InputPanel({
             textareaRef={textareaRef}
           />
           <p className="field__hint" id={helpId}>
-            Tab inserts four spaces. Press Esc and then Tab to move to the next control.
+            Tab adds 4 spaces. Press Esc, then Tab, to leave.
           </p>
           <div id={limitId} aria-live="polite">
             {overApiLimit ? (
@@ -292,7 +288,7 @@ export function InputPanel({
                   <svg className="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
                     <path d="M4.5 2.8v10.4L13 8Z" fill="currentColor" />
                   </svg>
-                  Propose refactoring
+                  Improve code
                 </>
               )}
             </button>

@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import type { HumanDecision, RunRecord, RunStatus } from "../api/contracts";
 import { hasProposal, isTerminalStatus } from "../api/contracts";
 import { useNow } from "../hooks/useNow";
@@ -6,6 +6,7 @@ import { formatDateTime, formatDuration, formatElapsed, parseServerTime, seconds
 import { PROVIDER_LABELS, RUN_STATUS_META, WORKFLOW_META, runErrorHint, stepForStage } from "../lib/labels";
 import type { RunEntry } from "../state/runs";
 import { AnalysisSection } from "./AnalysisSection";
+import { CheckRow } from "./CheckRow";
 import { ShapeComparison, ShapeIllustration } from "./CodeShape";
 import { type DecisionState, DecisionPanel } from "./DecisionPanel";
 import { CodeListing, DiffViewer } from "./DiffViewer";
@@ -47,18 +48,13 @@ export function RunPanel(props: RunPanelProps) {
     <section className="panel run-panel" aria-labelledby="run-heading">
       <div className="panel__head">
         <h2 id="run-heading" ref={headingRef} tabIndex={-1}>
-          Run
+          Result
         </h2>
-        <p className="panel__sub">
-          {entry ? (
-            <>
-              Run <span className="mono">{shortId(entry.runId)}</span>
-              {created ? `, created ${formatDateTime(created)}` : null}
-            </>
-          ) : (
-            "Progress and results appear here"
-          )}
-        </p>
+        {entry && created ? (
+          <p className="panel__sub">
+            <span className="mono">{shortId(entry.runId)}</span>, {formatDateTime(created)}
+          </p>
+        ) : null}
       </div>
       {entry ? <RunBody {...props} entry={entry} /> : <EmptyRun />}
     </section>
@@ -66,21 +62,18 @@ export function RunPanel(props: RunPanelProps) {
 }
 
 const PIPELINE: Array<{ title: string; text: string }> = [
-  { title: "Analysis", text: "Finds the nested conditionals that guard clauses can flatten." },
-  { title: "Refactoring", text: "Rewrites them as early returns or raises, with at most one correction." },
-  { title: "Verification", text: "Syntax, task rubric, reference tests and a model review, each reported on its own." },
+  { title: "Find", text: "Spots nested if statements." },
+  { title: "Rewrite", text: "Turns them into early returns." },
+  { title: "Check", text: "Runs four checks on the new code." },
 ];
 
 function EmptyRun() {
   return (
     <div className="empty">
       <ShapeIllustration />
-      <p className="empty__title">No run selected</p>
-      <p className="empty__text">
-        Paste a Python function into the editor or load a demonstration case, then choose Propose refactoring. You can
-        also open an earlier run from the history.
-      </p>
-      <ol className="pipeline" aria-label="What a multi-role run does">
+      <p className="empty__title">No result yet</p>
+      <p className="empty__text">Paste a function or pick a demo case, then press Improve code.</p>
+      <ol className="pipeline" aria-label="What the tool does">
         {PIPELINE.map((step, index) => (
           <li key={step.title} className="pipeline__step">
             <span className="pipeline__index" aria-hidden="true">
@@ -146,22 +139,21 @@ function RunBody(props: RunPanelProps & { entry: RunEntry }) {
       {record ? <RunSummaryLine record={record} onLoadInput={props.onLoadInput} /> : null}
       {record && record.provider_mode === "fake" && !props.fakeBannerShown ? (
         <p className="notice" data-tone="warn">
-          This run used the fake test provider. Its output is not from a language model.
+          Demo mode: this result is not from the AI model.
         </p>
       ) : null}
-      <ProgressBlock entry={entry} status={status} mode={mode} terminal={terminal} />
+      {status === "completed" ? null : (
+        <ProgressBlock entry={entry} status={status} mode={mode} terminal={terminal} />
+      )}
       <PollNotices entry={entry} onResume={props.onResume} onReload={onReload} />
       {record && record.status === "failed" ? <FailureView {...props} record={record} /> : null}
       {record && record.status === "completed" ? <ResultView {...props} record={record} /> : null}
       {!terminal ? (
         <>
-          <p className="waiting-note">
-            Results appear here when the run finishes. You can keep editing your code in the meantime.
-          </p>
+          <p className="waiting-note">Working on it. You can keep editing.</p>
           <ResultSkeleton />
         </>
       ) : null}
-      {record && terminal ? <RunDetails record={record} /> : null}
     </>
   );
 }
@@ -170,17 +162,8 @@ function RunSummaryLine({ record, onLoadInput }: { record: RunRecord; onLoadInpu
   return (
     <div className="run-summary">
       <ul className="run-summary__facts">
-        <li>{WORKFLOW_META[record.workflow_mode].label} workflow</li>
+        <li>{WORKFLOW_META[record.workflow_mode].label}</li>
         <li>{PROVIDER_LABELS[record.provider_mode]}</li>
-        <li>
-          {record.reference_case_id ? (
-            <>
-              Reference case <span className="mono">{record.reference_case_id}</span>
-            </>
-          ) : (
-            "No reference case"
-          )}
-        </li>
       </ul>
       <button type="button" className="button button--small button--quiet" onClick={() => onLoadInput(record)}>
         Edit this input
@@ -296,11 +279,21 @@ function PollNotices({
   return null;
 }
 
+/** Everything beyond the verdict, the change and the decision, closed by default. */
+function DetailsDrawer({ children }: { children: ReactNode }) {
+  return (
+    <details className="details-drawer">
+      <summary className="details-drawer__summary">Details</summary>
+      <div className="details-drawer__body">{children}</div>
+    </details>
+  );
+}
+
 function WarningsNotice({ warnings }: { warnings: string[] }) {
   if (warnings.length === 0) return null;
   return (
     <div className="notice" data-tone="warn">
-      <p className="notice__title">Warnings recorded for this run</p>
+      <p className="notice__title">Warnings</p>
       <ul className="notice__list">
         {warnings.map((warning, index) => (
           <li key={index}>{warning}</li>
@@ -320,27 +313,13 @@ function FailureView(props: RunPanelProps & { entry: RunEntry; record: RunRecord
     <>
       <section className="failure" aria-labelledby="failure-heading">
         <h3 id="failure-heading" className="failure__title">
-          The run failed
+          Something went wrong
         </h3>
-        {error ? (
-          <p className="failure__message">
-            <code className="code-tag">{error.code}</code> {error.message}
-          </p>
-        ) : (
-          <p className="failure__message">The service did not record an error message.</p>
-        )}
-        {hint ? <p>{hint}</p> : null}
+        <p className="failure__message">{hint ?? error?.message ?? "The service gave no reason."}</p>
         {error?.stage ? (
-          <p className="muted">
-            Stopped during: {step ? RUN_STATUS_META[step].label.toLowerCase() : error.stage}
-          </p>
+          <p className="muted">Stopped while {step ? RUN_STATUS_META[step].label.toLowerCase() : error.stage}.</p>
         ) : null}
-        {record.verification ? <ReasonList reasons={record.verification.disposition_reasons} /> : null}
-        <p>
-          {editorHoldsInput
-            ? "Your input is unchanged in the editor."
-            : "The original input is kept with this run and shown below."}
-        </p>
+        <p>{editorHoldsInput ? "Your code is still in the editor." : "Your code is saved with this run."}</p>
         <div className="failure__actions">
           <button
             type="button"
@@ -362,11 +341,20 @@ function FailureView(props: RunPanelProps & { entry: RunEntry; record: RunRecord
           />
         ) : null}
       </section>
-      <WarningsNotice warnings={record.warnings} />
-      <div className="result-section">
-        <CodeListing title="Original input" code={record.original_code} findings={record.findings} />
-      </div>
-      {record.findings.length > 0 || record.analysis ? <AnalysisSection record={record} /> : null}
+      <DetailsDrawer>
+        {error ? (
+          <p className="failure__code">
+            Error code <code className="code-tag">{error.code}</code>: {error.message}
+          </p>
+        ) : null}
+        {record.verification ? <ReasonList reasons={record.verification.disposition_reasons} /> : null}
+        <WarningsNotice warnings={record.warnings} />
+        <div className="result-section">
+          <CodeListing title="Your code" code={record.original_code} findings={record.findings} />
+        </div>
+        {record.findings.length > 0 || record.analysis ? <AnalysisSection record={record} /> : null}
+        <RunDetails record={record} />
+      </DetailsDrawer>
     </>
   );
 }
@@ -378,16 +366,10 @@ function ResultView(props: RunPanelProps & { entry: RunEntry; record: RunRecord 
   const disposition = record.verification?.disposition ?? null;
   return (
     <>
-      <DispositionBanner
-        verification={record.verification}
-        fake={fake}
-        aside={
-          proposal && record.proposed_code !== null ? (
-            <ShapeComparison original={record.original_code} proposed={record.proposed_code} />
-          ) : null
-        }
-      />
-      <WarningsNotice warnings={record.warnings} />
+      <DispositionBanner verification={record.verification} fake={fake} />
+      {record.verification ? (
+        <CheckRow verification={record.verification} mode={record.workflow_mode} fake={fake} />
+      ) : null}
       {proposal && record.proposed_code !== null ? (
         <DiffViewer
           original={record.original_code}
@@ -398,24 +380,10 @@ function ResultView(props: RunPanelProps & { entry: RunEntry; record: RunRecord 
         />
       ) : (
         <div className="result-section">
-          <p className="muted">
-            {disposition === "no_change"
-              ? "No proposal: the original code stays as it is."
-              : "No proposal was produced, so there is nothing to compare or download."}
-          </p>
-          <CodeListing title="Original input" code={record.original_code} findings={record.findings} />
+          <p className="muted">{disposition === "no_change" ? "Your code stays as it is." : "No new code was made."}</p>
+          <CodeListing title="Your code" code={record.original_code} findings={record.findings} />
         </div>
       )}
-      {record.verification ? (
-        <VerificationPanel
-          verification={record.verification}
-          review={record.review}
-          mode={record.workflow_mode}
-          fake={fake}
-          hasProposal={proposal}
-        />
-      ) : null}
-      <AnalysisSection record={record} />
       {proposal ? (
         <DecisionPanel
           decision={record.human_decision}
@@ -424,6 +392,29 @@ function ResultView(props: RunPanelProps & { entry: RunEntry; record: RunRecord 
           onDecide={(choice) => onDecide(record.run_id, choice)}
         />
       ) : null}
+      <DetailsDrawer>
+        {proposal && record.proposed_code !== null ? (
+          <ShapeComparison original={record.original_code} proposed={record.proposed_code} />
+        ) : null}
+        {record.verification && record.verification.disposition_reasons.length > 0 ? (
+          <div className="result-section">
+            <h3 className="result-section__title">Why</h3>
+            <ReasonList reasons={record.verification.disposition_reasons} />
+          </div>
+        ) : null}
+        <WarningsNotice warnings={record.warnings} />
+        {record.verification ? (
+          <VerificationPanel
+            verification={record.verification}
+            review={record.review}
+            mode={record.workflow_mode}
+            fake={fake}
+            hasProposal={proposal}
+          />
+        ) : null}
+        <AnalysisSection record={record} />
+        <RunDetails record={record} />
+      </DetailsDrawer>
     </>
   );
 }
