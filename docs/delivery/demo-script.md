@@ -204,11 +204,11 @@ Remove the adapter switch: with it, every fake-mode run fails with `adapter_unav
 
 ### Screenshots
 
-The screenshots in `docs/report/screenshots/` were taken on 2026-10-21 in fake mode, with the real reference runner. The fake-provider banner is visible in every image, so present them as interface screenshots, not as model results. None shows the local model, a `rejected` outcome or a failed run. Add the local-model screenshots from the rehearsal when they exist.
+The screenshots in `docs/report/screenshots/` were taken on 2026-10-21 from the simplified interface (commit `bad4095`) served on the demonstration laptop with the fine-tuned model (adapter `full-2026-10-21`, bf16) and the real reference runner, at 1440 by 900 px and 390 by 844 px. They show real model output from single runs, so present each as one example, not as a measured rate. None shows a `rejected` outcome or a failed run. Add the local-model screenshots from the rehearsal when they exist.
 
 | Script step | Screenshot |
 |---|---|
-| Orientation (fake mode header) | [s01-empty-light.png](../report/screenshots/s01-empty-light.png) |
+| Orientation (header with the model status) | [s01-empty-light.png](../report/screenshots/s01-empty-light.png) |
 | Case loaded and linked | [s02-case-loaded-light.png](../report/screenshots/s02-case-loaded-light.png) |
 | Run in progress | [s04-run-in-progress-light.png](../report/screenshots/s04-run-in-progress-light.png) |
 | Outcome | [s05-proposal-ready-light.png](../report/screenshots/s05-proposal-ready-light.png) |

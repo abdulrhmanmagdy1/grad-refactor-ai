@@ -44,7 +44,7 @@ The visual design was reworked on 2026-10-21 after the first version was judged 
 
 ## Interface states and screenshots to take
 
-Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, the default). The screenshots in [`docs/report/screenshots/`](../screenshots/) were taken on 2026-10-21 from the built interface served by the real service in fake mode with the real reference runner, at 1440 by 900 px for desktop and 390 by 844 px for a phone; every result in them comes from the deterministic test provider, as the banner in each image says. The run-in-progress image was taken while the browser held back the progress requests for a few seconds without changing them, so the queued state returned by the service stayed on screen.
+Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, the default). The screenshots in [`docs/report/screenshots/`](../screenshots/) were taken on 2026-10-21 from the simplified interface (commit `bad4095`) served on the demonstration laptop with the fine-tuned model (adapter `full-2026-10-21`, bf16) and the real reference runner, at 1440 by 900 px and 390 by 844 px; each result is one real run of the fine-tuned model, not a measured rate. The run-in-progress image was taken while the browser held back the progress requests for a few seconds without changing them, so the queued state returned by the service stayed on screen.
 
 | ID | State | How to produce it |
 |---|---|---|
@@ -119,7 +119,7 @@ The redesign of 2026-10-21 was checked the same way against the real service in 
 
 ## Known limitations
 
-- The screenshots show the fake provider only; S10, S11, S15 and S16 were not captured.
+- The screenshots show single runs of the fine-tuned model on the simplified interface; S10, S11, S15 and S16 were not captured.
 - The highlighter and the indentation outline are display aids written for this one task; they do not handle every corner of Python's grammar (for example f-string nesting or line continuations with a backslash), and a wrong color or outline never changes the code, the request or a result.
 - The browser checks were manual; there is no automated browser test, by design (no Playwright dependency).
 - Without ESLint, React hook dependency rules are not checked mechanically; effects were reviewed by hand and the unmount behavior is tested.
