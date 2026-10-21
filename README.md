@@ -15,7 +15,7 @@ The research part compares four arms on a frozen test split: the original model 
 
 ## Current status (2026-10-21)
 
-**Implemented and tested.** Unless stated otherwise, these components were tested with a deterministic fake provider that stands in for the model; none of the evidence below measures refactoring quality.
+**Implemented and tested.** The automated tests use a deterministic fake provider that stands in for the model; refactoring quality is measured only by the recorded evaluation below.
 
 | Part | What exists | Evidence |
 |---|---|---|
@@ -29,17 +29,23 @@ The research part compares four arms on a frozen test split: the original model 
 | Evaluation harness | Arms A to D with case-level records and paired comparisons; checked only with a stub workflow and the fake provider | [Protocol](docs/evaluation/protocol.md), [notes](docs/report/notes/data-evaluation.md) |
 | Feasibility | A 16-step LoRA pilot on pilot material (saved, reloaded and resumed) and a validation-only choice of the code-first prompt format | [Training records](experiments/training/README.md), [model records](experiments/models/README.md) |
 
-**Still running or pending.**
+**Results (frozen test split, protocol eval-v1).** The fine-tuned refactoring role was trained on Kaggle (Tesla T4, 3 epochs, [training record](experiments/training/full-2026-10-21.json)) and adopted by a rule written before any comparison ([selection record](experiments/training/validation-selection-2026-10-20.json)). The single test-split run compared four arms on 88 held-out cases ([results](experiments/evaluation/test-2026-10-21/targets-report/summary.md)):
 
-- The full LoRA fine-tuning run of the refactoring role on the 627 training records completed on 2026-10-21 on a Kaggle Tesla T4 (3 epochs, best validation loss 0.036); its training record is being added under experiments/training/. A first attempt on the laptop failed after 22 steps when the laptop ran out of virtual memory ([record](experiments/training/full-2026-10-20-local-attempt1-failed.json)), so the GPU work moved to a private [Kaggle lane](training/kaggle/README.md). No adapter is selected yet.
-- The validation-only choice between the base model and the adapter has a [selection rule](experiments/training/validation-selection-2026-10-20.json) written before any comparison; its results are pending.
-- The evaluation protocol eval-v1 is a draft and not frozen. The final A/B/C/D comparison on the frozen test split is still to run, so no evaluation results exist yet.
-- An updated model card, the report, the slides, interface screenshots with the local model (the existing ones show the fake provider) and the release are pending.
-- No supervisor review has been held yet. The team's packs for [R1](docs/supervisor-reviews/r1-scope-and-feasibility.md), [R2](docs/supervisor-reviews/r2-data-and-baseline.md), [R3](docs/supervisor-reviews/r3-integration-and-training.md) and [R4](docs/supervisor-reviews/r4-first-release.md) are prepared, with the feedback fields left empty.
+| Arm | Model | Workflow | Accepted (proposal_ready) |
+|---|---|---|---|
+| A | Original | One role | 7/88 (8.0%) |
+| B | Original | Analysis, refactoring, review | 1/88 (1.1%) |
+| C | Fine-tuned refactoring role | One role | 70/88 (79.5%) |
+| D | Fine-tuned refactoring role | Analysis, refactoring, review | 35/88 (39.8%) |
+
+Fine-tuning is the large effect (C vs A: 65 cases accepted only with the adapter, 2 only without it). Adding roles lowered acceptance with both models, mainly because the untuned review role's outputs were cut off and counted as errors. Eleven of the twelve targets set before the test run were met; arm D's acceptance floor was not. Passing reference tests supports behavior preservation on the tested inputs only. The full analysis is in the [report](docs/report/report.md).
+
+**Open items.**
+
+- No supervisor review has been held yet. The team's packs for [R1](docs/supervisor-reviews/r1-scope-and-feasibility.md) to [R5](docs/supervisor-reviews/r5-delivery.md) are prepared, with the feedback fields left empty.
 - The university report template, the official deadline and the presentation format are not yet confirmed ([delivery checklist](docs/delivery/checklist.md)).
-- A clean-clone reproduction on a second machine and the redistribution license of the team-authored data are open. The reference runner has no operating-system network, file system or privilege boundary ([runner safety](docs/development/runner-safety.md#honest-limits)).
-
-**Early observation, not an evaluation result.** In the validation-only prompt-format study (24 validation records, original model, refactoring role only), every output contained parseable code, but 14 returned the input unchanged and 2 of 24 passed syntax, the rubric and the reference tests ([record](experiments/models/2026-10-20-prompt-format-selection.md)). Nothing in this repository yet shows whether fine-tuning or the multi-role workflow improves on that.
+- Each student still has to inspect and accept their workstream ([handover](docs/delivery/implementation-handover.md)).
+- Cross-machine reproduction is untested (only clean checkouts on the demonstration laptop), the redistribution license of the team-authored data is a team decision, and the adapter is not published. The reference runner has no operating-system network, file system or privilege boundary ([runner safety](docs/development/runner-safety.md#honest-limits)).
 
 ## Quickstart
 

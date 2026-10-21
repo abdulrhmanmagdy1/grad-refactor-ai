@@ -1,85 +1,85 @@
 {
   "schema_version": 1,
-  "status": "in_progress",
-  "last_verified_commit": "3aa2998",
-  "branch": "main (uncommitted working tree; no Git publication authorized yet)",
+  "status": "pending_human",
+  "last_verified_commit": "see experiments/qa/2026-10-21-clean-worktree-verification.md (every pushed commit was checked in a clean worktree)",
+  "branch": "main",
   "hardware_report": "experiments/hardware/2026-10-20-demonstration-laptop.json",
   "environment_records": [
-    "Core: Python 3.11.9, uv 0.13.3, uv sync --frozen (uv.lock unchanged)"
+    "Core: Python 3.11.9, uv, uv sync --frozen (uv.lock)",
+    "Training: experiments/hardware/2026-10-20-training-environment.json and training/requirements-cuda.txt (CUDA 12.6, laptop)",
+    "Kaggle: Tesla T4, Python 3.13.15, torch 2.11.0+cu128, pinned Hugging Face packages (experiments/evaluation/test-2026-10-21/provenance.json)",
+    "Frontend: Node 24.12.0, frontend/package-lock.json"
   ],
   "steps": [
     {
       "id": 0,
       "status": "completed",
-      "evidence": [
-        "experiments/hardware/2026-10-20-demonstration-laptop.json",
-        "Foundation checks passed on 2026-10-20: doctor, pytest (9), ruff check, ruff format --check, check_docs, /health, /api/v1/analyze"
-      ],
+      "evidence": ["experiments/hardware/2026-10-20-demonstration-laptop.json"],
       "blockers": []
     },
     {
       "id": 1,
-      "status": "in_progress",
+      "status": "completed",
       "evidence": [
-        "docs/architecture/contracts.md (task guard_clauses v1, prompt refactor-v1)",
-        "src/refactor_ai/tasks/guard_clauses.py and tests/test_guard_clauses.py"
+        "docs/requirements/task-scope.md",
+        "experiments/models/ (benchmark, prompt-format selection, second candidate not measured)",
+        "experiments/training/pilot-2026-10-20*.json (save, reload, resume)"
       ],
-      "blockers": []
+      "blockers": ["R1 supervisor review not held"]
     },
     {
       "id": 2,
-      "status": "in_progress",
+      "status": "completed",
       "evidence": [
-        "src/refactor_ai/contracts.py, providers/base.py, providers/fake.py with tests"
+        "datasets/guard_clauses/v1/ and experiments/data/ (curation, splits, leakage checks, test freeze)",
+        "docs/architecture/contracts.md and docs/architecture/examples/",
+        "experiments/evaluation/validation-2026-10-21/ (baseline), experiments/evaluation/protocol-freeze.json"
       ],
-      "blockers": []
+      "blockers": ["R2 supervisor review not held"]
     },
     {
       "id": 3,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
+      "status": "completed",
+      "evidence": [
+        "experiments/training/full-2026-10-21.json (adapter trained on Kaggle)",
+        "experiments/integration/2026-10-21-first-real-model-run.json (browser path to result with the real model)",
+        "frontend/ and the run API"
+      ],
+      "blockers": ["R3 supervisor review not held"]
     },
     {
       "id": 4,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
+      "status": "completed",
+      "evidence": [
+        "docs/delivery/acceptance-matrix.md and acceptance-status.md",
+        "experiments/training/validation-selection-2026-10-20.json (adapter adopted on validation)",
+        "independent review fixes: commits f187b63, e4d6f31, c3f0709"
+      ],
+      "blockers": ["R4 supervisor review not held"]
     },
     {
       "id": 5,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
+      "status": "pending_human",
+      "evidence": [
+        "experiments/evaluation/test-2026-10-21/ (single frozen test-split run, eval-v1)",
+        "docs/report/report.md, docs/report/screenshots/",
+        "docs/delivery/implementation-handover.md, demo-script.md, presentation-outline.md"
+      ],
+      "blockers": [
+        "Owners' inspection and acceptance of their workstreams",
+        "R5 supervisor review, university template and dates",
+        "Second-machine reproduction untested",
+        "Data license and adapter publication are team decisions"
+      ]
     }
   ],
   "supervisor_reviews": [
-    {
-      "phase": "P1",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P2",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P3",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P4",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P5",
-      "status": "pending_human",
-      "record": null
-    }
+    {"phase": "P1", "status": "pending_human", "record": "docs/supervisor-reviews/r1-scope-and-feasibility.md (prepared)"},
+    {"phase": "P2", "status": "pending_human", "record": "docs/supervisor-reviews/r2-data-and-baseline.md (prepared)"},
+    {"phase": "P3", "status": "pending_human", "record": "docs/supervisor-reviews/r3-integration-and-training.md (prepared)"},
+    {"phase": "P4", "status": "pending_human", "record": "docs/supervisor-reviews/r4-first-release.md (prepared)"},
+    {"phase": "P5", "status": "pending_human", "record": "docs/supervisor-reviews/r5-delivery.md (prepared)"}
   ],
-  "next_action": "Wave 1: run the five workstream agents in parallel on the agreed contracts (see docs/agent-execution/team-allocation.md).",
-  "notes": "Agent team execution started 2026-10-20. Supervisor reviews have not taken place; no approval is implied."
+  "next_action": "Each owner inspects their workstream (docs/delivery/implementation-handover.md); hold the supervisor reviews; decide the data license and adapter publication.",
+  "notes": "Implementation by AI coding agents on 2026-10-20 and 2026-10-21. No supervisor review has taken place and no approval is implied."
 }
