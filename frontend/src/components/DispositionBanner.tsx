@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { VerificationResult } from "../api/contracts";
 import { DISPOSITION_META, splitReason } from "../lib/labels";
 import { Icon } from "./Icon";
@@ -28,9 +29,12 @@ export function ReasonList({ reasons, className = "reasons" }: { reasons: string
 export function DispositionBanner({
   verification,
   fake,
+  aside = null,
 }: {
   verification: VerificationResult | null;
   fake: boolean;
+  /** Optional figure shown beside the outcome, such as the outline of the change. */
+  aside?: ReactNode;
 }) {
   if (!verification) {
     return (
@@ -75,6 +79,7 @@ export function DispositionBanner({
           </div>
         ) : null}
       </div>
+      {aside ? <div className="disposition__aside">{aside}</div> : null}
     </section>
   );
 }

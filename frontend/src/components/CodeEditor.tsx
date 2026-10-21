@@ -1,5 +1,7 @@
-import { type KeyboardEvent, type RefObject, memo, useLayoutEffect, useRef } from "react";
-import { countEditorRows, replaceSelection } from "../lib/text";
+import { type KeyboardEvent, type RefObject, memo, useLayoutEffect, useMemo, useRef } from "react";
+import { highlightPython } from "../lib/highlight";
+import { countEditorRows, normalizeNewlines, replaceSelection } from "../lib/text";
+import { CodeText } from "./CodeText";
 
 export const INDENT = "    ";
 
@@ -54,6 +56,7 @@ export interface CodeEditorProps {
  */
 export function CodeEditor({ id, value, onChange, errorLine, describedBy, invalid, textareaRef }: CodeEditorProps) {
   const gutterRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const pendingCaret = useRef<number | null>(null);
   const escapeArmed = useRef(false);
   const rows = countEditorRows(value);
@@ -63,6 +66,11 @@ export function CodeEditor({ id, value, onChange, errorLine, describedBy, invali
     if (pendingCaret.current !== null && textarea) {
       textarea.setSelectionRange(pendingCaret.current, pendingCaret.current);
       pendingCaret.current = null;
+    }
+    // Keep the colored layer and the line numbers aligned after any change of content.
+    if (textarea && highlightRef.current) {
+      highlightRef.current.scrollTop = textarea.scrollTop;
+      highlightRef.current.scrollLeft = textarea.scrollLeft;
     }
   });
 
@@ -91,29 +99,61 @@ export function CodeEditor({ id, value, onChange, errorLine, describedBy, invali
   return (
     <div className="editor" data-invalid={invalid ? "true" : undefined}>
       <Gutter rows={rows} errorLine={errorLine} gutterRef={gutterRef} />
-      <textarea
-        id={id}
-        ref={textareaRef}
-        className="editor__input"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={onKeyDown}
-        onBlur={() => {
-          escapeArmed.current = false;
-        }}
-        onScroll={(event) => {
-          if (gutterRef.current) gutterRef.current.scrollTop = event.currentTarget.scrollTop;
-        }}
-        spellCheck={false}
-        autoCapitalize="off"
-        autoComplete="off"
-        autoCorrect="off"
-        wrap="off"
-        rows={18}
-        placeholder="Paste one Python function here"
-        aria-describedby={describedBy}
-        aria-invalid={invalid ? true : undefined}
-      />
+      <div className="editor__surface">
+        <Highlight value={value} errorLine={errorLine} highlightRef={highlightRef} />
+        <textarea
+          id={id}
+          ref={textareaRef}
+          className="editor__input"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          onBlur={() => {
+            escapeArmed.current = false;
+          }}
+          onScroll={(event) => {
+            const { scrollTop, scrollLeft } = event.currentTarget;
+            if (gutterRef.current) gutterRef.current.scrollTop = scrollTop;
+            if (highlightRef.current) {
+              highlightRef.current.scrollTop = scrollTop;
+              highlightRef.current.scrollLeft = scrollLeft;
+            }
+          }}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          autoCorrect="off"
+          wrap="off"
+          rows={18}
+          placeholder="Paste one Python function here"
+          aria-describedby={describedBy}
+          aria-invalid={invalid ? true : undefined}
+        />
+      </div>
     </div>
   );
 }
+
+interface HighlightProps {
+  value: string;
+  errorLine: number | null;
+  highlightRef: RefObject<HTMLPreElement | null>;
+}
+
+/**
+ * Syntax colors drawn behind the transparent text of the textarea. The textarea stays
+ * the only control; this layer is hidden from assistive technology and from forced-colors
+ * mode, where the textarea shows its own text.
+ */
+const Highlight = memo(function Highlight({ value, errorLine, highlightRef }: HighlightProps) {
+  const lines = useMemo(() => highlightPython(normalizeNewlines(value)), [value]);
+  return (
+    <pre className="editor__highlight" aria-hidden="true" ref={highlightRef}>
+      {lines.map((line, index) => (
+        <span key={index} className="editor__line" data-error={index + 1 === errorLine ? "true" : undefined}>
+          <CodeText tokens={line.tokens} />
+        </span>
+      ))}
+    </pre>
+  );
+});

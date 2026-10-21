@@ -38,6 +38,7 @@ export function contrast(first: string, second: string): number {
 
 const TONES = ["pass", "fail", "warn", "neutral", "info", "progress"];
 const SURFACES = ["color-canvas", "color-surface", "color-surface-2", "color-surface-3", "color-accent-soft"];
+const SYNTAX = ["syn-keyword", "syn-entity", "syn-string", "syn-number", "syn-comment"];
 
 const TEXT_PAIRS: Array<[string, string]> = [
   ...SURFACES.map((bg): [string, string] => ["color-text", bg]),
@@ -59,6 +60,17 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ["color-text-muted", "diff-add-num"],
   ["color-text-muted", "diff-del-num"],
   ["diff-hunk-fg", "diff-hunk-bg"],
+  // Code surfaces: plain text, line numbers and every syntax color on each background
+  // a code line can have (plain, added, removed).
+  ["color-text", "code-bg"],
+  ["color-text-muted", "code-bg"],
+  ["code-gutter-fg", "code-gutter-bg"],
+  ["code-gutter-fg", "code-bg"],
+  ["diff-add-fg", "diff-add-num"],
+  ["diff-del-fg", "diff-del-num"],
+  ...SYNTAX.flatMap((token): Array<[string, string]> =>
+    ["code-bg", "diff-add-bg", "diff-del-bg"].map((bg): [string, string] => [token, bg]),
+  ),
 ];
 
 const UI_PAIRS: Array<[string, string]> = [
@@ -69,7 +81,12 @@ const UI_PAIRS: Array<[string, string]> = [
   ["color-focus", "color-canvas"],
   ["color-focus", "color-surface-2"],
   ["diff-flag", "color-surface"],
+  ["diff-flag", "code-bg"],
+  ["shape-original", "color-surface"],
+  ["shape-proposed", "color-surface"],
   ...TONES.map((tone): [string, string] => [`tone-${tone}-line`, "color-surface"]),
+  // Icons drawn on a solid status color.
+  ...TONES.map((tone): [string, string] => ["on-tone", `tone-${tone}-line`]),
 ];
 
 describe.each([

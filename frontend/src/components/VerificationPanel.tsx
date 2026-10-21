@@ -44,14 +44,19 @@ function EvidenceCard({
       data-evidence={meta.evidence}
       aria-labelledby={headingId}
     >
-      <header className="evidence__head">
-        <h4 id={headingId} className="evidence__title">
-          {title}
-        </h4>
-        <StatusBadge meta={meta} />
-      </header>
-      <div className="evidence__body">{children}</div>
-      {footnote ? <p className="evidence__foot">{footnote}</p> : null}
+      <span className="evidence__tile" aria-hidden="true">
+        <Icon name={meta.icon} />
+      </span>
+      <div className="evidence__main">
+        <header className="evidence__head">
+          <h4 id={headingId} className="evidence__title">
+            {title}
+          </h4>
+          <StatusBadge meta={meta} />
+        </header>
+        <div className="evidence__body">{children}</div>
+        {footnote ? <p className="evidence__foot">{footnote}</p> : null}
+      </div>
     </article>
   );
 }
@@ -84,6 +89,13 @@ function RubricCard({ rubric }: { rubric: RubricCheck }) {
       dimension="rubric"
       footnote="Structural checks only. Passing them does not show that the behavior is unchanged."
     >
+      {checks.length > 0 ? (
+        <p className="evidence__figure">
+          <strong>
+            {checks.filter(([, passed]) => passed).length} of {plural(checks.length, "check")} passed
+          </strong>
+        </p>
+      ) : null}
       {checks.length > 0 ? (
         <ul className="checklist">
           {checks.map(([name, passed]) => (

@@ -86,7 +86,7 @@ export function AppHeader({ health, error, loading, onRetry }: AppHeaderProps) {
       <div className="app-header__inner">
         <div className="brand">
           <BrandMark />
-          <div>
+          <div className="brand__text">
             <h1 className="brand__name">Multi-Agent Refactoring for Python</h1>
             <p className="brand__tagline">Guard-clause proposals with separate verification</p>
           </div>
@@ -190,10 +190,18 @@ export function FakeProviderBanner() {
   return (
     <div className="fake-banner" role="note" aria-label="Fake provider warning">
       <div className="fake-banner__inner">
+        <span className="fake-banner__icon" aria-hidden="true">
+          <svg viewBox="0 0 16 16" width="16" height="16" focusable="false">
+            <path d="M8 2.2 14.4 13.4H1.6Z" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+            <path d="M8 6.4v3.2M8 11.5v.1" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
         <p>
-          <strong>Fake provider: these are not language-model results.</strong> The service is running its
-          deterministic test provider, so every proposal, explanation and review here comes from fixed rules. Do
-          not present these results as AI output.
+          <strong>Fake provider: these are not language-model results.</strong>{" "}
+          <span className="fake-banner__detail">
+            The service is running its deterministic test provider, so every proposal, explanation and review here
+            comes from fixed rules. Do not present these results as AI output.
+          </span>
         </p>
       </div>
     </div>

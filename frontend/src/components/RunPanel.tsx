@@ -6,6 +6,7 @@ import { formatDateTime, formatDuration, formatElapsed, parseServerTime, seconds
 import { PROVIDER_LABELS, RUN_STATUS_META, WORKFLOW_META, runErrorHint, stepForStage } from "../lib/labels";
 import type { RunEntry } from "../state/runs";
 import { AnalysisSection } from "./AnalysisSection";
+import { ShapeComparison, ShapeIllustration } from "./CodeShape";
 import { type DecisionState, DecisionPanel } from "./DecisionPanel";
 import { CodeListing, DiffViewer } from "./DiffViewer";
 import { DispositionBanner, ReasonList } from "./DispositionBanner";
@@ -64,14 +65,50 @@ export function RunPanel(props: RunPanelProps) {
   );
 }
 
+const PIPELINE: Array<{ title: string; text: string }> = [
+  { title: "Analysis", text: "Finds the nested conditionals that guard clauses can flatten." },
+  { title: "Refactoring", text: "Rewrites them as early returns or raises, with at most one correction." },
+  { title: "Verification", text: "Syntax, task rubric, reference tests and a model review, each reported on its own." },
+];
+
 function EmptyRun() {
   return (
     <div className="empty">
+      <ShapeIllustration />
       <p className="empty__title">No run selected</p>
-      <p>
+      <p className="empty__text">
         Paste a Python function into the editor or load a demonstration case, then choose Propose refactoring. You can
         also open an earlier run from the history.
       </p>
+      <ol className="pipeline" aria-label="What a multi-role run does">
+        {PIPELINE.map((step, index) => (
+          <li key={step.title} className="pipeline__step">
+            <span className="pipeline__index" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span className="pipeline__title">{step.title}</span>
+            <span className="pipeline__text">{step.text}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** Placeholder shapes for the result while a run is in progress. */
+function ResultSkeleton() {
+  return (
+    <div className="skeleton" aria-hidden="true">
+      <div className="skeleton__block skeleton__block--outcome" />
+      <div className="skeleton__block skeleton__block--diff">
+        {[0, 1, 2, 3, 4, 5, 6].map((index) => (
+          <span key={index} className="skeleton__line" />
+        ))}
+      </div>
+      <div className="skeleton__row">
+        <div className="skeleton__block" />
+        <div className="skeleton__block" />
+      </div>
     </div>
   );
 }
@@ -117,9 +154,12 @@ function RunBody(props: RunPanelProps & { entry: RunEntry }) {
       {record && record.status === "failed" ? <FailureView {...props} record={record} /> : null}
       {record && record.status === "completed" ? <ResultView {...props} record={record} /> : null}
       {!terminal ? (
-        <p className="waiting-note">
-          Results appear here when the run finishes. You can keep editing your code in the meantime.
-        </p>
+        <>
+          <p className="waiting-note">
+            Results appear here when the run finishes. You can keep editing your code in the meantime.
+          </p>
+          <ResultSkeleton />
+        </>
       ) : null}
       {record && terminal ? <RunDetails record={record} /> : null}
     </>
@@ -338,7 +378,15 @@ function ResultView(props: RunPanelProps & { entry: RunEntry; record: RunRecord 
   const disposition = record.verification?.disposition ?? null;
   return (
     <>
-      <DispositionBanner verification={record.verification} fake={fake} />
+      <DispositionBanner
+        verification={record.verification}
+        fake={fake}
+        aside={
+          proposal && record.proposed_code !== null ? (
+            <ShapeComparison original={record.original_code} proposed={record.proposed_code} />
+          ) : null
+        }
+      />
       <WarningsNotice warnings={record.warnings} />
       {proposal && record.proposed_code !== null ? (
         <DiffViewer

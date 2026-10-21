@@ -10,7 +10,7 @@ A local single-page application lets a person paste one Python function, or load
 |---|---|
 | FR01 bounded input | Counts characters as Python does (code points) against the 20,000-character limit and blocks submission above it; warns above the task's 3,000 characters or 60 lines; shows the service's 422 errors |
 | FR04 verification | Syntax, task rubric, reference tests and model review in four separate cards, never merged into one verdict |
-| FR05 diff | Unified diff parsed from the service's `diff`, and a side-by-side view of the full original and proposed code |
+| FR05 diff | Unified diff parsed from the service's `diff`, and a side-by-side view of the full original and proposed code, both with syntax colors and indentation guides; an outline of the indentation before and after sits beside the outcome |
 | FR06 user control | Accept and reject record a decision only; copy and download are explicit; the editor content is never changed by a run, a decision or an error |
 | FR07 traceability | Run record: identifier, workflow, provider, exact model and adapter identity, the refactoring weights requested, calls and attempts against their limits, stage timings, per-attempt outcomes and raw output, stop reason in words and as its code, warnings |
 | FR08 bounded execution | The run record lists each role's generation limits (new tokens, input tokens, time limit, temperature) and the run's time limit as stored with the run |
@@ -32,13 +32,19 @@ A local single-page application lets a person paste one Python function, or load
 | Production build with a Content Security Policy | No policy | The page may load scripts, styles and data from its own origin only, so it works offline and cannot fetch from the internet |
 | Fixed English formats; UTC for zone-less timestamps | The browser locale | The laptop's regional settings must not change the page language or date order |
 | Model output shown verbatim, never parsed | Parsing the refactoring output in the browser | The service parses the model output (now the code-first refactor-v2 format) and stores the result; the interface only shows the stored raw output per attempt, so a prompt-format change needs no interface change |
+| Syntax colors from a small display-only highlighter | A highlighting library (Prism, Shiki); plain monochrome code | Code is the main material of the page and color makes nested structure readable at a glance. About 250 lines cover Python's keywords, names, strings (with prefixes, escapes and triple quotes across lines), numbers and comments; the rendered text is always exactly the source line, so copying and tests see the original characters. It never interprets or changes code |
+| Editor colors drawn under a transparent textarea | A code-editor component | The textarea stays the only control (keyboard, undo, screen readers and the Tab and Escape rules are unchanged); the colored copy is hidden from assistive technology and switched off in Windows forced-colors mode, where the textarea shows its own text |
+| Indentation outline beside the outcome | A single depth number; no figure | Guard clauses exist to flatten nesting, so the outcome shows the outline of the original and the proposed code to the same scale, with the deepest indentation level of each. It is measured from the text by Python's block rule and is a display aid only; the service's rubric check "Reduces the nesting depth" stays the verdict |
+| The four checks as one list, like a CI run | Four cards in a grid | A list keeps the four results separate, aligns their status words in one column and leaves room for the eight rubric checks without unbalanced card heights. Missing evidence keeps its dashed outline and hatched tile |
+| Workflow choice and Propose refactoring in one action bar that stays in view | The button at the end of a long form | The primary action is visible on a laptop screen without scrolling; on a phone the bar stays in place so it does not cover the screen. A submission error appears above the editor, next to the code it concerns |
+| JetBrains Mono for code, self-hosted (SIL OFL 1.1) | Consolas only | Cascadia Mono is not installed on the demonstration laptop and Consolas is cramped at small sizes. Two Latin files of about 21 kB each are served from the page's own origin with their license; ligatures are turned off so `>=` and `!=` show as typed |
 | Not-ready reasons shown from the service's own text | A fixed message | The service knows whether the model is loading or an adapter is missing; the header labels the state (loading, adapter missing, not ready) and shows the service's detail in full |
 
-The visual design is a quiet set of white panels on a cool grey page, with an indigo accent kept for actions and progress so that green, red and amber mean only results. Headings use Bahnschrift where it exists (Windows) and code uses Cascadia Mono or Consolas, with system fallbacks and no downloaded fonts. Light and dark themes follow the operating system. WCAG AA contrast is checked by a test for every text and background pair the stylesheet uses in both themes (4.5:1 for text, 3:1 for borders, focus rings and status bars). Focus is always visible, every control has a label, status changes are announced through a polite live region, and the layout works from 380 px wide (one column) to wide screens (input and history beside the result).
+The visual design was reworked on 2026-10-21 after the first version was judged weak. It treats the page as a developer tool whose main material is code: white panels on a cool grey page, a single cobalt accent kept for actions, focus and progress, and green, red and amber reserved for results. The code surfaces (editor, diff, listings) share one monospace face, syntax colors, indentation guides at every four columns and a quiet gutter, so the nesting that guard clauses remove is visible in every view. The outcome card leads the result with the verdict, the service's reasons and the indentation outline; the diff follows in a framed view with the layout switch and the line counts in its bar, then the four checks as one list, the explanation and findings, the decision and the run record. Interface text uses the system font (Segoe UI Variable on Windows), with semibold headings on a small scale (14 px body, 16 to 20 px headings). The fake-provider banner is a slim sticky amber bar with a warning tile; on a phone it keeps its first sentence on screen and the full text for screen readers. Light and dark themes follow the operating system. WCAG AA contrast is checked by a test for every text and background pair the stylesheet uses in both themes (4.5:1 for text, 3:1 for borders, focus rings and status bars), including each syntax color on plain, added and removed lines. Focus is always visible, every control has a label, status changes are announced through a polite live region, motion is reduced when the system asks for it, and the layout works from 380 px wide (one column, vertical stepper) to wide screens (input and history beside the result).
 
 ## Interface states and screenshots to take
 
-Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, the default). Screenshot files will be added by the coordinator; none are included yet.
+Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, the default). The screenshots in [`docs/report/screenshots/`](../screenshots/) were taken on 2026-10-21 from the built interface served by the real service in fake mode with the real reference runner, at 1440 by 900 px for desktop and 390 by 844 px for a phone; every result in them comes from the deterministic test provider, as the banner in each image says. The run-in-progress image was taken while the browser held back the progress requests for a few seconds without changing them, so the queued state returned by the service stayed on screen.
 
 | ID | State | How to produce it |
 |---|---|---|
@@ -46,7 +52,7 @@ Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, 
 | S2 | Demonstration case loaded and linked | Choose a case, then Load case |
 | S3 | Link removed after an edit | Change one character of the loaded case |
 | S4 | Run in progress with the stepper | Propose refactoring and capture during analysis or generation |
-| S5 | Proposal ready: outcome, unified diff, four verification cards | Submit a demonstration case unchanged, multi-role |
+| S5 | Proposal ready: outcome, unified diff, four verification checks | Submit a demonstration case unchanged, multi-role |
 | S6 | Side-by-side view with lines flagged by the analysis | Choose Side by side on S5 |
 | S7 | Uncertain: reference tests not available, review not run | Single-role run of code that is not linked to a case |
 | S8 | No change | Submit a function without a nested conditional, for example `def sign(x)` with an `if`/`elif` chain |
@@ -59,20 +65,40 @@ Each state can be produced with the fake provider (`REFACTOR_AI_PROVIDER=fake`, 
 | S15 | Header while the local model loads, and with a requested adapter missing | Start in local mode and open the page at once; or set `REFACTOR_AI_REFACTOR_USE_ADAPTER=true` with no adapter configured |
 | S16 | Run failed with `adapter_unavailable` | Submit a run in the configuration of S15 with the adapter missing |
 
+| File in `docs/report/screenshots/` | State |
+|---|---|
+| `s01-empty-light.png`, `s01-empty-dark.png` | S1 |
+| `s02-case-loaded-light.png` | S2 |
+| `s03-link-removed-light.png` | S3 |
+| `s04-run-in-progress-light.png` | S4 (queued) |
+| `s05-proposal-ready-light.png`, `s05-proposal-ready-dark.png` | S5, outcome with the indentation outline |
+| `s05b-diff-and-verification-light.png`, `s05b-diff-and-verification-dark.png` | S5, unified diff and the start of the checks |
+| `s05c-run-record-light.png` | S5, run record |
+| `s06-side-by-side-light.png` | S6 |
+| `s07-uncertain-single-role-light.png`, `s07b-uncertain-verification-light.png` | S7 |
+| `s08-no-change-light.png` | S8 |
+| `s09-invalid-syntax-light.png`, `s09-invalid-syntax-dark.png` | S9 |
+| `s12-decision-recorded-light.png` | S12 (decision; the download notice is in the diff header) |
+| `s13-history-delete-light.png` | S13 |
+| `s14-mobile-input-*.png`, `s14-mobile-outcome-*.png`, `s14-mobile-diff-*.png`, `s14-mobile-verification-*.png` | S14 at 390 px, light and dark |
+
+S10, S11, S15 and S16 need a full queue, a stopped service, the local model or a missing adapter, so they were not captured; their rendering is covered by the tests in `src/App.test.tsx` and `src/test/contractExamples.test.tsx`.
+
 ## Evidence
 
-Commands run in `frontend/` on 2026-10-20 on the demonstration laptop (Windows 11, Node 24.12.0, npm 11.6.2):
+Commands run in `frontend/` on the demonstration laptop (Windows 11, Node 24.12.0, npm 11.6.2), first on 2026-10-20 and again after the redesign on 2026-10-21 (the test and build rows show the later run):
 
 | Command | Result |
 |---|---|
 | `npm ci` equivalent (`npm install` from the pinned manifest) | 106 packages, 0 vulnerabilities reported by npm audit, `node_modules` about 110 MB |
 | `npm run typecheck` (`tsc -b`) | Passed; a deliberately wrong type in an application file and in a test file each made it fail |
-| `npm test` | 419 passed, 5 skipped (the optional end-to-end file), 0 failed, in 12 test files |
-| `npm run build` | Passed: one 310 kB script (94 kB compressed) and one 33 kB stylesheet in `frontend/dist` |
+| `npm test` | 488 passed, 5 skipped (the optional end-to-end file), 0 failed, in 13 test files |
+| `npm run build` | Passed: one 321 kB script (97 kB compressed), one 45 kB stylesheet (9 kB compressed) and the two font files in `frontend/dist` |
 
 | Test file | Tests | Subject |
 |---|---|---|
 | `src/lib/diff.test.ts` | 22 | Unified diff parser and side-by-side alignment |
+| `src/lib/highlight.test.ts` | 9 | Display-only Python highlighter and the indentation outline |
 | `src/lib/polling.test.ts` | 15 | Backoff, terminal stop, `stop()`, timeout, retries, fatal errors (fake timers) |
 | `src/api/client.test.ts` | 29 | Requests, error bodies, retry delay, network failure, timeout, cancellation, download names |
 | `src/lib/helpers.test.ts` | 18 | Text measurement, time and duration formats, status vocabulary, reasons, `hasProposal` |
@@ -82,16 +108,19 @@ Commands run in `frontend/` on 2026-10-20 on the demonstration laptop (Windows 1
 | `src/App.test.tsx` | 39 | The whole page against a fake service, including the model-loading and missing-adapter header states |
 | `src/test/contractMirror.test.ts` | 56 | TypeScript contract against `contracts.py`, task limits, API limits, the default generation limits, every coordinator stop reason and every service run-error code |
 | `src/test/contractExamples.test.tsx` | 53 | Every file in `docs/architecture/examples/`, each run record rendered and each health example rendered in the header |
-| `src/styles/contrast.test.ts` | 127 | WCAG contrast of the color pairs in both themes |
+| `src/styles/contrast.test.ts` | 187 | WCAG contrast of the color pairs in both themes, including syntax colors on code, added and removed lines |
 | `src/test/e2e.test.ts` | 5 | Optional, against a running service |
 
 The end-to-end file was run once against the real service on a private port, with the fake provider, the real coordinator and the real reference runner, and a database in a temporary folder: all 5 tests passed. They covered a demonstration case completed with verification, a diff that parses and aligns, the downloaded file's content and name, a recorded decision, a single-role run without review, the `invalid_syntax`, `reference_case_mismatch`, `unknown_reference_case` and `run_not_found` errors, and deletion. All six demonstration cases completed as `proposal_ready` with every reference test passing; with the fake provider this shows the plumbing only.
 
 The built interface was also checked in a headless browser served by that service, at 1440 px and 390 px, in light and dark themes. This found and fixed a side-by-side table that grew to 4,400 px (a percentage column width), screen-reader text that widened the page from inside a scroll box, notices whose bold words broke onto their own lines, a fake placeholder review that still showed a check mark and an unbalanced three-plus-one card grid.
 
+The redesign of 2026-10-21 was checked the same way against the real service in fake mode, at 1280, 1440 and 390 px in both themes, for every state in the screenshot list. Problems found and fixed on the way: the primary button and the workflow choice fell below the fold on a laptop screen (now in the action bar), a syntax error appeared below the fold (now above the editor), the outcome title wrapped beside the outline on narrower screens (the outline moves under the text through a container query), the five-step stepper's labels collided at 390 px (vertical stepper on phones), and a notice built as a flex column broke its bold case name onto separate lines. The existing behavior tests passed without changes; the contrast test gained pairs for the new color tokens, and a new test file covers the highlighter and the outline.
+
 ## Known limitations
 
-- No screenshots are stored yet; the list above names the states to capture.
+- The screenshots show the fake provider only; S10, S11, S15 and S16 were not captured.
+- The highlighter and the indentation outline are display aids written for this one task; they do not handle every corner of Python's grammar (for example f-string nesting or line continuations with a backslash), and a wrong color or outline never changes the code, the request or a result.
 - The browser checks were manual; there is no automated browser test, by design (no Playwright dependency).
 - Without ESLint, React hook dependency rules are not checked mechanically; effects were reviewed by hand and the unmount behavior is tested.
 - Elapsed time while a run is active uses the browser clock against the service's `created_at`; both run on the same machine.

@@ -2,6 +2,7 @@ import { useId } from "react";
 import type { ApiError } from "../api/client";
 import type { Disposition, HumanDecision } from "../api/contracts";
 import { DISPOSITION_META } from "../lib/labels";
+import { Icon } from "./Icon";
 
 export interface DecisionState {
   pending: HumanDecision | null;
@@ -48,6 +49,7 @@ export function DecisionPanel({
           disabled={busy}
           onClick={() => onDecide("accepted")}
         >
+          <Icon name="check" />
           {state.pending === "accepted" ? "Recording…" : "Accept proposal"}
         </button>
         <button
@@ -58,6 +60,7 @@ export function DecisionPanel({
           disabled={busy}
           onClick={() => onDecide("rejected")}
         >
+          <Icon name="cross" />
           {state.pending === "rejected" ? "Recording…" : "Reject proposal"}
         </button>
       </div>

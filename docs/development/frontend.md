@@ -26,6 +26,8 @@ The web interface is a React and TypeScript single-page application in `frontend
 
 There is no UI kit, editor component, CSS framework, font or icon package. `node_modules` takes about 110 MB.
 
+The only bundled asset that is not code is the JetBrains Mono typeface for code (`frontend/public/fonts/`, two Latin `woff2` files of about 21 kB each, regular and semibold). It is licensed under the SIL Open Font License 1.1, which allows redistribution with software; the license text ships next to the files as `JetBrainsMono-OFL.txt`. The files were taken from the `@fontsource/jetbrains-mono` 5.2.8 package and are served from the page's own origin, so the page still makes no request to the internet. If the files are missing, code falls back to Cascadia Mono, Consolas or the system monospace face. Interface text uses the system font (Segoe UI Variable on Windows 11).
+
 ## Setup
 
 ```bash
@@ -88,6 +90,7 @@ npm test
 Tests replace `fetch` with an in-memory fake of the service (`src/test/mockServer.ts`), so requests go through the real API client without a network or backend. At most two test workers run at once (`maxWorkers` in `vite.config.ts`), because the demonstration laptop has 8 GB of memory shared with model work; a full run takes about 20 to 60 seconds there. Dates are checked in UTC whatever the machine's time zone. The tests cover:
 
 - the unified diff parser (hunks, additions and removals, line numbers, missing counts, CRLF, stripped context lines, no-newline markers, malformed and empty diffs) and the side-by-side alignment;
+- the display-only Python highlighter (every character kept, keywords, names, strings with prefixes and escapes, numbers, comments, soft keywords, triple-quoted strings and brackets across lines) and the indentation outline drawn beside a proposal (levels by Python's block rule, continuation and comment lines, tabs, CRLF);
 - polling with fake timers (750 ms delay growing to 3 s, reset on a status change, stop on a terminal status, on `stop()` and on unmount, maximum wait, network errors and fatal errors);
 - the API client's error handling (ErrorResponse codes and details, FastAPI's default validation body, `Retry-After`, network failures, timeouts, cancellation, malformed responses, download file names);
 - every disposition and every status of the four verification dimensions, including that `not_available`, `not_run` and `error` never use the pass color or a check mark;
@@ -95,7 +98,7 @@ Tests replace `fetch` with an in-memory fake of the service (`src/test/mockServe
 - that the TypeScript contract mirror has exactly the fields, enums and literals of `src/refactor_ai/contracts.py`, plus the task limits and rubric checks of `src/refactor_ai/tasks/guard_clauses.py` (`src/test/contractMirror.test.ts`);
 - that every file in `docs/architecture/examples/` matches the mirrored contract field by field and renders correctly, including every health state in the header (`src/test/contractExamples.test.tsx`);
 - that every stop reason the coordinator writes and every run error code the service writes has a readable explanation, and that the test fixtures use the default generation limits of `WorkflowSettings`;
-- WCAG AA contrast of the color pairs used in both themes (`src/styles/contrast.test.ts`).
+- WCAG AA contrast of the color pairs used in both themes, including every syntax color on plain, added and removed code lines (`src/styles/contrast.test.ts`).
 
 An optional end-to-end test drives the real client and poller against a running service. It is skipped unless `REFACTOR_AI_E2E_URL` is set, and it creates and deletes its own runs:
 
@@ -112,10 +115,11 @@ In PowerShell, set `$env:REFACTOR_AI_E2E_URL = "http://127.0.0.1:8000"` first. W
 |---|---|
 | `src/api/contracts.ts` | TypeScript mirror of the contract models, enums and limits |
 | `src/api/client.ts` | Typed API client and the `ApiError` model |
-| `src/lib/` | Diff parsing and alignment, polling, text measurement as the service does it, formatting, status vocabulary |
+| `src/lib/` | Diff parsing and alignment, polling, text measurement as the service does it, formatting, status vocabulary, the display-only Python highlighter (`highlight.ts`) and the indentation outline (`shape.ts`) |
 | `src/state/` | Reducers for the editor and the runs this page tracks |
-| `src/components/` | Header, input panel and editor, run panel (progress, outcome, diff, verification, findings, decision, run record), history |
-| `src/styles/` | Design tokens (light and dark), base elements and the application layout |
+| `src/components/` | Header, input panel and editor, run panel (progress, outcome, diff, verification, findings, decision, run record), history; `CodeText.tsx` draws one highlighted code line with indentation guides and `CodeShape.tsx` the before and after outline |
+| `src/styles/` | Design tokens (light and dark, including code and syntax colors) with the `@font-face` rules, base elements and the application layout |
+| `public/fonts/` | JetBrains Mono (OFL 1.1) and its license |
 | `src/test/` | Test fixtures, the fake service, contract and example checks, the optional end-to-end test |
 
 ## Changing a contract

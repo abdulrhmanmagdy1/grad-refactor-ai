@@ -102,39 +102,6 @@ export function InputPanel({
       </div>
 
       <form className="input-form" onSubmit={submit} noValidate>
-        <div className="field-row">
-          <div className="field">
-            <label className="field__label" htmlFor={`${ids}-task`}>
-              Refactoring task
-            </label>
-            <select id={`${ids}-task`} className="select" value={TASK_TYPE} onChange={() => undefined}>
-              <option value={TASK_TYPE}>{TASK_LABEL}</option>
-            </select>
-          </div>
-        </div>
-
-        <fieldset className="field choice-group">
-          <legend className="field__label">Workflow</legend>
-          {WORKFLOW_MODES.map((mode) => (
-            <label key={mode} className="choice">
-              <input
-                type="radio"
-                name={`${ids}-workflow`}
-                value={mode}
-                checked={editor.workflowMode === mode}
-                onChange={() => dispatch({ type: "set_mode", mode })}
-              />
-              <span className="choice__text">
-                <span className="choice__label">
-                  {WORKFLOW_META[mode].label}
-                  {mode === "multi_role" ? <span className="choice__default"> (default)</span> : null}
-                </span>
-                <span className="choice__description">{WORKFLOW_META[mode].description}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
-
         <div className="field">
           <label className="field__label" htmlFor={`${ids}-case`}>
             Demonstration case
@@ -232,6 +199,20 @@ export function InputPanel({
           ) : null}
         </div>
 
+        {failure ? (
+          <SubmissionErrorView
+            error={failure.error}
+            location={location}
+            onGoToLine={locationApplies ? goToLine : undefined}
+            onUnlinkCase={() => dispatch({ type: "unlink_case" })}
+            onRestoreCaseCode={loadedCase ? () => dispatch({ type: "reset_case_code" }) : undefined}
+            onReloadCases={onReloadCases}
+            onRetry={onSubmit}
+            retryDisabled={!canSubmit}
+            onDismiss={onDismissFailure}
+          />
+        ) : null}
+
         <div className="field">
           <div className="editor-label-row">
             <label className="field__label" htmlFor={editorId}>
@@ -271,26 +252,59 @@ export function InputPanel({
           </div>
         </div>
 
-        <div className="submit-row">
-          <button type="submit" className="button button--primary" disabled={!canSubmit}>
-            {submitting ? "Submitting…" : "Propose refactoring"}
-          </button>
-          {submitHint ? <p className="submit-row__hint">{submitHint}</p> : null}
+        <div className="field">
+          <label className="field__label" htmlFor={`${ids}-task`}>
+            Refactoring task
+          </label>
+          <select id={`${ids}-task`} className="select" value={TASK_TYPE} onChange={() => undefined}>
+            <option value={TASK_TYPE}>{TASK_LABEL}</option>
+          </select>
         </div>
 
-        {failure ? (
-          <SubmissionErrorView
-            error={failure.error}
-            location={location}
-            onGoToLine={locationApplies ? goToLine : undefined}
-            onUnlinkCase={() => dispatch({ type: "unlink_case" })}
-            onRestoreCaseCode={loadedCase ? () => dispatch({ type: "reset_case_code" }) : undefined}
-            onReloadCases={onReloadCases}
-            onRetry={onSubmit}
-            retryDisabled={!canSubmit}
-            onDismiss={onDismissFailure}
-          />
-        ) : null}
+        <div className="submit-row">
+          <div className="submit-row__controls">
+            <fieldset className="choice-group">
+              <legend className="visually-hidden">Workflow</legend>
+              <div className="segmented segmented--block">
+                {WORKFLOW_MODES.map((mode) => (
+                  <label key={mode} className="segmented__option">
+                    <input
+                      type="radio"
+                      name={`${ids}-workflow`}
+                      value={mode}
+                      checked={editor.workflowMode === mode}
+                      onChange={() => dispatch({ type: "set_mode", mode })}
+                    />
+                    <span>
+                      {WORKFLOW_META[mode].label}
+                      {mode === "multi_role" ? <span className="choice__default"> (default)</span> : null}
+                      <span className="visually-hidden">: {WORKFLOW_META[mode].description}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+            <button type="submit" className="button button--primary button--large" disabled={!canSubmit}>
+              {submitting ? (
+                "Submitting…"
+              ) : (
+                <>
+                  <svg className="icon" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+                    <path d="M4.5 2.8v10.4L13 8Z" fill="currentColor" />
+                  </svg>
+                  Propose refactoring
+                </>
+              )}
+            </button>
+          </div>
+          <p className="submit-row__hint">
+            {submitHint ?? (
+              <span aria-hidden="true">
+                {WORKFLOW_META[editor.workflowMode].label}: {WORKFLOW_META[editor.workflowMode].description}
+              </span>
+            )}
+          </p>
+        </div>
       </form>
     </section>
   );
