@@ -1,0 +1,13 @@
+arm,metric,kind,limit_rate,numerator,denominator,rate,met
+A,proposal_ready,floor,0.026663,7,88,0.079545,True
+A,syntax_valid,floor,0.935448,87,88,0.988636,True
+A,failed,ceiling,0.064552,1,88,0.011364,True
+B,proposal_ready,floor,0.000301,1,88,0.011364,True
+B,syntax_valid,floor,0.899157,88,88,1.000000,True
+B,failed,ceiling,0.100843,0,88,0.000000,True
+C,proposal_ready,floor,0.722632,70,88,0.795455,True
+C,syntax_valid,floor,0.957035,88,88,1.000000,True
+C,failed,ceiling,0.042965,0,88,0.000000,True
+D,proposal_ready,floor,0.435213,35,88,0.397727,False
+D,syntax_valid,floor,0.957035,88,88,1.000000,True
+D,failed,ceiling,0.042965,0,88,0.000000,True

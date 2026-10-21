@@ -1,0 +1,13 @@
+arm,dimension,value,proposal_ready,attempted,rate
+A,source,humaneval,0,1,0.000000
+A,source,mbpp,0,3,0.000000
+A,source,team-template,7,84,0.083333
+B,source,humaneval,0,1,0.000000
+B,source,mbpp,0,3,0.000000
+B,source,team-template,1,84,0.011905
+C,source,humaneval,1,1,1.000000
+C,source,mbpp,2,3,0.666667
+C,source,team-template,67,84,0.797619
+D,source,humaneval,0,1,0.000000
+D,source,mbpp,0,3,0.000000
+D,source,team-template,35,84,0.416667

@@ -1,0 +1,1364 @@
+{
+  "evaluation_id": "kaggle-grad-refactor-ai-eval-3ba44332",
+  "command": [
+    "python3",
+    "scripts/evaluate.py",
+    "--split",
+    "test",
+    "--provider",
+    "local",
+    "--model-config",
+    "/tmp/grad/model.kaggle.json",
+    "--arms",
+    "A,B,C,D",
+    "--output-dir",
+    "/kaggle/working/evaluation",
+    "--evaluation-id",
+    "kaggle-grad-refactor-ai-eval-3ba44332",
+    "--gpu-memory",
+    "--i-confirm-frozen-test",
+    "--protocol-version",
+    "eval-v1"
+  ],
+  "started_at": "2026-10-21T10:48:05+00:00",
+  "finished_at": "2026-10-21T12:03:25+00:00",
+  "resumed": false,
+  "earlier_manifests": [],
+  "protocol": {
+    "version": "eval-v1",
+    "status": "frozen",
+    "freeze_record": "experiments/evaluation/protocol-freeze.json"
+  },
+  "arms": {
+    "A": {
+      "mode": "single_role",
+      "refactor_use_adapter": false,
+      "max_calls": 1,
+      "max_corrections": 0,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "B": {
+      "mode": "multi_role",
+      "refactor_use_adapter": false,
+      "max_calls": 5,
+      "max_corrections": 1,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "C": {
+      "mode": "single_role",
+      "refactor_use_adapter": true,
+      "max_calls": 1,
+      "max_corrections": 0,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    },
+    "D": {
+      "mode": "multi_role",
+      "refactor_use_adapter": true,
+      "max_calls": 5,
+      "max_corrections": 1,
+      "run_timeout_s": 600.0,
+      "generation": {
+        "analysis": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "refactor": {
+          "max_new_tokens": 768,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        },
+        "review": {
+          "max_new_tokens": 384,
+          "temperature": 0.0,
+          "top_p": 1.0,
+          "seed": 42,
+          "max_input_tokens": 2048,
+          "timeout_s": 120.0
+        }
+      }
+    }
+  },
+  "dataset": "datasets/guard_clauses/v1/records.jsonl",
+  "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+  "split": "test",
+  "split_sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633",
+  "cases": [
+    "gc1-atm-withdrawal-01",
+    "gc1-atm-withdrawal-02",
+    "gc1-atm-withdrawal-03",
+    "gc1-atm-withdrawal-04",
+    "gc1-atm-withdrawal-05",
+    "gc1-atm-withdrawal-06",
+    "gc1-atm-withdrawal-07",
+    "gc1-course-enrollment-01",
+    "gc1-course-enrollment-02",
+    "gc1-course-enrollment-03",
+    "gc1-course-enrollment-04",
+    "gc1-course-enrollment-05",
+    "gc1-course-enrollment-06",
+    "gc1-course-enrollment-07",
+    "gc1-email-split-01",
+    "gc1-email-split-02",
+    "gc1-email-split-03",
+    "gc1-email-split-04",
+    "gc1-email-split-05",
+    "gc1-email-split-06",
+    "gc1-email-split-07",
+    "gc1-freight-quote-01",
+    "gc1-freight-quote-02",
+    "gc1-freight-quote-03",
+    "gc1-freight-quote-04",
+    "gc1-freight-quote-05",
+    "gc1-freight-quote-06",
+    "gc1-freight-quote-07",
+    "gc1-hotel-booking-01",
+    "gc1-hotel-booking-02",
+    "gc1-hotel-booking-03",
+    "gc1-hotel-booking-04",
+    "gc1-hotel-booking-05",
+    "gc1-hotel-booking-06",
+    "gc1-hotel-booking-07",
+    "gc1-humaneval-95",
+    "gc1-invoice-status-01",
+    "gc1-invoice-status-02",
+    "gc1-invoice-status-03",
+    "gc1-invoice-status-04",
+    "gc1-invoice-status-05",
+    "gc1-invoice-status-06",
+    "gc1-invoice-status-07",
+    "gc1-login-attempt-01",
+    "gc1-login-attempt-02",
+    "gc1-login-attempt-03",
+    "gc1-login-attempt-04",
+    "gc1-login-attempt-05",
+    "gc1-login-attempt-06",
+    "gc1-login-attempt-07",
+    "gc1-mbpp-task-113",
+    "gc1-mbpp-task-47",
+    "gc1-mbpp-task-605",
+    "gc1-quiz-score-01",
+    "gc1-quiz-score-02",
+    "gc1-quiz-score-03",
+    "gc1-quiz-score-04",
+    "gc1-quiz-score-05",
+    "gc1-quiz-score-06",
+    "gc1-quiz-score-07",
+    "gc1-recipe-scaling-01",
+    "gc1-recipe-scaling-02",
+    "gc1-recipe-scaling-03",
+    "gc1-recipe-scaling-04",
+    "gc1-recipe-scaling-05",
+    "gc1-recipe-scaling-06",
+    "gc1-recipe-scaling-07",
+    "gc1-reset-token-01",
+    "gc1-reset-token-02",
+    "gc1-reset-token-03",
+    "gc1-reset-token-04",
+    "gc1-reset-token-05",
+    "gc1-reset-token-06",
+    "gc1-reset-token-07",
+    "gc1-text-truncate-01",
+    "gc1-text-truncate-02",
+    "gc1-text-truncate-03",
+    "gc1-text-truncate-04",
+    "gc1-text-truncate-05",
+    "gc1-text-truncate-06",
+    "gc1-text-truncate-07",
+    "gc1-tracking-status-01",
+    "gc1-tracking-status-02",
+    "gc1-tracking-status-03",
+    "gc1-tracking-status-04",
+    "gc1-tracking-status-05",
+    "gc1-tracking-status-06",
+    "gc1-tracking-status-07"
+  ],
+  "provider": {
+    "provider_mode": "local_model",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "device": "cuda:0 (Tesla T4)",
+    "ready": true,
+    "detail": "Model loaded in 31.8 s on cuda:0 (Tesla T4) (float32); revision verified: True. Adapter weights sha256 dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2, adapter config sha256 a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571."
+  },
+  "runner": {
+    "enabled": true,
+    "reason": null,
+    "isolation": {
+      "platform_supported": true,
+      "interpreter_found": true,
+      "basic_execution": true,
+      "os_limits_applied": true,
+      "audit_hook_installed": true,
+      "environment_scrubbed": true,
+      "working_directory_isolated": true,
+      "workdir_removed": true,
+      "network_blocked": true,
+      "file_write_blocked": true,
+      "host_read_blocked": true,
+      "subprocess_blocked": true,
+      "native_code_blocked": true,
+      "introspection_blocked": true,
+      "process_limit_enforced": true,
+      "memory_limit_enforced": true,
+      "timeout_enforced": true,
+      "process_cleanup": true,
+      "cpu_limit_enforced": true
+    }
+  },
+  "warm_up": {
+    "runner": {
+      "enabled": true,
+      "reason": null,
+      "elapsed_s": 2.293
+    },
+    "provider_calls": [
+      {
+        "use_adapter": false,
+        "elapsed_s": 33.758,
+        "error": null,
+        "error_message": null,
+        "model": {
+          "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+          "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+          "adapter_id": "full-2026-10-21",
+          "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+          "use_adapter": false
+        }
+      },
+      {
+        "use_adapter": true,
+        "elapsed_s": 3.119,
+        "error": null,
+        "error_message": null,
+        "model": {
+          "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+          "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+          "adapter_id": "full-2026-10-21",
+          "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+          "use_adapter": true
+        }
+      }
+    ]
+  },
+  "arm_order": "rotated per case (case i starts with arm i mod number of arms)",
+  "code_sha": "9582c662850eeb6c5495cd2124138aa4cfd04714",
+  "test_authorization": {
+    "test_freeze": {
+      "dataset": "guard_clauses-v1",
+      "records_path": "datasets/guard_clauses/v1/records.jsonl",
+      "split": "test",
+      "frozen_on": "2026-10-20",
+      "count": 88,
+      "ids": [
+        "gc1-atm-withdrawal-01",
+        "gc1-atm-withdrawal-02",
+        "gc1-atm-withdrawal-03",
+        "gc1-atm-withdrawal-04",
+        "gc1-atm-withdrawal-05",
+        "gc1-atm-withdrawal-06",
+        "gc1-atm-withdrawal-07",
+        "gc1-course-enrollment-01",
+        "gc1-course-enrollment-02",
+        "gc1-course-enrollment-03",
+        "gc1-course-enrollment-04",
+        "gc1-course-enrollment-05",
+        "gc1-course-enrollment-06",
+        "gc1-course-enrollment-07",
+        "gc1-email-split-01",
+        "gc1-email-split-02",
+        "gc1-email-split-03",
+        "gc1-email-split-04",
+        "gc1-email-split-05",
+        "gc1-email-split-06",
+        "gc1-email-split-07",
+        "gc1-freight-quote-01",
+        "gc1-freight-quote-02",
+        "gc1-freight-quote-03",
+        "gc1-freight-quote-04",
+        "gc1-freight-quote-05",
+        "gc1-freight-quote-06",
+        "gc1-freight-quote-07",
+        "gc1-hotel-booking-01",
+        "gc1-hotel-booking-02",
+        "gc1-hotel-booking-03",
+        "gc1-hotel-booking-04",
+        "gc1-hotel-booking-05",
+        "gc1-hotel-booking-06",
+        "gc1-hotel-booking-07",
+        "gc1-humaneval-95",
+        "gc1-invoice-status-01",
+        "gc1-invoice-status-02",
+        "gc1-invoice-status-03",
+        "gc1-invoice-status-04",
+        "gc1-invoice-status-05",
+        "gc1-invoice-status-06",
+        "gc1-invoice-status-07",
+        "gc1-login-attempt-01",
+        "gc1-login-attempt-02",
+        "gc1-login-attempt-03",
+        "gc1-login-attempt-04",
+        "gc1-login-attempt-05",
+        "gc1-login-attempt-06",
+        "gc1-login-attempt-07",
+        "gc1-mbpp-task-113",
+        "gc1-mbpp-task-47",
+        "gc1-mbpp-task-605",
+        "gc1-quiz-score-01",
+        "gc1-quiz-score-02",
+        "gc1-quiz-score-03",
+        "gc1-quiz-score-04",
+        "gc1-quiz-score-05",
+        "gc1-quiz-score-06",
+        "gc1-quiz-score-07",
+        "gc1-recipe-scaling-01",
+        "gc1-recipe-scaling-02",
+        "gc1-recipe-scaling-03",
+        "gc1-recipe-scaling-04",
+        "gc1-recipe-scaling-05",
+        "gc1-recipe-scaling-06",
+        "gc1-recipe-scaling-07",
+        "gc1-reset-token-01",
+        "gc1-reset-token-02",
+        "gc1-reset-token-03",
+        "gc1-reset-token-04",
+        "gc1-reset-token-05",
+        "gc1-reset-token-06",
+        "gc1-reset-token-07",
+        "gc1-text-truncate-01",
+        "gc1-text-truncate-02",
+        "gc1-text-truncate-03",
+        "gc1-text-truncate-04",
+        "gc1-text-truncate-05",
+        "gc1-text-truncate-06",
+        "gc1-text-truncate-07",
+        "gc1-tracking-status-01",
+        "gc1-tracking-status-02",
+        "gc1-tracking-status-03",
+        "gc1-tracking-status-04",
+        "gc1-tracking-status-05",
+        "gc1-tracking-status-06",
+        "gc1-tracking-status-07"
+      ],
+      "source_groups": [
+        "humaneval-95",
+        "mbpp-task-113",
+        "mbpp-task-47",
+        "mbpp-task-605",
+        "tpl-atm-withdrawal",
+        "tpl-course-enrollment",
+        "tpl-email-split",
+        "tpl-freight-quote",
+        "tpl-hotel-booking",
+        "tpl-invoice-status",
+        "tpl-login-attempt",
+        "tpl-quiz-score",
+        "tpl-recipe-scaling",
+        "tpl-reset-token",
+        "tpl-text-truncate",
+        "tpl-tracking-status"
+      ],
+      "content_sha256": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12",
+      "content_hash_method": "SHA-256 over one canonical JSON line per record (sorted keys, ensure_ascii, separators ',' and ':') in file order, each followed by LF. The line holds the fields id, split, source_group, source, source_url, license, refactoring_type, function_name, original_code, target_code, tests, provenance, task_version, the explanation text (the completion line after 'Explanation: ') and the analysis notes (the prompt lines after 'Analysis notes:'); prompt and completion layout is excluded.",
+      "split_sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633",
+      "hash_method": "SHA-256 of UTF-8 bytes with LF line endings (normalize CRLF to LF before hashing). A split hash covers that split's JSON lines from records.jsonl in file order, each followed by LF.",
+      "prompt_version": "refactor-v2",
+      "rule": "Frozen held-out test split. Use it only for the final A/B/C/D run under a frozen evaluation protocol. Do not train, tune prompts, select models or hyperparameters, or set targets on it. Any change to these records requires a new dataset version and a new protocol version.",
+      "frozen_by": "data and evaluation workstream (coding agent working for Shahd Abdelhay); pending the owner's inspection",
+      "curation_command": "python -m uv run python scripts/curate_dataset.py",
+      "curation_seed": 20261020,
+      "git_head_at_freeze": "23c384b7bf3052f0710db567526523ec9c8f5ac5",
+      "code_sha256_at_freeze": {
+        "scripts/curate_dataset.py": "fe48d9157563d4e75abe84c189b14538acae50b52e9797800b65418a98f359cd",
+        "src/refactor_ai/data/__init__.py": "5a5b4139c5261c9862343882aad5b7e1c0754c21bd8047bf05a830a7fb3a8400",
+        "src/refactor_ai/data/_harness.py": "1db0b11d4812eafb31a5a8a5e33b0d9c682b3328700e3c81c3e5d7b36ca2bb19",
+        "src/refactor_ai/data/codegen.py": "bccb7447c12e233a25ae313d55bccaaa07b700718cc9343d4c6060dc0430a165",
+        "src/refactor_ai/data/content.py": "6d0ee9a2f071175f640ee68d22c4af2e7126d796ae080f24290a2720bb0c624d",
+        "src/refactor_ai/data/curate.py": "767bfc9bf69e022ee95f0f4169be2e37f5a24c4daff5fc02c72e4f8607f34f72",
+        "src/refactor_ai/data/demo.py": "6a2526e972c8abe778ef73ea8157e88b79306e40ca6cfb7aa95a751989b79dff",
+        "src/refactor_ai/data/executor.py": "e07a1da79f250b239d764d931d4e71f3b51ff90055f9686ec477735cf4507280",
+        "src/refactor_ai/data/explain.py": "b1b80bd85f038e967e381bce4edb355e8190d2ec95566895f335861a609fe6d5",
+        "src/refactor_ai/data/leakage.py": "b75fe416b345edc21f8ab7dd7add0d003cbee1eceb6b56632d111797635d3916",
+        "src/refactor_ai/data/manifest.py": "26227cb56e270674cf948cab8cfe27fc5090eee6dbbcdc6a91904d6e0a959690",
+        "src/refactor_ai/data/mutation.py": "da56c0636251320bf59d9827431d92c57636814f6fcea847b77d1cd48c30c0cf",
+        "src/refactor_ai/data/refgen.py": "ee877c6479e6bb41c3c3217efb7de7516dd4ca472c322e4bb331a77426f1586b",
+        "src/refactor_ai/data/sources.py": "08ee082d8e778d42cee37020da7a2ab1ceb91ec5217c1a269825ce852130f49e",
+        "src/refactor_ai/data/splits.py": "95ae78678ca6a3fe67e4984e2843ef3750abf744dddee4cb569541b960b87022",
+        "src/refactor_ai/data/families/__init__.py": "aac6b820a8a9aebc927a62746fb6db901d7efe8d9a6594c5b6c282834f6d32c9",
+        "src/refactor_ai/data/families/access.py": "d93778d485c70e01ce7f3976d7e940fb8f4cc0a4e69ffd0f4977e14065fd21c2",
+        "src/refactor_ai/data/families/base.py": "ddd49cbc7327ea330bbefdfb5a1bfc298ae043ab062f5e5f8e276502c4386aea",
+        "src/refactor_ai/data/families/commerce.py": "0f1f1597288460f88371f9651e6a8b12fffcad94310e9cc4d70f85f0f2ffc1fb",
+        "src/refactor_ai/data/families/finance.py": "27db997ad35fd39c87dba0e24a16a3322cde8fb7dc81647767096db0ab87df60",
+        "src/refactor_ai/data/families/helpers.py": "fb66bdc47cdb3ccf9ac4076ad1c6f43aad26ecf9354a0d8977e79793d7295626",
+        "src/refactor_ai/data/families/logistics.py": "bd1ddf97b1ae44ba5a6c2a5d3e9ecae70323b22294615d676dafbfc62d4c3453",
+        "src/refactor_ai/data/families/people.py": "2febcf2c112ea5faf1b9a6429385e00ba6435db274cf50078e596b4249461ce1",
+        "src/refactor_ai/data/families/systems.py": "e0ec6d7251aae1ae1096889f29e4f0e1734b6745309d8f27718fd8ccf006d8ed",
+        "src/refactor_ai/data/families/text.py": "d4a9a253aef4a2150a4482e651da07de32abdf28959c5a87d9397630d74470f3",
+        "src/refactor_ai/tasks/guard_clauses.py": "0a533a39ab9fecf9423f9e948ff5a4d5d4e5a04fa9179e5504b55c6cba040aff",
+        "src/refactor_ai/task_format.py": "db4888b490c71e01da8d49c68203b4d95ff1c7286094d6851658a20ea048ae10"
+      },
+      "history": [
+        {
+          "kind": "superseded_before_commit",
+          "frozen_on": "2026-10-20",
+          "split_sha256": "164ce75eef672560303d35b5254793a0fa21d8f661fd807d3f1273e67098d0aa",
+          "content_sha256": null,
+          "prompt_version": "refactor-v1",
+          "note": "Added by hand from the wave-1 report. During wave-1 curation, before the dataset was committed, the test split was frozen with this hash twice (the second time only to record the final code hashes) and then superseded the same day, because the manual review showed that some reference tests did not exercise capped or rounded return values; the tests were strengthened, which changed the case content. The freeze file was replaced at the time, so no content hash was kept. No model or person used these versions."
+        },
+        {
+          "dataset": "guard_clauses-v1",
+          "records_path": "datasets/guard_clauses/v1/records.jsonl",
+          "split": "test",
+          "frozen_on": "2026-10-20",
+          "count": 88,
+          "split_sha256": "b765dbb8ba3c3f76771ed6aa4a05e645372de19751f720805ccfc511d5535b72",
+          "hash_method": "SHA-256 of UTF-8 bytes with LF line endings (normalize CRLF to LF before hashing). A split hash covers that split's JSON lines from records.jsonl in file order, each followed by LF.",
+          "ids": [
+            "gc1-atm-withdrawal-01",
+            "gc1-atm-withdrawal-02",
+            "gc1-atm-withdrawal-03",
+            "gc1-atm-withdrawal-04",
+            "gc1-atm-withdrawal-05",
+            "gc1-atm-withdrawal-06",
+            "gc1-atm-withdrawal-07",
+            "gc1-course-enrollment-01",
+            "gc1-course-enrollment-02",
+            "gc1-course-enrollment-03",
+            "gc1-course-enrollment-04",
+            "gc1-course-enrollment-05",
+            "gc1-course-enrollment-06",
+            "gc1-course-enrollment-07",
+            "gc1-email-split-01",
+            "gc1-email-split-02",
+            "gc1-email-split-03",
+            "gc1-email-split-04",
+            "gc1-email-split-05",
+            "gc1-email-split-06",
+            "gc1-email-split-07",
+            "gc1-freight-quote-01",
+            "gc1-freight-quote-02",
+            "gc1-freight-quote-03",
+            "gc1-freight-quote-04",
+            "gc1-freight-quote-05",
+            "gc1-freight-quote-06",
+            "gc1-freight-quote-07",
+            "gc1-hotel-booking-01",
+            "gc1-hotel-booking-02",
+            "gc1-hotel-booking-03",
+            "gc1-hotel-booking-04",
+            "gc1-hotel-booking-05",
+            "gc1-hotel-booking-06",
+            "gc1-hotel-booking-07",
+            "gc1-humaneval-95",
+            "gc1-invoice-status-01",
+            "gc1-invoice-status-02",
+            "gc1-invoice-status-03",
+            "gc1-invoice-status-04",
+            "gc1-invoice-status-05",
+            "gc1-invoice-status-06",
+            "gc1-invoice-status-07",
+            "gc1-login-attempt-01",
+            "gc1-login-attempt-02",
+            "gc1-login-attempt-03",
+            "gc1-login-attempt-04",
+            "gc1-login-attempt-05",
+            "gc1-login-attempt-06",
+            "gc1-login-attempt-07",
+            "gc1-mbpp-task-113",
+            "gc1-mbpp-task-47",
+            "gc1-mbpp-task-605",
+            "gc1-quiz-score-01",
+            "gc1-quiz-score-02",
+            "gc1-quiz-score-03",
+            "gc1-quiz-score-04",
+            "gc1-quiz-score-05",
+            "gc1-quiz-score-06",
+            "gc1-quiz-score-07",
+            "gc1-recipe-scaling-01",
+            "gc1-recipe-scaling-02",
+            "gc1-recipe-scaling-03",
+            "gc1-recipe-scaling-04",
+            "gc1-recipe-scaling-05",
+            "gc1-recipe-scaling-06",
+            "gc1-recipe-scaling-07",
+            "gc1-reset-token-01",
+            "gc1-reset-token-02",
+            "gc1-reset-token-03",
+            "gc1-reset-token-04",
+            "gc1-reset-token-05",
+            "gc1-reset-token-06",
+            "gc1-reset-token-07",
+            "gc1-text-truncate-01",
+            "gc1-text-truncate-02",
+            "gc1-text-truncate-03",
+            "gc1-text-truncate-04",
+            "gc1-text-truncate-05",
+            "gc1-text-truncate-06",
+            "gc1-text-truncate-07",
+            "gc1-tracking-status-01",
+            "gc1-tracking-status-02",
+            "gc1-tracking-status-03",
+            "gc1-tracking-status-04",
+            "gc1-tracking-status-05",
+            "gc1-tracking-status-06",
+            "gc1-tracking-status-07"
+          ],
+          "source_groups": [
+            "humaneval-95",
+            "mbpp-task-113",
+            "mbpp-task-47",
+            "mbpp-task-605",
+            "tpl-atm-withdrawal",
+            "tpl-course-enrollment",
+            "tpl-email-split",
+            "tpl-freight-quote",
+            "tpl-hotel-booking",
+            "tpl-invoice-status",
+            "tpl-login-attempt",
+            "tpl-quiz-score",
+            "tpl-recipe-scaling",
+            "tpl-reset-token",
+            "tpl-text-truncate",
+            "tpl-tracking-status"
+          ],
+          "rule": "Frozen held-out test split. Use it only for the final A/B/C/D run under a frozen evaluation protocol. Do not train, tune prompts, select models or hyperparameters, or set targets on it. Any change to these records requires a new dataset version and a new protocol version.",
+          "frozen_by": "data and evaluation workstream (coding agent working for Shahd Abdelhay); pending the owner's inspection",
+          "curation_command": "python -m uv run python scripts/curate_dataset.py",
+          "curation_seed": 20261020,
+          "git_head_at_freeze": "5549a77c6c966e35e1d3b6307086f23ba0cab27b",
+          "code_sha256_at_freeze": {
+            "scripts/curate_dataset.py": "2a4e1978af9e74f64c987d46b867516217bee7875c2e6719e5aa1cb16897078d",
+            "src/refactor_ai/data/__init__.py": "5a5b4139c5261c9862343882aad5b7e1c0754c21bd8047bf05a830a7fb3a8400",
+            "src/refactor_ai/data/_harness.py": "1db0b11d4812eafb31a5a8a5e33b0d9c682b3328700e3c81c3e5d7b36ca2bb19",
+            "src/refactor_ai/data/codegen.py": "bccb7447c12e233a25ae313d55bccaaa07b700718cc9343d4c6060dc0430a165",
+            "src/refactor_ai/data/curate.py": "20a5fac115be6b385d98f8db4fb0f32ae4493939bedac8b3a35f39312c8f5fb1",
+            "src/refactor_ai/data/demo.py": "6a2526e972c8abe778ef73ea8157e88b79306e40ca6cfb7aa95a751989b79dff",
+            "src/refactor_ai/data/executor.py": "e07a1da79f250b239d764d931d4e71f3b51ff90055f9686ec477735cf4507280",
+            "src/refactor_ai/data/explain.py": "b1b80bd85f038e967e381bce4edb355e8190d2ec95566895f335861a609fe6d5",
+            "src/refactor_ai/data/leakage.py": "b75fe416b345edc21f8ab7dd7add0d003cbee1eceb6b56632d111797635d3916",
+            "src/refactor_ai/data/manifest.py": "a35c2b7ed08df3d8efb49cfd384290c25fadbe839570e90bf4ee0bdcbf2124f0",
+            "src/refactor_ai/data/mutation.py": "da56c0636251320bf59d9827431d92c57636814f6fcea847b77d1cd48c30c0cf",
+            "src/refactor_ai/data/refgen.py": "ee877c6479e6bb41c3c3217efb7de7516dd4ca472c322e4bb331a77426f1586b",
+            "src/refactor_ai/data/sources.py": "08ee082d8e778d42cee37020da7a2ab1ceb91ec5217c1a269825ce852130f49e",
+            "src/refactor_ai/data/splits.py": "95ae78678ca6a3fe67e4984e2843ef3750abf744dddee4cb569541b960b87022",
+            "src/refactor_ai/data/families/__init__.py": "aac6b820a8a9aebc927a62746fb6db901d7efe8d9a6594c5b6c282834f6d32c9",
+            "src/refactor_ai/data/families/access.py": "d93778d485c70e01ce7f3976d7e940fb8f4cc0a4e69ffd0f4977e14065fd21c2",
+            "src/refactor_ai/data/families/base.py": "ddd49cbc7327ea330bbefdfb5a1bfc298ae043ab062f5e5f8e276502c4386aea",
+            "src/refactor_ai/data/families/commerce.py": "0f1f1597288460f88371f9651e6a8b12fffcad94310e9cc4d70f85f0f2ffc1fb",
+            "src/refactor_ai/data/families/finance.py": "27db997ad35fd39c87dba0e24a16a3322cde8fb7dc81647767096db0ab87df60",
+            "src/refactor_ai/data/families/helpers.py": "fb66bdc47cdb3ccf9ac4076ad1c6f43aad26ecf9354a0d8977e79793d7295626",
+            "src/refactor_ai/data/families/logistics.py": "bd1ddf97b1ae44ba5a6c2a5d3e9ecae70323b22294615d676dafbfc62d4c3453",
+            "src/refactor_ai/data/families/people.py": "2febcf2c112ea5faf1b9a6429385e00ba6435db274cf50078e596b4249461ce1",
+            "src/refactor_ai/data/families/systems.py": "e0ec6d7251aae1ae1096889f29e4f0e1734b6745309d8f27718fd8ccf006d8ed",
+            "src/refactor_ai/data/families/text.py": "d4a9a253aef4a2150a4482e651da07de32abdf28959c5a87d9397630d74470f3",
+            "src/refactor_ai/tasks/guard_clauses.py": "0a533a39ab9fecf9423f9e948ff5a4d5d4e5a04fa9179e5504b55c6cba040aff",
+            "src/refactor_ai/task_format.py": "a34251306bf379de71f97f83f995531f6bcb06e0aeeea9ab3294526adbd042d1"
+          },
+          "content_sha256": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12",
+          "prompt_version": "refactor-v1",
+          "superseded_on": "2026-10-20",
+          "superseded_because": "prompt rendering changed from refactor-v1 to refactor-v2 on validation-only evidence (experiments/models/2026-10-20-prompt-format-selection.md) before any test evaluation; test case content unchanged, see content_sha256",
+          "committed_in": "446db35 (Add the curated guard-clause dataset, frozen splits and evaluation harness)"
+        }
+      ],
+      "rendering_refrozen_on": "2026-10-20",
+      "refreeze_reason": "prompt rendering changed from refactor-v1 to refactor-v2 on validation-only evidence (experiments/models/2026-10-20-prompt-format-selection.md) before any test evaluation; test case content unchanged, see content_sha256"
+    },
+    "protocol_freeze": {
+      "protocol_version": "eval-v1",
+      "status": "frozen",
+      "frozen_on": "2026-10-21",
+      "frozen_by": "data and evaluation workstream (coding agent working for Shahd Abdelhay); pending the owner's review",
+      "document": "docs/evaluation/protocol.md",
+      "rule": "This record is the frozen protocol eval-v1. scripts/evaluate.py runs the test split only when protocol.check_protocol_freeze() finds no difference between this record and the run (protocol version, per-arm settings, dataset and test-split hashes, model identity, frozen code) and the warm-up reports this model identity. Any change after the freeze needs a new protocol version (eval-v2) and is reported as exploratory; only before any test-split run may the freeze be redone, with the previous record kept in history and the reason stated.",
+      "test_runs_before_freeze": "none. The repository's evaluation outputs (runs/evaluation, experiments/evaluation) and Kaggle submissions (runs/kaggle/submissions.jsonl) hold validation and plumbing runs only; the harness refused the test split while the protocol was a draft.",
+      "model": {
+        "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+        "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+        "adapter_id": "full-2026-10-21",
+        "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+        "adapter_config_sha256": "a190572935f3c37d2f22fcca45024c4fb4f790e3f99802457abc2d3f38682571",
+        "base_weights_sha256": "f9523886352217ded3aeeef552b381af79d568c6d49a4b9e423288cea56b0a44",
+        "base_weights_sha256_source": "SHA-256 of model.safetensors, checked by the Kaggle kernel against its pinned value before the validation run (status.json)",
+        "adapter_record": "experiments/training/full-2026-10-21.json",
+        "adapter_use": "refactoring role only, in arms C and D; analysis and review always use the base model",
+        "checked_by_the_harness": "model_id, model_revision, adapter_id and adapter_sha256: required here, and compared with the identity every warm-up call reports (adapter fields for adapter calls). The model worker computes the adapter SHA-256 from the file and refuses a mismatch with the configured value; set adapter_config_sha256 in the model configuration so the worker also verifies adapter_config.json."
+      },
+      "inference": {
+        "platform": "Kaggle private script kernel through training/kaggle/lane.py, machine shape NvidiaTeslaT4",
+        "device": "cuda:0, Tesla T4 (15360 MiB, compute capability 7.5); two T4 visible, inference uses one",
+        "dtype": "float32 (the T4 has no native bfloat16; training used fp32 too)",
+        "driver": "580.178.04",
+        "python": "3.13.15",
+        "torch": "2.11.0+cu128 (Kaggle's build), CUDA 12.8",
+        "packages": {
+          "transformers": "5.20.2",
+          "peft": "0.21.2",
+          "accelerate": "1.15.0",
+          "safetensors": "0.8.0",
+          "tokenizers": "0.23.3",
+          "huggingface-hub": "2.2.0",
+          "pydantic": "2.14.1",
+          "torch": "2.11.0+cu128"
+        },
+        "removed_packages": [
+          "torchao"
+        ],
+        "dependency_lock": "training/requirements-cuda.txt",
+        "requirement": "The test run uses the same lane, machine shape, device and dtype. Latency and memory are comparable only on this hardware; greedy decoding on a GPU is deterministic in practice but not guaranteed bit-for-bit across runs."
+      },
+      "arms": {
+        "A": {
+          "mode": "single_role",
+          "refactor_use_adapter": false,
+          "max_calls": 1,
+          "max_corrections": 0,
+          "run_timeout_s": 600.0,
+          "generation": {
+            "analysis": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "refactor": {
+              "max_new_tokens": 768,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "review": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            }
+          }
+        },
+        "B": {
+          "mode": "multi_role",
+          "refactor_use_adapter": false,
+          "max_calls": 5,
+          "max_corrections": 1,
+          "run_timeout_s": 600.0,
+          "generation": {
+            "analysis": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "refactor": {
+              "max_new_tokens": 768,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "review": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            }
+          }
+        },
+        "C": {
+          "mode": "single_role",
+          "refactor_use_adapter": true,
+          "max_calls": 1,
+          "max_corrections": 0,
+          "run_timeout_s": 600.0,
+          "generation": {
+            "analysis": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "refactor": {
+              "max_new_tokens": 768,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "review": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            }
+          }
+        },
+        "D": {
+          "mode": "multi_role",
+          "refactor_use_adapter": true,
+          "max_calls": 5,
+          "max_corrections": 1,
+          "run_timeout_s": 600.0,
+          "generation": {
+            "analysis": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "refactor": {
+              "max_new_tokens": 768,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            },
+            "review": {
+              "max_new_tokens": 384,
+              "temperature": 0.0,
+              "top_p": 1.0,
+              "seed": 42,
+              "max_input_tokens": 2048,
+              "timeout_s": 120.0
+            }
+          }
+        }
+      },
+      "arm_descriptions": {
+        "A": "original model, one refactoring role",
+        "B": "original model, analysis, refactoring and review roles, at most one correction",
+        "C": "LoRA-adapted refactoring role, one role",
+        "D": "LoRA-adapted refactoring role; analysis and review on the original model"
+      },
+      "generation_settings_source": {
+        "used": "The harness settings (src/refactor_ai/evaluation/protocol.py: generation_settings, arm_settings), identical for every arm: greedy decoding (temperature 0, top_p 1), seed 42, max_input_tokens 2048, timeout 120 s per call, max_new_tokens 384 for analysis, 768 for refactoring and 384 for review, run timeout 600 s per case. These are exactly the settings of the validation run (its run.json).",
+        "service_defaults_not_used": {
+          "analysis": {
+            "max_new_tokens": 384,
+            "max_input_tokens": 2048,
+            "timeout_s": 60.0
+          },
+          "refactor": {
+            "max_new_tokens": 1024,
+            "max_input_tokens": 2048,
+            "timeout_s": 120.0
+          },
+          "review": {
+            "max_new_tokens": 768,
+            "max_input_tokens": 4096,
+            "timeout_s": 90.0
+          }
+        },
+        "why": [
+          "The harness budgets were declared in the draft protocol when the harness was added (commit 446db35, 2026-10-20), before any model run. The service defaults were set later the same day (commit f8dc49c) for interactive use on the demonstration laptop.",
+          "The validation baseline, and with it every numerical target in this record, was measured with the harness settings; the test run must use the same settings to be comparable with it.",
+          "The protocol states its settings instead of inheriting the application's defaults, so a later change to the application cannot silently change the protocol."
+        ],
+        "consequence": "Results describe the workflow under these budgets, not under the service defaults. In the validation run 87 of 260 review outputs reached the 384-token review limit (B 58 of 161, D 29 of 99). Every one of them began with an accept verdict and was repeating the same reason or sentence when it was cut (82 repeated one reason at least three times, 5 one sentence 7 to 9 times), so it could not be parsed and the review counts as an error. 21 of D's 23 uncertain cases and 31 of B's 84 cases ended with such a review. A larger budget may only lengthen the loops; that was not tested. 3 of 430 refactoring outputs and 0 of 168 analysis outputs reached their limits. The longest prompt had 743 tokens (limit 2048) and the slowest call took 20.9 s (limit 120 s)."
+      },
+      "prompts": {
+        "analysis": "analysis-v1",
+        "refactor": "refactor-v2 (task_format; the same rendering as the dataset prompts)",
+        "correction": "correction-v2 (embeds refactor-v2)",
+        "review": "review-v1",
+        "note": "the prompt texts are part of the frozen code (agents/prompts.py, task_format.py)"
+      },
+      "oracle_feedback": {
+        "arms": [
+          "B",
+          "D"
+        ],
+        "disclosure": "In arms B and D the single correction is requested when the first proposal fails syntax, the rubric or the reference tests, or the review rejects it. The correction prompt (correction-v2) lists the problems found by the application, including 'Reference tests: k of n passed' and up to three failing reference tests, each with the call, its arguments and the expected return value or exception. These are the evaluation's own reference tests, so B and D receive test-oracle feedback that A and C never receive and that a user's own code does not have (the service runs reference tests only for a chosen reference case). Reference-test and acceptance rates of B and D after a correction are therefore optimistic for real use, and B vs A and D vs C measure role coordination together with this feedback.",
+        "validation_use": "a correction ran in 79 of 84 B cases and 15 of 84 D cases"
+      },
+      "procedure": [
+        "One attempt per (case, arm); completed attempts are never repeated. An infrastructure interruption may be resumed for missing attempts only (--resume --evaluation-id), and every resumed segment keeps its own manifest.",
+        "The arm order rotates per case (case i starts with arm i mod 4).",
+        "Before timing: the reference runner's self-checks and one untimed warm-up generation per adapter state; a model worker that stopped is warmed up again before the next attempt.",
+        "The single test run covers all 88 test cases and all four arms with the reference runner enabled (--limit, --case-ids and --runner disabled are refused) and stops before its first attempt if the runner is not enabled, a warm-up call fails, or a warm-up call reports another model identity.",
+        "Command: scripts/evaluate.py --split test --provider local --model-config <config naming this model and adapter> --arms A,B,C,D --i-confirm-frozen-test --protocol-version eval-v1, then scripts/report_evaluation.py <records.jsonl> --out <dir> --targets experiments/evaluation/protocol-freeze.json."
+      ],
+      "measures": {
+        "primary": "proposal_ready: the run completed, the final proposal parses, passes the task rubric and all reference tests, and the review accepts it (B, D) or no review runs (A, C)",
+        "denominator": "N = all attempted cases of the arm (88 per arm on the test split). Failures, timeouts and harness exceptions count as non-success; nothing missing counts as zero; a failed run's syntax, rubric and reference-test outcomes are not_run.",
+        "secondary": [
+          "syntax_valid (completed run whose final proposal parses)",
+          "rubric_pass (completed run; structure only, not behavior)",
+          "tests_pass over N, and over the cases whose tests executed (at least one test result)",
+          "failed and timeouts, by failure type",
+          "rejected, uncertain and no_change dispositions",
+          "latency of the whole workflow per case: median, 90th percentile (nearest rank), mean, max",
+          "provider calls per case (harness count) and prompt plus completion tokens",
+          "worker peak RSS and GPU memory used",
+          "agreement of the harness recheck (syntax, rubric) with the workflow"
+        ],
+        "breakdowns": [
+          "by source: the 84 team-template cases and the 4 public-benchmark functions (3 MBPP, 1 HumanEval) separately; pretraining overlap with public benchmarks cannot be excluded",
+          "by source group (16 groups) and by failure type"
+        ],
+        "limits": "Passing reference tests supports behavior preservation only on the tested inputs; exception messages are not compared. Conclusions are limited to this task, these cases and this model."
+      },
+      "paired_tests": {
+        "metric": "proposal_ready",
+        "comparisons": [
+          {
+            "comparison": "B vs A",
+            "isolates": "role coordination, original model"
+          },
+          {
+            "comparison": "C vs A",
+            "isolates": "fine-tuning, single role"
+          },
+          {
+            "comparison": "D vs C",
+            "isolates": "role coordination, adapted refactoring role"
+          },
+          {
+            "comparison": "D vs B",
+            "isolates": "fine-tuning, multi-role"
+          }
+        ],
+        "pairs": "cases attempted by both arms",
+        "test": "two-sided exact McNemar test on the discordant pairs (binomial, p = 0.5)",
+        "adjustment": "Holm over the four comparisons",
+        "alpha": 0.05,
+        "caveat": "cases come from 16 source groups and are not independent; results are also reported by group"
+      },
+      "data": {
+        "dataset": "datasets/guard_clauses/v1/records.jsonl",
+        "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+        "prompt_version": "refactor-v2",
+        "test_split": {
+          "count": 88,
+          "split_sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633",
+          "content_sha256": "3a1e6b95ce74dbd1acdd76207eefcead31eeb255cc3b24a1e6d3955f90e75d12",
+          "freeze_record": "experiments/data/test-split-freeze.json",
+          "source_groups": 16
+        },
+        "validation_split": {
+          "count": 84,
+          "split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5"
+        },
+        "hash_method": "SHA-256 of UTF-8 bytes with LF line endings (normalize CRLF to LF before hashing). A split hash covers that split's JSON lines from records.jsonl in file order, each followed by LF.",
+        "content_hash_method": "SHA-256 over one canonical JSON line per record (sorted keys, ensure_ascii, separators ',' and ':') in file order, each followed by LF. The line holds the fields id, split, source_group, source, source_url, license, refactoring_type, function_name, original_code, target_code, tests, provenance, task_version, the explanation text (the completion line after 'Explanation: ') and the analysis notes (the prompt lines after 'Analysis notes:'); prompt and completion layout is excluded."
+      },
+      "validation_baseline": {
+        "evaluation_id": "kaggle-grad-refactor-ai-eval-600603dc",
+        "evidence": "experiments/evaluation/validation-2026-10-21/",
+        "records_sha256": "121007ca7205e463897fda346e9169ed9a32e59e192c6a69f7fabf88ee7c2027",
+        "kaggle_kernel": "grad-refactor-ai-eval-600603dc (private), 2026-10-21 08:44-10:01 UTC",
+        "bundle_sha256": "74a6ad84fbc5416dcf6425c6e73ae935d7af616c655e60f22b9bc16011b425fb",
+        "code_used": "the bundle was built from commit ee87a11 with uncommitted changes: every file equals ee87a11 except src/refactor_ai/verification/runner.py (the version committed in f187b63) and training/kaggle/kernel_template.py (the version committed in 884a4cf); see provenance.json",
+        "code_differences": "Commits f187b63 and e4d6f31 changed the rubric (a trailing elif no longer counts as a guard clause), the JSON repair, the unfenced-code repair, the static findings, the test admission policy and the harness and report. Replaying every deterministic decision of the 336 records with both code versions (code-change-check.json) changes no outcome of A, C and D and three of B (gc1-blood-pressure-01 and -05, recorded proposal_ready, now fail the rubric's guard-clause check and would get a correction; gc1-http-status-07, recorded rejected, would get a different correction prompt). The current report code reproduces every table of the Kaggle report.",
+        "n": 84,
+        "recorded": {
+          "A": {
+            "proposal_ready": 6,
+            "syntax_valid": 83,
+            "rubric_pass": 17,
+            "tests_pass": 66,
+            "failed": 1,
+            "uncertain": 0,
+            "rejected": 77
+          },
+          "B": {
+            "proposal_ready": 3,
+            "syntax_valid": 84,
+            "rubric_pass": 16,
+            "tests_pass": 69,
+            "failed": 0,
+            "uncertain": 2,
+            "rejected": 79
+          },
+          "C": {
+            "proposal_ready": 69,
+            "syntax_valid": 84,
+            "rubric_pass": 84,
+            "tests_pass": 69,
+            "failed": 0,
+            "uncertain": 0,
+            "rejected": 15
+          },
+          "D": {
+            "proposal_ready": 46,
+            "syntax_valid": 84,
+            "rubric_pass": 84,
+            "tests_pass": 69,
+            "failed": 0,
+            "uncertain": 23,
+            "rejected": 15
+          }
+        },
+        "attainable_under_frozen_code": {
+          "A": {
+            "proposal_ready": [
+              6,
+              6
+            ],
+            "syntax_valid": [
+              83,
+              83
+            ],
+            "failed": [
+              1,
+              1
+            ]
+          },
+          "B": {
+            "proposal_ready": [
+              1,
+              4
+            ],
+            "syntax_valid": [
+              81,
+              84
+            ],
+            "failed": [
+              0,
+              3
+            ]
+          },
+          "C": {
+            "proposal_ready": [
+              69,
+              69
+            ],
+            "syntax_valid": [
+              84,
+              84
+            ],
+            "failed": [
+              0,
+              0
+            ]
+          },
+          "D": {
+            "proposal_ready": [
+              46,
+              46
+            ],
+            "syntax_valid": [
+              84,
+              84
+            ],
+            "failed": [
+              0,
+              0
+            ]
+          }
+        },
+        "latency_median_s": {
+          "A": 4.08,
+          "B": 15.54,
+          "C": 9.74,
+          "D": 15.81
+        },
+        "calls_per_case": {
+          "A": 1.0,
+          "B": 4.86,
+          "C": 1.0,
+          "D": 3.36
+        }
+      },
+      "targets": {
+        "rule": "Floors (proposal_ready, syntax_valid): lower limit of the two-sided 95% Clopper-Pearson interval of the validation proportion; ceiling (failed): upper limit of that interval; a count that is not determinable under the frozen code uses its least favourable attainable value. Expected direction of a paired comparison: the sign of the validation difference when its Holm-adjusted exact McNemar p < 0.05 for every attainable validation outcome, otherwise none.",
+        "confidence": 0.95,
+        "source": "src/refactor_ai/evaluation/targets.py (derive_arm_targets, direction)",
+        "arms": {
+          "A": {
+            "proposal_ready": {
+              "kind": "floor",
+              "validation_count": [
+                6,
+                6
+              ],
+              "validation_n": 84,
+              "count_used": 6,
+              "limit_rate": 0.026663,
+              "test_n": 88,
+              "test_count_needed": 3
+            },
+            "syntax_valid": {
+              "kind": "floor",
+              "validation_count": [
+                83,
+                83
+              ],
+              "validation_n": 84,
+              "count_used": 83,
+              "limit_rate": 0.935448,
+              "test_n": 88,
+              "test_count_needed": 83
+            },
+            "failed": {
+              "kind": "ceiling",
+              "validation_count": [
+                1,
+                1
+              ],
+              "validation_n": 84,
+              "count_used": 1,
+              "limit_rate": 0.064552,
+              "test_n": 88,
+              "test_count_allowed": 5
+            }
+          },
+          "B": {
+            "proposal_ready": {
+              "kind": "floor",
+              "validation_count": [
+                1,
+                4
+              ],
+              "validation_n": 84,
+              "count_used": 1,
+              "limit_rate": 0.000301,
+              "test_n": 88,
+              "test_count_needed": 1
+            },
+            "syntax_valid": {
+              "kind": "floor",
+              "validation_count": [
+                81,
+                84
+              ],
+              "validation_n": 84,
+              "count_used": 81,
+              "limit_rate": 0.899157,
+              "test_n": 88,
+              "test_count_needed": 80
+            },
+            "failed": {
+              "kind": "ceiling",
+              "validation_count": [
+                0,
+                3
+              ],
+              "validation_n": 84,
+              "count_used": 3,
+              "limit_rate": 0.100843,
+              "test_n": 88,
+              "test_count_allowed": 8
+            }
+          },
+          "C": {
+            "proposal_ready": {
+              "kind": "floor",
+              "validation_count": [
+                69,
+                69
+              ],
+              "validation_n": 84,
+              "count_used": 69,
+              "limit_rate": 0.722632,
+              "test_n": 88,
+              "test_count_needed": 64
+            },
+            "syntax_valid": {
+              "kind": "floor",
+              "validation_count": [
+                84,
+                84
+              ],
+              "validation_n": 84,
+              "count_used": 84,
+              "limit_rate": 0.957035,
+              "test_n": 88,
+              "test_count_needed": 85
+            },
+            "failed": {
+              "kind": "ceiling",
+              "validation_count": [
+                0,
+                0
+              ],
+              "validation_n": 84,
+              "count_used": 0,
+              "limit_rate": 0.042965,
+              "test_n": 88,
+              "test_count_allowed": 3
+            }
+          },
+          "D": {
+            "proposal_ready": {
+              "kind": "floor",
+              "validation_count": [
+                46,
+                46
+              ],
+              "validation_n": 84,
+              "count_used": 46,
+              "limit_rate": 0.435213,
+              "test_n": 88,
+              "test_count_needed": 39
+            },
+            "syntax_valid": {
+              "kind": "floor",
+              "validation_count": [
+                84,
+                84
+              ],
+              "validation_n": 84,
+              "count_used": 84,
+              "limit_rate": 0.957035,
+              "test_n": 88,
+              "test_count_needed": 85
+            },
+            "failed": {
+              "kind": "ceiling",
+              "validation_count": [
+                0,
+                0
+              ],
+              "validation_n": 84,
+              "count_used": 0,
+              "limit_rate": 0.042965,
+              "test_n": 88,
+              "test_count_allowed": 3
+            }
+          }
+        },
+        "directions": [
+          {
+            "comparison": "B vs A",
+            "isolates": "role coordination, original model",
+            "expected": "none",
+            "validation_recorded": {
+              "both": 1,
+              "first_only": 2,
+              "second_only": 5,
+              "neither": 76,
+              "exact_mcnemar_p": 0.453125,
+              "holm_adjusted_p": 0.453125
+            },
+            "validation_holm_p_range_over_attainable_outcomes": [
+              0.125,
+              0.7265625
+            ],
+            "attainable_outcomes_checked": 8
+          },
+          {
+            "comparison": "C vs A",
+            "isolates": "fine-tuning, single role",
+            "expected": "first",
+            "validation_recorded": {
+              "both": 4,
+              "first_only": 65,
+              "second_only": 2,
+              "neither": 13,
+              "exact_mcnemar_p": 3.088620938868081e-17,
+              "holm_adjusted_p": 1.2354483755472323e-16
+            },
+            "validation_holm_p_range_over_attainable_outcomes": [
+              1.2354483755472323e-16,
+              1.2354483755472323e-16
+            ],
+            "attainable_outcomes_checked": 8
+          },
+          {
+            "comparison": "D vs C",
+            "isolates": "role coordination, adapted refactoring role",
+            "expected": "second",
+            "validation_recorded": {
+              "both": 44,
+              "first_only": 2,
+              "second_only": 25,
+              "neither": 13,
+              "exact_mcnemar_p": 5.647540092468262e-06,
+              "holm_adjusted_p": 1.1295080184936523e-05
+            },
+            "validation_holm_p_range_over_attainable_outcomes": [
+              1.1295080184936523e-05,
+              1.1295080184936523e-05
+            ],
+            "attainable_outcomes_checked": 8
+          },
+          {
+            "comparison": "D vs B",
+            "isolates": "fine-tuning, multi-role",
+            "expected": "first",
+            "validation_recorded": {
+              "both": 2,
+              "first_only": 44,
+              "second_only": 1,
+              "neither": 37,
+              "exact_mcnemar_p": 2.6147972675971687e-12,
+              "holm_adjusted_p": 7.844391802791506e-12
+            },
+            "validation_holm_p_range_over_attainable_outcomes": [
+              1.7053025658242404e-13,
+              1.5347723092418164e-11
+            ],
+            "attainable_outcomes_checked": 8
+          }
+        ],
+        "assessment": "scripts/report_evaluation.py --targets experiments/evaluation/protocol-freeze.json writes targets.csv, target_directions.csv and a summary section"
+      },
+      "frozen_code": {
+        "patterns": [
+          "scripts/evaluate.py",
+          "scripts/report_evaluation.py",
+          "src/refactor_ai/agents/*.py",
+          "src/refactor_ai/contracts.py",
+          "src/refactor_ai/evaluation/*.py",
+          "src/refactor_ai/providers/local.py",
+          "src/refactor_ai/providers/model_worker.py",
+          "src/refactor_ai/task_format.py",
+          "src/refactor_ai/tasks/*.py",
+          "src/refactor_ai/verification/*.py"
+        ],
+        "hash_method": "SHA-256 of each file's bytes with CRLF read as LF, by path relative to the repository root of the running code",
+        "git_head_at_freeze": "c3f0709fc73de41dd26f02da90fa7dd25a79e743",
+        "note": "Frozen from the working tree at that commit, which also held this workstream's uncommitted changes to the evaluation code; the hashes, not the commit, identify the frozen files.",
+        "files": {
+          "scripts/evaluate.py": "863a3797b19dbb8d332f912b341ac116054ac96ba32fd3d9f82e0610e5ea3b34",
+          "scripts/report_evaluation.py": "cd75ef8914fcc5097a755d2e8e5e91c2f54d4f08b929fef957c0b79aa2b9782f",
+          "src/refactor_ai/agents/__init__.py": "d18f7bddba144061c4c99820fbb4f1f1c67ca2e0dd40331979f667d79e47d9d1",
+          "src/refactor_ai/agents/coordinator.py": "dac0adb86ed033cd11d5fcb09e1746a4dca6aa12401e32b09b27c2a39640e762",
+          "src/refactor_ai/agents/parsing.py": "be70c6eb6e36664823d998a621c417e75d77bfc33c0f24ba59efb49ed4929f11",
+          "src/refactor_ai/agents/prompts.py": "10925f13ac4bfb407a8eceb5d2e33ec175543bd7b648a33c150fbfff9b2c2fdd",
+          "src/refactor_ai/contracts.py": "db6b2c69715251804e9f14acf17690ae4aa91554cd6fe5d5a98a6d5db079d4a0",
+          "src/refactor_ai/evaluation/__init__.py": "907518d6a956cf8d00ff4512eff70c75f4f469a6b2e2c41550d31f28cc03dfd7",
+          "src/refactor_ai/evaluation/cases.py": "312bbf7950a213156c67f7fe5d7ba25d87f3ea07118aaf5f4804a12b1e790a0c",
+          "src/refactor_ai/evaluation/harness.py": "25c71bde43ce457f4195142c43290e91c35a60fd436ec96538731955a54b5d67",
+          "src/refactor_ai/evaluation/protocol.py": "21582086ebcdde6ba0d45ab7cc0376a1b0bb490027c7bbd95a31019127c53652",
+          "src/refactor_ai/evaluation/records.py": "cde8cbe6bd7eb28482bfbb3f93a31ce4f4c9242dcc93c69d7b146296eb8a5a4d",
+          "src/refactor_ai/evaluation/report.py": "e83eb0d5e237a0f72c7aa059ae9c446b47a22463901c66666d9b39851fed2425",
+          "src/refactor_ai/evaluation/resources.py": "a495d0855d053908bd8591480abab972e60942cb243e95df70c7e20c1feb3923",
+          "src/refactor_ai/evaluation/targets.py": "8a4d2b57f330605cb79ea775ba4048556a44549b7963658dcc273d2ac53a31fa",
+          "src/refactor_ai/providers/local.py": "90bb080a5516b27affc4128af00abee163c76305bc4908bcfd03a3333b391b9e",
+          "src/refactor_ai/providers/model_worker.py": "313b1987ea45e101f2b13714de28002e07bb366d655d22e5617caf32da1d67aa",
+          "src/refactor_ai/task_format.py": "ab9bcbd51b65a0bbb58af06d2c51b102a06a5e2b7fd592f2eab38f81c15f8778",
+          "src/refactor_ai/tasks/__init__.py": "4b9042566418ebaaab92cd0ff0e2f3efa46245c0fddd0b092a53f722f9cb5d5a",
+          "src/refactor_ai/tasks/guard_clauses.py": "dc1777d9cc7b1e0d896c3bc9059702c8354baf5089d338d16f7f4aacf00f3d85",
+          "src/refactor_ai/verification/__init__.py": "82bc8f954f05cbb7235e9601649665675adeb13bceea679463b9b53fe971e60b",
+          "src/refactor_ai/verification/_winjob.py": "c72e3e82b2e93824db7e86e37585364fb4f858c620f761f7259caef76fca7727",
+          "src/refactor_ai/verification/checks.py": "60a14573e1e2c9448e1f9fe43e62a0209b5efce89050e74176a557f81ce2be24",
+          "src/refactor_ai/verification/diffing.py": "64174c1f26912734c3631502ab63d532eb19369a80291346db2e28800fdfc8da",
+          "src/refactor_ai/verification/disposition.py": "9508694d5a482127507962a3e981583d7de2eae48c8e9fecd7bc129c8e8d156b",
+          "src/refactor_ai/verification/policy.py": "0e23390bbb5086d33e428f29ac0f07cab777532ca131151b146508001de133d3",
+          "src/refactor_ai/verification/registry.py": "19cb71a47bf212a8af1f01d9139082075b8f2bfe0339dc2aa319594780e12280",
+          "src/refactor_ai/verification/runner.py": "1b9cf17186b8ec68ecfef716c35e7cadbfad0b539b192e3df22139c5c4ff8ea4",
+          "src/refactor_ai/verification/runner_child.py": "226ba8a9e9664072571b24687a90628e262bf8e04d46bc2eed34589294f4c944"
+        }
+      },
+      "history": []
+    }
+  },
+  "summary": {
+    "written_by_arm": {
+      "A": 88,
+      "B": 88,
+      "C": 88,
+      "D": 88
+    },
+    "skipped_existing": 0,
+    "repaired_last_line": null,
+    "rewarm": [],
+    "output": "/kaggle/working/evaluation/kaggle-grad-refactor-ai-eval-3ba44332/records.jsonl"
+  }
+}

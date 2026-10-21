@@ -1,0 +1,6 @@
+arm,dimension,value,proposal_ready,attempted,rate
+A,failure_type,none,7,87,0.080460
+A,failure_type,unparseable_output,0,1,0.000000
+B,failure_type,none,1,88,0.011364
+C,failure_type,none,70,88,0.795455
+D,failure_type,none,35,88,0.397727

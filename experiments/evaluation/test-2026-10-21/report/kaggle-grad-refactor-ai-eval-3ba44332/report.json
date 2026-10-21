@@ -1,0 +1,497 @@
+{
+  "meta": {
+    "cases": 88,
+    "code_shas": [
+      "9582c662850eeb6c5495cd2124138aa4cfd04714"
+    ],
+    "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+    "evaluation_ids": [
+      "kaggle-grad-refactor-ai-eval-3ba44332"
+    ],
+    "models": [
+      "{\"adapter_id\": \"full-2026-10-21\", \"adapter_sha256\": \"dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2\", \"model_id\": \"Qwen/Qwen2.5-Coder-0.5B-Instruct\", \"model_revision\": \"ea3f2471cf1b1f0db85067f1ef93848e38e88c25\", \"use_adapter\": false}",
+      "{\"adapter_id\": \"full-2026-10-21\", \"adapter_sha256\": \"dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2\", \"model_id\": \"Qwen/Qwen2.5-Coder-0.5B-Instruct\", \"model_revision\": \"ea3f2471cf1b1f0db85067f1ef93848e38e88c25\", \"use_adapter\": true}"
+    ],
+    "protocol_status": [
+      "frozen"
+    ],
+    "protocol_version": "eval-v1",
+    "provider_modes": [
+      "local_model"
+    ],
+    "split": "test",
+    "split_sha256": "27b6d0ece9430ee30a96617949a31e1c71a0a5c0be7187b36bc660d998e95633"
+  },
+  "metrics": {
+    "A": {
+      "attempted": 88,
+      "budget_warnings": 0,
+      "calls": {
+        "max": 1,
+        "mean": 1.0,
+        "total": 88
+      },
+      "dispositions": {
+        "failed": 1,
+        "proposal_ready": 7,
+        "rejected": 80
+      },
+      "failure_types": {
+        "none": 87,
+        "unparseable_output": 1
+      },
+      "latency_s": {
+        "denominator": 88,
+        "max": 20.826163,
+        "mean": 3.5470562159090906,
+        "median": 3.029248,
+        "p90": 4.950908
+      },
+      "memory_mb": {
+        "gpu_records": 88,
+        "gpu_used_max": 2615.0,
+        "worker_peak_rss_max": 2258.5,
+        "worker_peak_rss_records": 88
+      },
+      "rates": {
+        "completed": {
+          "denominator": 88,
+          "numerator": 87,
+          "rate": 0.9886363636363636
+        },
+        "failed": {
+          "denominator": 88,
+          "numerator": 1,
+          "rate": 0.011363636363636364
+        },
+        "no_change": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "proposal_ready": {
+          "denominator": 88,
+          "numerator": 7,
+          "rate": 0.07954545454545454
+        },
+        "recheck_disagreement": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "rejected": {
+          "denominator": 88,
+          "numerator": 80,
+          "rate": 0.9090909090909091
+        },
+        "rubric_pass": {
+          "denominator": 88,
+          "numerator": 13,
+          "rate": 0.14772727272727273
+        },
+        "syntax_valid": {
+          "denominator": 88,
+          "numerator": 87,
+          "rate": 0.9886363636363636
+        },
+        "tests_executed": {
+          "denominator": 88,
+          "numerator": 87,
+          "rate": 0.9886363636363636
+        },
+        "tests_pass": {
+          "denominator": 88,
+          "numerator": 68,
+          "rate": 0.7727272727272727
+        },
+        "timeouts": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "uncertain": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "tests_pass_of_executed": {
+        "denominator": 87,
+        "numerator": 68,
+        "rate": 0.7816091954022989
+      },
+      "tokens": {
+        "denominator": 88,
+        "mean": 381.09090909090907,
+        "records_with_counts": 88,
+        "total": 33536
+      }
+    },
+    "B": {
+      "attempted": 88,
+      "budget_warnings": 0,
+      "calls": {
+        "max": 5,
+        "mean": 4.931818181818182,
+        "total": 434
+      },
+      "dispositions": {
+        "proposal_ready": 1,
+        "rejected": 85,
+        "uncertain": 2
+      },
+      "failure_types": {
+        "none": 88
+      },
+      "latency_s": {
+        "denominator": 88,
+        "max": 40.996098,
+        "mean": 20.16741156818182,
+        "median": 16.02326,
+        "p90": 31.159137
+      },
+      "memory_mb": {
+        "gpu_records": 88,
+        "gpu_used_max": 2615.0,
+        "worker_peak_rss_max": 2258.5,
+        "worker_peak_rss_records": 88
+      },
+      "rates": {
+        "completed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "failed": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "no_change": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "proposal_ready": {
+          "denominator": 88,
+          "numerator": 1,
+          "rate": 0.011363636363636364
+        },
+        "recheck_disagreement": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "rejected": {
+          "denominator": 88,
+          "numerator": 85,
+          "rate": 0.9659090909090909
+        },
+        "rubric_pass": {
+          "denominator": 88,
+          "numerator": 9,
+          "rate": 0.10227272727272728
+        },
+        "syntax_valid": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_executed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_pass": {
+          "denominator": 88,
+          "numerator": 69,
+          "rate": 0.7840909090909091
+        },
+        "timeouts": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "uncertain": {
+          "denominator": 88,
+          "numerator": 2,
+          "rate": 0.022727272727272728
+        }
+      },
+      "tests_pass_of_executed": {
+        "denominator": 88,
+        "numerator": 69,
+        "rate": 0.7840909090909091
+      },
+      "tokens": {
+        "denominator": 88,
+        "mean": 2704.5454545454545,
+        "records_with_counts": 88,
+        "total": 238000
+      }
+    },
+    "C": {
+      "attempted": 88,
+      "budget_warnings": 0,
+      "calls": {
+        "max": 1,
+        "mean": 1.0,
+        "total": 88
+      },
+      "dispositions": {
+        "proposal_ready": 70,
+        "rejected": 18
+      },
+      "failure_types": {
+        "none": 88
+      },
+      "latency_s": {
+        "denominator": 88,
+        "max": 17.198952,
+        "mean": 8.274967829545455,
+        "median": 7.742976,
+        "p90": 10.765335
+      },
+      "memory_mb": {
+        "gpu_records": 88,
+        "gpu_used_max": 2615.0,
+        "worker_peak_rss_max": 2258.5,
+        "worker_peak_rss_records": 88
+      },
+      "rates": {
+        "completed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "failed": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "no_change": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "proposal_ready": {
+          "denominator": 88,
+          "numerator": 70,
+          "rate": 0.7954545454545454
+        },
+        "recheck_disagreement": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "rejected": {
+          "denominator": 88,
+          "numerator": 18,
+          "rate": 0.20454545454545456
+        },
+        "rubric_pass": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "syntax_valid": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_executed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_pass": {
+          "denominator": 88,
+          "numerator": 70,
+          "rate": 0.7954545454545454
+        },
+        "timeouts": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "uncertain": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        }
+      },
+      "tests_pass_of_executed": {
+        "denominator": 88,
+        "numerator": 70,
+        "rate": 0.7954545454545454
+      },
+      "tokens": {
+        "denominator": 88,
+        "mean": 433.6136363636364,
+        "records_with_counts": 88,
+        "total": 38158
+      }
+    },
+    "D": {
+      "attempted": 88,
+      "budget_warnings": 0,
+      "calls": {
+        "max": 5,
+        "mean": 3.4318181818181817,
+        "total": 302
+      },
+      "dispositions": {
+        "proposal_ready": 35,
+        "rejected": 19,
+        "uncertain": 34
+      },
+      "failure_types": {
+        "none": 88
+      },
+      "latency_s": {
+        "denominator": 88,
+        "max": 46.110371,
+        "mean": 18.784500227272726,
+        "median": 17.864673,
+        "p90": 29.99002
+      },
+      "memory_mb": {
+        "gpu_records": 88,
+        "gpu_used_max": 2615.0,
+        "worker_peak_rss_max": 2258.5,
+        "worker_peak_rss_records": 88
+      },
+      "rates": {
+        "completed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "failed": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "no_change": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "proposal_ready": {
+          "denominator": 88,
+          "numerator": 35,
+          "rate": 0.3977272727272727
+        },
+        "recheck_disagreement": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "rejected": {
+          "denominator": 88,
+          "numerator": 19,
+          "rate": 0.2159090909090909
+        },
+        "rubric_pass": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "syntax_valid": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_executed": {
+          "denominator": 88,
+          "numerator": 88,
+          "rate": 1.0
+        },
+        "tests_pass": {
+          "denominator": 88,
+          "numerator": 69,
+          "rate": 0.7840909090909091
+        },
+        "timeouts": {
+          "denominator": 88,
+          "numerator": 0,
+          "rate": 0.0
+        },
+        "uncertain": {
+          "denominator": 88,
+          "numerator": 34,
+          "rate": 0.38636363636363635
+        }
+      },
+      "tests_pass_of_executed": {
+        "denominator": 88,
+        "numerator": 69,
+        "rate": 0.7840909090909091
+      },
+      "tokens": {
+        "denominator": 88,
+        "mean": 1811.659090909091,
+        "records_with_counts": 88,
+        "total": 159426
+      }
+    }
+  },
+  "paired": [
+    {
+      "A_only": 6,
+      "B_only": 0,
+      "both": 1,
+      "comparison": "B vs A",
+      "exact_mcnemar_p": 0.03125,
+      "holm_adjusted_p": 0.03125,
+      "meaning": "role coordination, original model",
+      "metric": "proposal_ready",
+      "neither": 81,
+      "paired_cases": 88,
+      "rate_first": 0.011363636363636364,
+      "rate_second": 0.07954545454545454
+    },
+    {
+      "A_only": 2,
+      "C_only": 65,
+      "both": 5,
+      "comparison": "C vs A",
+      "exact_mcnemar_p": 3.088620938868081e-17,
+      "holm_adjusted_p": 1.2354483755472323e-16,
+      "meaning": "fine-tuning, single role",
+      "metric": "proposal_ready",
+      "neither": 16,
+      "paired_cases": 88,
+      "rate_first": 0.7954545454545454,
+      "rate_second": 0.07954545454545454
+    },
+    {
+      "C_only": 36,
+      "D_only": 1,
+      "both": 34,
+      "comparison": "D vs C",
+      "exact_mcnemar_p": 5.529727786779404e-10,
+      "holm_adjusted_p": 1.1059455573558807e-09,
+      "meaning": "role coordination, adapted refactoring role",
+      "metric": "proposal_ready",
+      "neither": 17,
+      "paired_cases": 88,
+      "rate_first": 0.3977272727272727,
+      "rate_second": 0.7954545454545454
+    },
+    {
+      "B_only": 0,
+      "D_only": 34,
+      "both": 1,
+      "comparison": "D vs B",
+      "exact_mcnemar_p": 1.1641532182693481e-10,
+      "holm_adjusted_p": 3.4924596548080444e-10,
+      "meaning": "fine-tuning, multi-role",
+      "metric": "proposal_ready",
+      "neither": 53,
+      "paired_cases": 88,
+      "rate_first": 0.3977272727272727,
+      "rate_second": 0.011363636363636364
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[10:46:50] == hardware
+[10:47:02] == bundle
+[10:47:20] bundle tree at /kaggle/input/datasets/abdelrhmanadel208/grad-refactor-ai-bundle/bundle
+[10:47:21] == install
+[10:47:22] $ /usr/bin/python3 -m pip install --quiet -c /tmp/grad/constraints.txt accelerate==1.15.0 huggingface-hub==2.2.0 peft==0.21.2 safetensors==0.8.0 tokenizers==0.23.3 transformers==5.20.2 pydantic==2.14.1
+[10:47:47] pip-install: exit 0 after 25.1 s
+[10:47:47] $ /usr/bin/python3 -m pip uninstall --yes --quiet torchao
+[10:47:48] pip-uninstall-torchao: exit 0 after 1.2 s
+[10:47:48] $ /usr/bin/python3 -m pip freeze
+[10:47:50] pip-freeze: exit 0 after 1.8 s
+[10:47:50] == model
+[10:48:04] == evaluate
+[10:48:04] $ /usr/bin/python3 -X utf8 scripts/evaluate.py --split test --provider local --model-config /tmp/grad/model.kaggle.json --arms A,B,C,D --output-dir /kaggle/working/evaluation --evaluation-id kaggle-grad-refactor-ai-eval-3ba44332 --gpu-memory --i-confirm-frozen-test --protocol-version eval-v1
+[12:03:26] evaluate: exit 0 after 4522.0 s
+[12:03:26] $ /usr/bin/python3 -X utf8 scripts/report_evaluation.py /kaggle/working/evaluation/kaggle-grad-refactor-ai-eval-3ba44332/records.jsonl --out /kaggle/working/report/kaggle-grad-refactor-ai-eval-3ba44332
+[12:03:27] report: exit 0 after 0.4 s
