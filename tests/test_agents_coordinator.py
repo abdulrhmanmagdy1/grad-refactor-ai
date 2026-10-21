@@ -449,6 +449,24 @@ def test_unsupported_input_completes_without_calls(code, reason, mode):
     assert outcome.verification.syntax.status == "not_run"
 
 
+@pytest.mark.parametrize("mode", ["multi_role", "single_role"])
+def test_expression_too_deep_for_the_rewrite_completes_as_no_change(mode):
+    # Valid Python inside the size limits whose a + b + ... chain is nested deeper than
+    # the recursion limit of the ast helpers that check_input uses for the rewrite.
+    chain = "+".join(["x"] * 1000)
+    code = (
+        f"def f(x):\n    if x:\n        return {chain}\n    else:\n"
+        "        if x > 1:\n            return 1\n        return 2\n"
+    )
+    assert len(code) <= guard_clauses.MAX_INPUT_CHARS
+    result = run(code, mode=mode, case=None)
+    outcome = result.outcome
+    assert outcome.error is None and outcome.status == RunStatus.COMPLETED
+    assert outcome.verification.disposition == Disposition.NO_CHANGE
+    assert outcome.stop_reason == coordinator.STOP_UNSUPPORTED_INPUT
+    assert result.provider.calls == [] and result.reasons
+
+
 def test_unsupported_task_type_is_no_change():
     provider = FakeProvider()
     request = WorkflowRequest(code=SHIP, task_type="extract_method")
@@ -761,6 +779,39 @@ def test_review_reject_triggers_correction_then_accept():
     correction = result.provider.calls[3].messages[-1].content
     assert "The reviewer rejected the proposal: A weight of 0 no longer raises." in correction
     assert "Reviewer suggestion: Use weight <= 0 in the guard." in correction
+
+
+def test_fenced_reject_with_a_code_block_in_its_suggestion_triggers_correction():
+    suggestion = "```python\nif weight <= 0:\n    raise ValueError('weight must be positive')\n```"
+    reject = json.dumps(
+        {
+            "verdict": "reject",
+            "reasons": ["A weight of 0 no longer raises."],
+            "suggested_correction": suggestion,
+        }
+    )
+    result = run(
+        script={
+            Role.REFACTOR: [completion(WRONG), completion(GOOD)],
+            Role.REVIEW: [f"```json\n{reject}\n```", ACCEPT],
+        }
+    )
+    first = result.outcome.attempts[0]
+    assert result.roles == [Role.ANALYSIS, Role.REFACTOR, Role.REVIEW, Role.REFACTOR, Role.REVIEW]
+    assert first.verification.model_review.status == "reject"
+    assert first.review.suggested_correction == suggestion
+    assert result.trace.calls[2].parse_repairs == ["code_fence_removed"]
+    assert result.outcome.stop_reason == coordinator.STOP_CORRECTION_USED
+    correction = result.provider.calls[3].messages[-1].content
+    assert "The reviewer rejected the proposal: A weight of 0 no longer raises." in correction
+    assert "Reviewer suggestion: ```python" in correction
+
+
+def test_analysis_json_followed_by_a_code_block_is_used():
+    output = f"{ANALYSIS_OK}\n```\ndef shipping_cost(weight, express):\n    return 0\n```"
+    result = run(script={Role.ANALYSIS: [output]})
+    assert result.outcome.analysis.source == "model"
+    assert result.trace.calls[0].parse_repairs == ["json_object_extracted"]
 
 
 def test_correction_exhaustion_stops_after_five_calls():

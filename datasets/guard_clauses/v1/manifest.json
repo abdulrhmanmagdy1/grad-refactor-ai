@@ -1172,7 +1172,7 @@
     "src/refactor_ai/data/families/people.py": "2febcf2c112ea5faf1b9a6429385e00ba6435db274cf50078e596b4249461ce1",
     "src/refactor_ai/data/families/systems.py": "e0ec6d7251aae1ae1096889f29e4f0e1734b6745309d8f27718fd8ccf006d8ed",
     "src/refactor_ai/data/families/text.py": "d4a9a253aef4a2150a4482e651da07de32abdf28959c5a87d9397630d74470f3",
-    "src/refactor_ai/tasks/guard_clauses.py": "0a533a39ab9fecf9423f9e948ff5a4d5d4e5a04fa9179e5504b55c6cba040aff",
-    "src/refactor_ai/task_format.py": "db4888b490c71e01da8d49c68203b4d95ff1c7286094d6851658a20ea048ae10"
+    "src/refactor_ai/tasks/guard_clauses.py": "dc1777d9cc7b1e0d896c3bc9059702c8354baf5089d338d16f7f4aacf00f3d85",
+    "src/refactor_ai/task_format.py": "ab9bcbd51b65a0bbb58af06d2c51b102a06a5e2b7fd592f2eab38f81c15f8778"
   }
 }

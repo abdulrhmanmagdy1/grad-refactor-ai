@@ -5,6 +5,7 @@ import threading
 import time
 from pathlib import Path
 
+import anyio
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,6 +21,7 @@ from refactor_ai.contracts import (
     RunList,
     RunnerInfo,
     RunStatus,
+    WorkflowOutcome,
 )
 from refactor_ai.providers.base import failed_result
 from refactor_ai.providers.fake import FakeProvider
@@ -33,6 +35,7 @@ from refactor_ai.runs.components import (
 )
 from refactor_ai.runs.records import INTERRUPTED_MESSAGE, NOT_STARTED_MESSAGE
 from refactor_ai.runs.service import WORKER_THREAD_NAME
+from refactor_ai.runs.store import StoreError
 from refactor_ai.runs.testing import ScriptedWorkflow
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -291,6 +294,93 @@ def test_frontend_is_served_without_shadowing_the_api(tmp_path, dist):
         wait_for(client, accepted.json()["run_id"])
 
 
+def raw_get(client, path: str) -> tuple[int, dict[str, str], bytes]:
+    """GET with the path exactly as given; httpx would remove dot segments first."""
+    messages: list[dict] = []
+
+    async def call():
+        finished = anyio.Event()
+        requested = False
+
+        async def receive():
+            nonlocal requested
+            if not requested:
+                requested = True
+                return {"type": "http.request", "body": b"", "more_body": False}
+            await finished.wait()  # file responses listen for the disconnect
+            return {"type": "http.disconnect"}
+
+        async def send(message):
+            messages.append(message)
+            if message["type"] == "http.response.body" and not message.get("more_body"):
+                finished.set()
+
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": path,
+            "raw_path": path.encode("utf-8"),
+            "root_path": "",
+            "query_string": b"",
+            "headers": [(b"host", b"testserver")],
+            "client": ("testclient", 50000),
+            "server": ("testserver", 80),
+        }
+        await client.app(scope, receive, send)
+
+    client.portal.call(call)
+    start = messages[0]
+    headers = {key.decode("latin-1"): value.decode("latin-1") for key, value in start["headers"]}
+    body = b"".join(message.get("body", b"") for message in messages[1:])
+    return start["status"], headers, body
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/./api/secret.json",
+        "/assets/../api/secret.json",
+        "/api./secret.json",
+        "/api /secret.json",
+        "/API./secret.json",
+        "/api::$INDEX_ALLOCATION/secret.json",
+        "/docs./index.html",
+        "/docs.",
+        "/docs./",
+        "/./docs/",
+    ],
+)
+def test_reserved_names_are_not_served_under_other_spellings(tmp_path, dist, path):
+    with TestClient(build(tmp_path, frontend_dist=dist)) as client:
+        status, headers, body = raw_get(client, path)
+    assert status == 404, (path, body)
+    assert json.loads(body)["error"]["code"] == "not_found"
+    assert b"leak" not in body and b"shadow docs" not in body
+    assert "location" not in headers
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/a*b",
+        '/a"b',
+        "/a<b",
+        "/a|b",
+        pytest.param("/" + "x" * 300, id="long-name"),
+        pytest.param("/assets/" + "y" * 300 + ".js", id="long-asset-name"),
+    ],
+)
+def test_paths_the_file_system_cannot_open_are_json_404(tmp_path, dist, path):
+    with TestClient(build(tmp_path, frontend_dist=dist)) as client:
+        status, _, body = raw_get(client, path)
+        assert raw_get(client, "/assets/app.js")[0] == 200
+    assert status == 404, (path, body)
+    assert json.loads(body)["error"]["code"] == "not_found"
+
+
 def test_frontend_built_after_startup_is_picked_up(tmp_path):
     root = tmp_path / "later"
     with TestClient(build(tmp_path, frontend_dist=root)) as client:
@@ -517,6 +607,81 @@ def test_restart_after_a_stuck_worker_marks_runs_interrupted(tmp_path):
     assert interrupted["original_code"] == CODE
     assert never_started["error"]["stage"] == "queued"
     assert never_started["status"] == RunStatus.FAILED
+
+
+class ClosingEndsCallProvider(StubLocalProvider):
+    """close() ends the call in progress, as LocalProvider.close() stops its worker."""
+
+    def __init__(self, gate):
+        super().__init__(info=ProviderInfo(provider_mode=ProviderMode.LOCAL_MODEL, ready=True))
+        self.gate = gate
+
+    def close(self):
+        super().close()
+        self.gate.set()
+
+
+def test_a_run_cut_off_at_shutdown_is_recorded_as_interrupted(tmp_path):
+    gate = threading.Event()
+    worker_exited = WorkflowOutcome.model_validate(
+        {
+            "status": "failed",
+            "provider_mode": "local_model",
+            "error": {
+                "code": "generation_error",
+                "message": "The model worker exited unexpectedly (exit code 1).",
+                "stage": "analysis",
+            },
+            "call_count": 1,
+            "stop_reason": "provider_error",
+        }
+    )
+    workflow = ScriptedWorkflow(statuses=[RunStatus.ANALYZING], gate=gate, outcome=worker_exited)
+    provider = ClosingEndsCallProvider(gate)
+    try:
+        app = build(tmp_path, workflow=workflow, provider=provider, shutdown_grace_s=0.2)
+        with TestClient(app) as client:
+            run_id = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+            wait_for(client, run_id, statuses=("analyzing",))
+        assert provider.closed == 1
+    finally:
+        gate.set()
+    with TestClient(build(tmp_path)) as client:
+        record = client.get(f"/api/v1/runs/{run_id}").json()
+    assert record["status"] == "failed"
+    assert record["error"] == {
+        "code": "interrupted",
+        "message": INTERRUPTED_MESSAGE,
+        "stage": "analyzing",
+    }
+    assert record["stop_reason"] is None  # the cut-off outcome was not stored
+
+
+def test_a_second_service_on_the_same_database_refuses_to_start(tmp_path):
+    """uvicorn runs the lifespan before it binds the port, so a second start on the same
+    database (for example one whose port is taken) must not touch the live runs."""
+    gate = threading.Event()
+    workflow = ScriptedWorkflow(gate=gate)
+    try:
+        with TestClient(build(tmp_path, workflow=workflow)) as client:
+            running = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+            wait_for(client, running, statuses=("verifying",))
+            waiting = client.post("/api/v1/runs", json={"code": CODE}).json()["run_id"]
+            second_provider = StubLocalProvider()
+            second = build(tmp_path, provider=second_provider)
+            with pytest.raises(StoreError, match="already in use"):
+                with TestClient(second):
+                    pass
+            assert second.state.runtime is None
+            assert second_provider.closed == 1
+            for run_id, status in ((running, "verifying"), (waiting, "queued")):
+                assert client.get(f"/api/v1/runs/{run_id}").json()["status"] == status
+            gate.set()
+            done = [wait_for(client, run_id) for run_id in (running, waiting)]
+    finally:
+        gate.set()
+    assert [(body["status"], body["error"]) for body in done] == [("completed", None)] * 2
+    assert len(workflow.calls) == 2
 
 
 def test_restart_applies_a_lower_retention(tmp_path):

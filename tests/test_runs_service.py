@@ -16,7 +16,7 @@ from refactor_ai.contracts import (
 )
 from refactor_ai.providers.fake import FakeProvider
 from refactor_ai.runs.components import DisabledRunner
-from refactor_ai.runs.records import new_record, new_run_id
+from refactor_ai.runs.records import INTERRUPTED_MESSAGE, new_record, new_run_id
 from refactor_ai.runs.service import (
     INVALID_OUTCOME,
     WORKER_THREAD_NAME,
@@ -399,6 +399,71 @@ def test_stop_finishes_the_current_run_and_interrupts_waiting_ones(store):
         assert record.started_at is None
     assert len(workflow.calls) == 1
     assert service.queue_info().pending == 0
+
+
+PROVIDER_CLOSED = WorkflowOutcome.model_validate(
+    {
+        "status": "failed",
+        "provider_mode": "local_model",
+        "error": {
+            "code": "generation_error",
+            "message": "The model worker exited unexpectedly (exit code 1).",
+            "stage": "analysis",
+        },
+        "call_count": 1,
+        "stop_reason": "provider_error",
+    }
+)
+
+
+@pytest.mark.parametrize(
+    "ending",
+    [{"outcome": PROVIDER_CLOSED}, {"error": RuntimeError("The provider is closed.")}],
+    ids=["provider-error-outcome", "exception"],
+)
+def test_a_run_cut_off_by_shutdown_is_interrupted(store, ending):
+    """Shutdown closes the provider under a run that outlived the grace period; what the
+    workflow then reports is the stop, not a model failure."""
+    gate = threading.Event()
+    workflow = ScriptedWorkflow(statuses=[RunStatus.ANALYZING], gate=gate, **ending)
+    service = make_service(store, workflow)
+    service.start()
+    try:
+        cut, waiting = submit(service), submit(service)
+        assert workflow.entered.wait(5)
+        assert service.stop(timeout=0.1) is False
+        service.interrupt_current()
+        gate.set()  # closing the provider ends the call
+        assert service.join(timeout=5) is True
+    finally:
+        gate.set()
+        service.stop(timeout=5)
+    record = store.get(cut.run_id)
+    assert record.status == RunStatus.FAILED
+    assert record.error.model_dump() == {
+        "code": "interrupted",
+        "message": INTERRUPTED_MESSAGE,
+        "stage": "analyzing",
+    }
+    assert record.started_at is not None and record.finished_at is not None
+    assert store.get(waiting.run_id).error.code == "interrupted"
+    assert len(workflow.calls) == 1
+
+
+def test_a_run_finishing_within_the_grace_period_keeps_its_outcome(store):
+    gate = threading.Event()
+    workflow = ScriptedWorkflow(statuses=[RunStatus.ANALYZING], gate=gate, outcome=PROVIDER_CLOSED)
+    service = make_service(store, workflow)
+    service.start()
+    try:
+        run = submit(service)
+        assert workflow.entered.wait(5)
+        gate.set()
+        assert service.stop(timeout=5) is True
+    finally:
+        gate.set()
+        service.stop(timeout=5)
+    assert store.get(run.run_id).error.code == "generation_error"
 
 
 def test_start_marks_unfinished_runs_interrupted_and_never_reruns_them(store):

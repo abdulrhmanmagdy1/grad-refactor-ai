@@ -64,3 +64,19 @@ def test_parse_keeps_invalid_python_for_verification():
 def test_explanation_without_label_uses_surrounding_text():
     parsed = tf.parse_refactor_output("Here it is.\n```py\ndef f():\n    return 1\n```\nDone.")
     assert parsed.explanation == "Here it is. Done."
+
+
+def test_unfenced_repair_stops_at_a_trailing_explanation():
+    parsed = tf.parse_refactor_output(
+        "def f(x):\n    if x is None:\n        return 0\n    return x + 1\n"
+        "Explanation: Uses a guard clause."
+    )
+    assert parsed.repaired and parsed.notes == ["unfenced_code"]
+    assert parsed.code == "def f(x):\n    if x is None:\n        return 0\n    return x + 1\n"
+    assert parsed.explanation == "Uses a guard clause."
+
+
+def test_unfenced_repair_with_leading_explanation_keeps_code_out_of_it():
+    parsed = tf.parse_refactor_output("Explanation: done\ndef f(x):\n    return x")
+    assert parsed.code == "def f(x):\n    return x\n"
+    assert parsed.explanation == "done"

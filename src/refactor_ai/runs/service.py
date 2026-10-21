@@ -7,7 +7,9 @@ the terminal status is stored together with the outcome, so a reader that sees
 completed or failed always sees the full result. A workflow exception becomes a failed
 run with error code internal_error and no traceback. On start, runs a previous process
 left unfinished are marked failed with error code interrupted and are never rerun; on
-stop, the run in progress may finish and runs still waiting are marked the same way.
+stop, the run in progress may finish and runs still waiting are marked the same way. A
+run that shutdown cuts off (interrupt_current(), then closing the provider under it) is
+marked interrupted too, instead of storing the failure that closing the provider causes.
 """
 
 from __future__ import annotations
@@ -35,6 +37,7 @@ from refactor_ai.providers.base import Provider
 from refactor_ai.runs.components import Workflow
 from refactor_ai.runs.errors import RunErrorCode
 from refactor_ai.runs.records import (
+    INTERRUPTED_MESSAGE,
     apply_outcome,
     failed_record,
     interrupted_record,
@@ -124,6 +127,7 @@ class RunService:
         self._pending = 0
         self._accepting = False
         self._stopping = False
+        self._interrupting = False
         self._thread: threading.Thread | None = None
 
     # --- accessors -------------------------------------------------------------------
@@ -179,6 +183,16 @@ class RunService:
                 self._stopping = True
                 self._queue.put(_STOP)
         return self.join(timeout)
+
+    def interrupt_current(self) -> None:
+        """Record the run in progress as interrupted when its workflow returns.
+
+        Shutdown calls this after the grace period, just before it closes the provider
+        under the run: whatever the workflow then reports (for example a model worker
+        that "exited unexpectedly") is caused by the stop, not by the model or the input.
+        """
+        with self._lock:
+            self._interrupting = True
 
     def join(self, timeout: float | None = None) -> bool:
         thread = self._thread
@@ -306,8 +320,12 @@ class RunService:
                 on_status=self._status_callback(run_id, progress),
             )
         except Exception as exc:
+            if self._cut_off(run_id, progress):
+                return
             logger.exception("The workflow raised an exception for run %s", run_id)
             self._finish_failed(run_id, internal_error_message(exc), progress.status)
+            return
+        if self._cut_off(run_id, progress):
             return
         try:
             outcome = (
@@ -334,6 +352,18 @@ class RunService:
             return
         if stored is None:
             logger.info("Run %s was deleted while it ran; its outcome was discarded", run_id)
+
+    def _cut_off(self, run_id: str, progress: _Progress) -> bool:
+        """Mark the run interrupted if shutdown cut it off; True when it did."""
+        with self._lock:
+            interrupting = self._interrupting
+        if not interrupting:
+            return False
+        logger.warning("Run %s was cut off by shutdown; recording it as interrupted", run_id)
+        self._finish_failed(
+            run_id, INTERRUPTED_MESSAGE, progress.status, code=RunErrorCode.INTERRUPTED
+        )
+        return True
 
     def _status_callback(self, run_id: str, progress: _Progress) -> Callable[[RunStatus], None]:
         def on_status(status: RunStatus) -> None:

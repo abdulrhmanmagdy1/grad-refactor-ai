@@ -21,6 +21,18 @@ class AnalysisResult(BaseModel):
 BLOCKS = (ast.If, ast.For, ast.AsyncFor, ast.While, ast.Try, ast.With, ast.AsyncWith)
 
 
+def _elif_of(node: ast.AST) -> ast.If | None:
+    """The elif that continues an if statement (an if alone in else, same column)."""
+    if (
+        isinstance(node, ast.If)
+        and len(node.orelse) == 1
+        and isinstance(node.orelse[0], ast.If)
+        and node.orelse[0].col_offset == node.col_offset
+    ):
+        return node.orelse[0]
+    return None
+
+
 def analyze(code: str) -> AnalysisResult:
     try:
         tree = ast.parse(code)
@@ -42,12 +54,12 @@ def analyze(code: str) -> AnalysisResult:
                     )
                 )
 
-    def visit(node: ast.AST, depth: int = 0) -> None:
+    def visit(node: ast.AST, depth: int = 0, continues_chain: bool = False) -> None:
         # Function and class bodies establish a new nesting context.
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
             depth = 0
         current = depth + int(isinstance(node, BLOCKS))
-        if isinstance(node, BLOCKS) and current == 4:
+        if isinstance(node, BLOCKS) and current == 4 and not continues_chain:
             findings.append(
                 Finding(
                     rule="deep-nesting",
@@ -55,8 +67,13 @@ def analyze(code: str) -> AnalysisResult:
                     message="Four nested control blocks; consider simplifying control flow.",
                 )
             )
+        elif_node = _elif_of(node)
         for child in ast.iter_child_nodes(node):
-            visit(child, current)
+            if child is elif_node:
+                # An elif continues its if at the same level instead of nesting deeper.
+                visit(child, depth, continues_chain=True)
+            else:
+                visit(child, current)
 
     try:
         visit(tree)

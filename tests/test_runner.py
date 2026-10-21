@@ -19,14 +19,18 @@ import pytest
 from refactor_ai.agents import run_workflow
 from refactor_ai.contracts import (
     Disposition,
+    ModelReviewResult,
     ReferenceCase,
     ReferenceTest,
+    RubricCheck,
+    SyntaxCheck,
+    WorkflowMode,
     WorkflowRequest,
     WorkflowSettings,
 )
 from refactor_ai.providers import FakeProvider
 from refactor_ai.tasks import guard_clauses
-from refactor_ai.verification import create_runner, load_cases
+from refactor_ai.verification import create_runner, decide, load_cases
 from refactor_ai.verification.runner import (
     ALLOWED_CHILD_ENVIRONMENT,
     RunnerLimits,
@@ -262,8 +266,13 @@ def test_syntax_error_is_reported_without_starting_a_process(runner):
 
 
 def test_infinite_loop_hits_the_wall_clock_limit(runner, work_root):
+    # The runner's own 1 s wall-clock limit, not a shorter run budget, stops the loop.
+    short = SubprocessReferenceRunner(
+        RunnerLimits(wall_timeout_s=1.0, cpu_time_s=2.0, memory_mb=256), work_root=work_root
+    )
+    short._info = runner.info()  # same host, so the fixture runner's self-checks apply
     started = time.monotonic()
-    result = runner.run(CASE, LOOP, timeout_s=1.0)
+    result = short.run(CASE, LOOP)
     assert time.monotonic() - started < 12.0
     assert result.status == "fail" and (result.passed, result.failed) == (0, 1)
     failure = result.failures[0]
@@ -271,10 +280,40 @@ def test_infinite_loop_hits_the_wall_clock_limit(runner, work_root):
     assert (
         "1 s wall-clock limit" in failure.detail and "3 later tests were not run" in failure.detail
     )
-    execution = runner.last_execution
+    execution = short.last_execution
     assert execution.outcome == "timeout" and execution.cleanup_ok
     assert execution.workdir_removed and not os.path.exists(execution.workdir)
     assert not process_alive(execution.pid)
+
+
+def single_role_disposition(tests) -> Disposition:
+    return decide(
+        SyntaxCheck(status="pass"),
+        RubricCheck(status="pass"),
+        tests,
+        ModelReviewResult(status="not_run"),
+        mode=WorkflowMode.SINGLE_ROLE,
+    )[0]
+
+
+def test_run_budget_ending_during_the_tests_is_not_a_failure(runner):
+    # The workflow lowers the wall-clock limit to the time left in the run; when that
+    # shorter limit ends the process, the tests did not finish, the candidate did not fail.
+    result = runner.run(CASE, LOOP, timeout_s=1.0)
+    assert result.status == "not_run" and result.failures == [], result
+    assert "time limit left only 1 s for the reference tests" in result.reason
+    execution = runner.last_execution
+    assert execution.outcome == "timeout" and execution.cleanup_ok
+    assert not process_alive(execution.pid)
+    assert single_role_disposition(result) == Disposition.UNCERTAIN
+
+
+def test_correct_candidate_is_not_rejected_when_the_run_budget_is_tiny(runner):
+    # About 0.3 s of interpreter start on the laptop exceeds the 0.05 s left in the run.
+    # A fast host may still finish all four tests; either way it is never a rejection.
+    result = runner.run(CASE, GOOD, timeout_s=0.05)
+    assert result.status in ("not_run", "pass"), result
+    assert single_role_disposition(result) != Disposition.REJECTED
 
 
 def test_cpu_bound_loop_hits_the_cpu_limit(runner):
@@ -582,3 +621,13 @@ def test_privilege_drop_only_under_root(monkeypatch):
     assert runner_module.privilege_drop() == {}
     monkeypatch.delattr(runner_module.os, "geteuid", raising=False)
     assert runner_module.privilege_drop() == {}
+
+
+def test_attribute_builtins_cannot_be_aliased_or_passed_as_values():
+    from refactor_ai.verification.policy import admission_problems
+
+    alias = 'def f(x):\n    g = getattr\n    return g(x, "_" + "_class__")\n'
+    passed = 'def f(x):\n    return list(map(getattr, [x], ["__class__"]))[0]\n'
+    assert "denied_name:getattr" in admission_problems(alias)
+    assert "denied_name:getattr" in admission_problems(passed)
+    assert admission_problems('def f(x):\n    return getattr(x, "real")\n') == []

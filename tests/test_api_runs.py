@@ -204,6 +204,30 @@ def test_malformed_bodies_are_validation_errors(make_app, content, content_type)
         assert response.json()["error"]["message"].startswith("Invalid request (body): ")
 
 
+@pytest.mark.parametrize(
+    ("content", "reason"),
+    [
+        (b'{"code": "\xff"}', "the body is not valid UTF-8"),
+        (b"[" * 100_000, "the JSON is nested too deeply"),
+    ],
+    ids=["invalid-utf8", "deep-nesting"],
+)
+@pytest.mark.parametrize("path", ["/api/v1/runs", "/api/v1/analyze"])
+def test_undecodable_bodies_are_validation_errors(make_app, content, reason, path):
+    """FastAPI answers these with a bare 400; the error contract lists malformed JSON
+    under 422 validation_error."""
+    with TestClient(make_app()) as client:
+        response = client.post(path, content=content, headers={"content-type": "application/json"})
+        assert response.status_code == 422, response.text
+        error = response.json()["error"]
+        assert error_code(response) == "validation_error"
+        assert error["message"] == f"Invalid request (body): JSON decode error ({reason})"
+        assert error["details"] == [
+            {"loc": ["body"], "message": f"JSON decode error ({reason})", "type": "json_invalid"}
+        ]
+        assert client.get("/api/v1/runs").json()["runs"] == []
+
+
 def test_blank_code_error_matches_the_published_example(make_app):
     with TestClient(make_app()) as client:
         response = submit(client, code="   ")

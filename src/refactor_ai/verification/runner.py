@@ -312,7 +312,9 @@ class SubprocessReferenceRunner:
         """Run the case's trusted tests against the candidate in a separate process.
 
         timeout_s, when given, lowers the wall-clock limit (the workflow passes the time
-        left in the run). Only status "pass" means every test ran and passed.
+        left in the run). When that lowered limit ends the process, the run's budget ran
+        out, not the candidate's: the result is not_run unless the tests that finished
+        already failed or errored. Only status "pass" means every test ran and passed.
         """
         if not case.tests:
             return ReferenceTestsResult(
@@ -352,8 +354,9 @@ class SubprocessReferenceRunner:
                 reason=_bounded(f"The candidate was not executed (runner policy): {texts}"),
             )
         wall = self.limits.wall_timeout_s
-        if timeout_s is not None:
-            wall = min(wall, timeout_s)
+        budget_limited = timeout_s is not None and timeout_s < wall
+        if budget_limited:
+            wall = timeout_s
         execution = self._execute(
             case.function_name,
             candidate_code,
@@ -362,7 +365,7 @@ class SubprocessReferenceRunner:
             cpu_s=self.limits.cpu_time_s,
             memory_mb=self.limits.memory_mb,
         )
-        return _to_result(case, execution, wall, self.limits)
+        return _to_result(case, execution, wall, self.limits, budget_limited=budget_limited)
 
     # --- Execution --------------------------------------------------------------------
 
@@ -644,20 +647,38 @@ def _limit_text(execution: Execution, wall_s: float, limits: RunnerLimits) -> st
 
 
 def _to_result(
-    case: ReferenceCase, execution: Execution, wall_s: float, limits: RunnerLimits
+    case: ReferenceCase,
+    execution: Execution,
+    wall_s: float,
+    limits: RunnerLimits,
+    *,
+    budget_limited: bool = False,
 ) -> ReferenceTestsResult:
     """Map one test process to the contract result. Missing evidence is never a pass.
 
     Counts cover the tests that ran; when a timeout stops the process, later tests are not
-    run and total exceeds passed + failed + errored.
+    run and total exceeds passed + failed + errored. budget_limited means wall_s is the
+    time left in the workflow run, below the runner's own limit: a wall-clock timeout then
+    ends the run's budget, not the candidate's, and is not_run (the disposition is
+    uncertain) unless failures or errors already observed decide the result.
     """
     total = len(case.tests)
     base = {"case_id": case.case_id, "total": total, "duration_s": round(execution.elapsed_s, 4)}
+    budget_ended = budget_limited and execution.outcome == "timeout"
 
     def error(reason: str, failures=None, **counts) -> ReferenceTestsResult:
         return ReferenceTestsResult(
             status="error", reason=_bounded(reason), failures=failures or [], **base, **counts
         )
+
+    def stopped(where: str) -> str:
+        return (
+            f"The run's time limit left only {wall_s:.3g} s for the reference tests, and "
+            f"they stopped {where}."
+        )
+
+    def not_run(where: str) -> ReferenceTestsResult:
+        return ReferenceTestsResult(status="not_run", reason=_bounded(stopped(where)), **base)
 
     if execution.outcome == "start_failed":
         return error("The isolated test process could not be started.")
@@ -667,6 +688,8 @@ def _to_result(
     if fatal is not None:
         return error(f"The test process refused to run: {fatal.get('d') or 'setup failed'}.")
     if execution.first("ready") is None:
+        if budget_ended:
+            return not_run("before the test process was ready")
         if execution.outcome in ("timeout", "cpu_limit"):
             limit = _limit_text(execution, wall_s, limits)
             return error(f"The test process {limit} before it was ready.")
@@ -711,6 +734,32 @@ def _to_result(
             )
 
     finished = execution.first("final") is not None
+    if budget_ended and not finished:
+        # More tests could not change a failure or an error that already happened.
+        if failed:
+            text = f"{failed} of {total} reference tests failed. " + stopped(
+                f"after {len(results)} of {total} tests"
+            )
+            return ReferenceTestsResult(
+                status="fail",
+                reason=_bounded(text),
+                passed=passed,
+                failed=failed,
+                errored=errored,
+                failures=failures,
+                **base,
+            )
+        if errored:
+            text = f"{errored} of {total} reference tests could not be evaluated. " + stopped(
+                f"after {len(results)} of {total} tests"
+            )
+            return error(text, failures, passed=passed, failed=failed, errored=errored)
+        if defined is None:
+            return not_run("while the function was being defined")
+        if not results:
+            return not_run("before the first test finished")
+        return not_run(f"after {passed} of {total} tests had passed")
+
     if execution.outcome in ("timeout", "cpu_limit") and not finished:
         limit = _limit_text(execution, wall_s, limits)
         if defined is None:

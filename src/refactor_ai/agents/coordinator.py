@@ -3,7 +3,8 @@
 run_workflow() implements docs/architecture/contracts.md and docs/architecture/workflow.md:
 
 1. Validate deterministically (guard_clauses.check_input). Unsupported input completes
-   with disposition no_change, reason codes and zero model calls.
+   with disposition no_change, reason codes and zero model calls; an expression nested
+   too deeply for the reference rewrite counts as no_opportunity, with a warning.
 2. Analyze (multi-role): one call; strict JSON with one deterministic repair; findings
    outside the input are dropped; unusable output falls back to the static findings.
 3. Generate: one refactoring call (task_format's prompt, PROMPT_VERSION; multi-role adds
@@ -120,6 +121,7 @@ ERROR_REFERENCE_CASE_MISMATCH = "reference_case_mismatch"
 ERROR_INTERNAL = "internal_error"
 
 UNSUPPORTED_TASK_TYPE = "unsupported_task_type"
+NO_OPPORTUNITY = "no_opportunity"  # guard_clauses' code when the rewrite cannot help
 MIN_MULTI_ROLE_CALLS = 3  # analysis, generation, review
 CORRECTION_CALLS = 2  # corrected generation and its review
 MAX_STATIC_FINDINGS = parsing.MAX_FINDINGS
@@ -341,7 +343,18 @@ class _Workflow:
             )
         if self.request.task_type != guard_clauses.TASK_TYPE:
             return [UNSUPPORTED_TASK_TYPE], None
-        check = guard_clauses.check_input(self.code)
+        try:
+            check = guard_clauses.check_input(self.code)
+        except (RecursionError, MemoryError):
+            # check_input applies the reference rewrite with recursive ast helpers. Valid
+            # code inside the size limits can nest an expression deeper than they allow
+            # (for example a long a + b + ... chain); the rewrite then cannot be computed,
+            # so it cannot lower the nesting depth (task scope rule 5).
+            self._warn(
+                "The deterministic guard-clause rewrite could not be computed because an "
+                "expression in the code is nested too deeply."
+            )
+            return [NO_OPPORTUNITY], None
         if not check.supported:
             return list(check.reasons), check
         if "```" in self.code:

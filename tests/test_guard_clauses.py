@@ -179,3 +179,34 @@ def test_opportunities_have_valid_lines():
 def test_same_code_ignores_formatting():
     assert gc.same_code("def f(x):\n    return (x)\n", "def f(x):  # comment\n    return x\n")
     assert not gc.same_code("def f(x):\n    return x\n", "def f(x):\n    return -x\n")
+
+
+ELIF_ONLY = """def label(kind, size):
+    note = 'small'
+    if size > 10:
+        note = 'large'
+    elif kind == 'box':
+        return 'box'
+    else:
+        if size < 0:
+            return 'negative'
+    return note
+"""
+
+
+def test_elif_collapse_alone_is_not_an_opportunity():
+    # Only ast.unparse's "else: if" -> "elif" lowers the depth; no guard clause exists.
+    check = gc.check_input(ELIF_ONLY)
+    assert not check.supported
+    assert check.reasons == ["no_opportunity"]
+    assert not gc.rubric(ELIF_ONLY, gc.to_guard_clauses(ELIF_ONLY)).checks["has_guard_clause"]
+
+
+def test_trailing_elif_is_not_counted_as_a_guard_clause():
+    chain = "def f(a, b):\n    if a:\n        x = 1\n    elif b:\n        return 2\n    return 3\n"
+    assert not gc._has_guard_clause(gc.parse_function(chain)[0].body)
+
+
+def test_long_input_is_rejected_before_any_recursive_analysis():
+    code = "def f(a):\n if a:0\n" + " elif a:0\n" * 1200 + " return 1\n"
+    assert gc.check_input(code).reasons == ["too_long"]

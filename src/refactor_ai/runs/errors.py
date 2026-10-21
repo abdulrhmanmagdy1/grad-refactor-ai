@@ -15,6 +15,8 @@ from refactor_ai.contracts import ErrorDetail, ErrorResponse
 
 RETRY_AFTER_SECONDS = 10
 MAX_BODY_BYTES = 1_048_576
+# Python's parser gives up on very deep nesting with RecursionError or MemoryError.
+PARSER_LIMIT_REASON = "the code is too deeply nested or too complex to parse"
 
 
 class ErrorCode(StrEnum):
@@ -106,6 +108,17 @@ def validation_error(errors: Sequence[Mapping[str, Any]]) -> ApiError:
     return ApiError(422, ErrorCode.VALIDATION_ERROR, message, details)
 
 
+BODY_NOT_UTF8 = "the body is not valid UTF-8"
+BODY_TOO_DEEP = "the JSON is nested too deeply"
+
+
+def body_not_decodable(reason: str) -> ApiError:
+    """422 for a JSON body the decoder cannot read at all (FastAPI raises a bare 400)."""
+    return validation_error(
+        [{"loc": ("body",), "msg": f"JSON decode error ({reason})", "type": "json_invalid"}]
+    )
+
+
 def invalid_syntax(exc: BaseException) -> ApiError:
     """422 for code that does not parse; reports the line and column when known."""
     line = getattr(exc, "lineno", None) if isinstance(exc, SyntaxError) else None
@@ -115,7 +128,7 @@ def invalid_syntax(exc: BaseException) -> ApiError:
     elif isinstance(exc, UnicodeError):
         reason = "the code contains characters that cannot be encoded as UTF-8"
     elif isinstance(exc, RecursionError | MemoryError):
-        reason = "the code is too deeply nested or too complex to parse"
+        reason = PARSER_LIMIT_REASON
     else:
         reason = str(exc) or "the code could not be parsed"
     if line is not None and column is not None:

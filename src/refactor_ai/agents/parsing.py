@@ -4,8 +4,11 @@ Each output is first parsed strictly: the whole text must be one JSON object tha
 matches the schema. If that fails, exactly one deterministic repair is applied and the
 result is parsed again:
 
-1. strip a surrounding Markdown code fence (```json ... ```), if present;
-2. extract the first balanced JSON object from the remaining text;
+1. strip a Markdown code fence (```json ... ```) that surrounds the whole output: it
+   opens on the first line and its closing fence ends the output or is missing; a fence
+   elsewhere (a code block next to the JSON, ``` inside a JSON string) is left alone;
+2. extract the first balanced {...} object from the remaining text that is valid JSON
+   (when none is, the first balanced object, so that its JSON error is reported);
 3. (review only) normalize the verdict's case and surrounding whitespace.
 
 The model is never called again for parsing. Anything still invalid after the repair is
@@ -17,6 +20,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 
 from pydantic import ValidationError
@@ -37,7 +41,9 @@ REVIEW_KEYS = frozenset({"verdict", "reasons", "suggested_correction"})
 # Fields that the application sets; a model copying them is ignored rather than trusted.
 APPLICATION_KEYS = frozenset({"schema_version", "source"})
 
-_FENCED = re.compile(r"```[ \t]*(?:json|JSON)?[ \t]*\n(.*?)(?:```|\Z)", re.DOTALL)
+# A fence counts only when it surrounds the whole (stripped) output; see the docstring.
+_FENCE_OPEN = re.compile(r"\A```[ \t]*[\w+.-]*[ \t]*\n")
+_FENCE_CLOSE = re.compile(r"```[ \t]*\Z")
 
 
 class SchemaError(ValueError):
@@ -66,39 +72,75 @@ class ReviewParse:
 
 
 def strip_code_fence(text: str) -> tuple[str, bool]:
-    """Content of the first Markdown code fence, or the text unchanged."""
-    match = _FENCED.search(text)
-    if match is None:
+    """Content of a Markdown code fence that surrounds the whole text, or the text unchanged.
+
+    The opening fence must be the first line. The content runs to a closing fence that
+    ends the text, or to the end when there is none (a cut-off answer, or prose after the
+    fence), so a ``` inside the content never ends it early.
+    """
+    stripped = text.strip()
+    opening = _FENCE_OPEN.match(stripped)
+    if opening is None:
         return text, False
-    return match.group(1), True
+    body = stripped[opening.end() :]
+    closing = _FENCE_CLOSE.search(body)
+    return (body[: closing.start()] if closing else body), True
+
+
+def _object_end(text: str, start: int) -> int | None:
+    """End of the balanced {...} starting at text[start], respecting JSON string escapes."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for position in range(start, len(text)):
+        char = text[position]
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return position + 1
+    return None
+
+
+def _balanced_objects(text: str) -> Iterator[str]:
+    """Balanced {...} spans in order. The search resumes after a balanced span, so an
+    object nested inside an earlier span is never returned on its own."""
+    start = text.find("{")
+    while start != -1:
+        end = _object_end(text, start)
+        if end is None:
+            start = text.find("{", start + 1)
+        else:
+            yield text[start:end]
+            start = text.find("{", end)
 
 
 def first_json_object(text: str) -> str | None:
     """The first balanced {...} object in the text, respecting JSON string escapes."""
-    start = text.find("{")
-    while start != -1:
-        depth = 0
-        in_string = False
-        escaped = False
-        for position in range(start, len(text)):
-            char = text[position]
-            if in_string:
-                if escaped:
-                    escaped = False
-                elif char == "\\":
-                    escaped = True
-                elif char == '"':
-                    in_string = False
-            elif char == '"':
-                in_string = True
-            elif char == "{":
-                depth += 1
-            elif char == "}":
-                depth -= 1
-                if depth == 0:
-                    return text[start : position + 1]
-        start = text.find("{", start + 1)
-    return None
+    return next(_balanced_objects(text), None)
+
+
+def _first_valid_object(text: str) -> str | None:
+    """The first balanced {...} span that is valid JSON, else the first balanced span."""
+    first = None
+    for span in _balanced_objects(text):
+        first = span if first is None else first
+        try:
+            json.loads(span)
+        except (ValueError, RecursionError):
+            continue
+        return span
+    return first
 
 
 def _loads_object(text: str) -> dict:
@@ -113,7 +155,7 @@ def _repair_candidates(text: str) -> tuple[str | None, list[str]]:
     body, fenced = strip_code_fence(text)
     if fenced:
         repairs.append("code_fence_removed")
-    extracted = first_json_object(body)
+    extracted = _first_valid_object(body)
     if extracted is None:
         return None, repairs
     if extracted.strip() != body.strip():

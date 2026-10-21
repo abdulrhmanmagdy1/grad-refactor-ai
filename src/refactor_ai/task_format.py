@@ -110,14 +110,25 @@ def parse_refactor_output(text: str) -> ParsedRefactor:
     if not blocks:
         if "```" in text:
             return ParsedRefactor(None, _explanation(text, None), error="unterminated_code_block")
-        candidate = _EXPLANATION.sub("", text, count=1)
-        lines = candidate.splitlines()
-        # Repair: unfenced output that starts at a def, preceded only by the explanation.
+        lines = text.splitlines()
+        # Repair: unfenced output starting at a def. The code ends at an "Explanation:"
+        # line (refactor-v2 puts it after the code) or at the end; the explanation may
+        # also precede the def (the refactor-v1 order).
         for index, line in enumerate(lines):
             if line.startswith("def "):
-                code = "\n".join(lines[index:]).rstrip() + "\n"
-                explanation = _explanation(text, None)
-                return ParsedRefactor(code, explanation, repaired=True, notes=["unfenced_code"])
+                end = next(
+                    (j for j in range(index + 1, len(lines)) if _EXPLANATION.match(lines[j])),
+                    len(lines),
+                )
+                code = "\n".join(lines[index:end]).rstrip() + "\n"
+                rest = "\n".join(lines[:index] + lines[end:])
+                explanation = " ".join(_EXPLANATION.sub("", rest).split())
+                return ParsedRefactor(
+                    code,
+                    explanation[:MAX_EXPLANATION_CHARS] or None,
+                    repaired=True,
+                    notes=["unfenced_code"],
+                )
         return ParsedRefactor(None, _explanation(text, None), error="no_code_block")
     chosen = next((m for m in blocks if "def " in m.group(2)), blocks[0])
     notes = ["multiple_code_blocks"] if len(blocks) > 1 else []

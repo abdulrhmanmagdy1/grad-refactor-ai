@@ -79,6 +79,7 @@ REASON_TEXT = {
     "match_present": "match statements are outside the supported scope.",
     "dunder_access": "Access to double-underscore names is outside the supported scope.",
     "no_opportunity": "No nested conditional can be flattened with guard clauses.",
+    "too_complex": "The input is nested too deeply to analyze.",
 }
 
 
@@ -332,40 +333,63 @@ def same_code(left: str, right: str) -> bool:
         return False
 
 
+def _opportunity(stmt: ast.If, plan: str) -> Opportunity | None:
+    dedented = stmt.orelse if plan == "keep" else stmt.body
+    if _block_depth(dedented, 0) == 0:
+        return None
+    line = (stmt.orelse[-1] if plan == "invert" else stmt.body[-1]).lineno
+    branch = "else branch" if plan == "invert" else "if branch"
+    return Opportunity(
+        start_line=stmt.lineno,
+        end_line=stmt.end_lineno or stmt.lineno,
+        reason=(
+            f"The {branch} ending near line {line} always returns or raises, "
+            "so it can become a guard clause and the remaining logic "
+            "can be dedented."
+        ),
+    )
+
+
 def _walk_conditionals(stmts: list[ast.stmt], found: list[Opportunity]) -> None:
+    """Report the rewrites to_guard_clauses applies; mirrors _transform_block."""
     for stmt in stmts:
         if not isinstance(stmt, ast.If):
             continue
         plan = _plan(stmt)
-        if plan is not None:
-            dedented = stmt.orelse if plan == "keep" else stmt.body
-            if _block_depth(dedented, 0) > 0:
-                line = (stmt.orelse[-1] if plan == "invert" else stmt.body[-1]).lineno
-                branch = "else branch" if plan == "invert" else "if branch"
-                found.append(
-                    Opportunity(
-                        start_line=stmt.lineno,
-                        end_line=stmt.end_lineno or stmt.lineno,
-                        reason=(
-                            f"The {branch} ending near line {line} always returns or raises, "
-                            "so it can become a guard clause and the remaining logic "
-                            "can be dedented."
-                        ),
-                    )
-                )
+        if plan is None:
+            _walk_children(stmt, found)
+            continue
+        opportunity = _opportunity(stmt, plan)
+        if opportunity is not None:
+            found.append(opportunity)
         _walk_conditionals(stmt.body, found)
         _walk_conditionals(stmt.orelse, found)
 
 
+def _walk_children(node: ast.If, found: list[Opportunity]) -> None:
+    """Mirror _rewrite_children: an elif inside an unplanned chain is never restructured."""
+    _walk_conditionals(node.body, found)
+    if _is_elif(node):
+        _walk_children(node.orelse[0], found)
+    else:
+        _walk_conditionals(node.orelse, found)
+
+
 def check_input(code: str) -> InputCheck:
     """Decide whether the input is inside the supported task scope."""
-    reasons: list[str] = []
     if len(code) > MAX_INPUT_CHARS or len(code.splitlines()) > MAX_INPUT_LINES:
-        reasons.append("too_long")
+        return InputCheck(supported=False, reasons=["too_long"])
+    try:
+        return _check_input(code)
+    except RecursionError:
+        return InputCheck(supported=False, reasons=["too_complex"])
+
+
+def _check_input(code: str) -> InputCheck:
     func, reason = parse_function(code)
     if func is None:
-        return InputCheck(supported=False, reasons=reasons + [reason])
-    reasons += constraint_violations(func)
+        return InputCheck(supported=False, reasons=[reason])
+    reasons = constraint_violations(func)
     depth = nesting_depth(func)
     if reasons:
         return InputCheck(False, reasons, func.name, depth)
@@ -373,7 +397,9 @@ def check_input(code: str) -> InputCheck:
     _walk_conditionals(func.body, found)
     transformed = to_guard_clauses(code)
     new_depth = code_nesting_depth(transformed) if transformed else None
-    if not found or new_depth is None or new_depth >= depth:
+    # The reference rewrite must itself create a guard clause: a depth drop that comes
+    # only from ast.unparse printing "else: if" as "elif" is not a supported case.
+    if not found or new_depth is None or new_depth >= depth or not rubric(code, transformed).passed:
         return InputCheck(False, ["no_opportunity"], func.name, depth)
     return InputCheck(True, [], func.name, depth, found)
 
@@ -383,9 +409,23 @@ def _has_guard_clause(stmts: list[ast.stmt]) -> bool:
         if isinstance(stmt, ast.If):
             if not stmt.orelse and always_exits(stmt.body):
                 return True
-            if _has_guard_clause(stmt.body) or _has_guard_clause(stmt.orelse):
+            if _has_guard_clause(stmt.body):
+                return True
+            if _is_elif(stmt):
+                if _elif_chain_has_guard(stmt.orelse[0]):
+                    return True
+            elif _has_guard_clause(stmt.orelse):
                 return True
     return False
+
+
+def _elif_chain_has_guard(node: ast.If) -> bool:
+    """Guards inside an elif chain; the trailing elif itself is not a guard clause."""
+    if _has_guard_clause(node.body):
+        return True
+    if _is_elif(node):
+        return _elif_chain_has_guard(node.orelse[0])
+    return _has_guard_clause(node.orelse)
 
 
 def _called_names(func: ast.AST) -> set[str]:

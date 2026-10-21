@@ -397,6 +397,50 @@ def test_limit_while_defining_the_function():
     assert result.failures[0].kind == "timeout" and "Defining the function" in result.reason
 
 
+def budget_mapped(outcome="timeout", events=()):
+    """The wall-clock limit was lowered to the 0.4 s left in the workflow run."""
+    execution = Execution(outcome=outcome, events=list(events))
+    return _to_result(CASE, execution, 0.4, LIMITS, budget_limited=True)
+
+
+@pytest.mark.parametrize(
+    ("events", "where"),
+    [
+        ([], "before the test process was ready"),
+        ([READY], "while the function was being defined"),
+        ([READY, DEFINED], "before the first test finished"),
+        ([READY, DEFINED, test_event(0), test_event(1)], "after 2 of 3 tests had passed"),
+    ],
+    ids=["not-ready", "defining", "first-test", "later-test"],
+)
+def test_run_budget_ending_is_not_blamed_on_the_candidate(events, where):
+    result = budget_mapped(events=events)
+    assert result.status == "not_run" and result.failures == []
+    assert (result.passed, result.failed, result.errored) == (None, None, None)
+    assert "time limit left only 0.4 s for the reference tests" in result.reason
+    assert where in result.reason
+
+
+def test_run_budget_ending_keeps_failures_already_observed():
+    events = [READY, DEFINED, test_event(0, "wrong_value", "f() returned 2")]
+    result = budget_mapped(events=events)
+    assert (result.status, result.passed, result.failed, result.errored) == ("fail", 0, 1, 0)
+    assert [(f.index, f.kind) for f in result.failures] == [(0, "wrong_value")]
+    assert "1 of 3 reference tests failed" in result.reason and "0.4 s" in result.reason
+
+
+def test_run_budget_ending_keeps_runner_errors_already_observed():
+    result = budget_mapped(events=[READY, DEFINED, test_event(0), test_event(1, "runner_error")])
+    assert (result.status, result.passed, result.errored) == ("error", 1, 1)
+    assert [(f.index, f.kind) for f in result.failures] == [(1, "runner_error")]
+
+
+def test_own_cpu_limit_still_fails_under_a_run_budget():
+    result = budget_mapped("cpu_limit", events=[READY, DEFINED, test_event(0)])
+    assert (result.status, result.passed, result.failed) == ("fail", 1, 1)
+    assert result.failures[-1].kind == "timeout" and "2 s CPU time limit" in result.reason
+
+
 def test_crash_during_a_test_is_an_error():
     result = mapped(
         events=[READY, DEFINED, test_event(0)],

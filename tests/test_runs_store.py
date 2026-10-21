@@ -224,6 +224,47 @@ def test_unreadable_rows_are_skipped_in_lists(tmp_path):
         store.close()
 
 
+def test_a_second_store_on_the_same_file_is_refused(tmp_path):
+    """One service process per database file: a second store would otherwise mark the
+    first one's queued and running runs interrupted at its startup recovery."""
+    path = tmp_path / "runs.sqlite3"
+    first = RunStore(path, retention=10)
+    try:
+        running = make().model_copy(
+            update={"status": RunStatus.VERIFYING, "started_at": T0 + timedelta(seconds=1)}
+        )
+        queued = make()
+        first.insert(running)
+        first.insert(queued)
+        with pytest.raises(StoreError, match="already in use"):
+            RunStore(path, retention=10)
+        with pytest.raises(StoreError, match="already in use"):
+            RunStore(str(path), retention=10)
+        # The refused store changed nothing, and the first one keeps working.
+        assert first.get(running.run_id) == running
+        assert first.get(queued.run_id) == queued
+        first.insert(make())
+        assert first.count() == 3
+    finally:
+        first.close()
+    second = RunStore(path, retention=10)  # closing releases the file
+    try:
+        assert second.count() == 3
+    finally:
+        second.close()
+
+
+def test_a_failed_open_releases_the_file(tmp_path):
+    path = tmp_path / "runs.sqlite3"
+    conn = sqlite3.connect(path)
+    conn.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION + 1}")
+    conn.close()
+    with pytest.raises(StoreError, match="schema version"):
+        RunStore(path, retention=10)
+    with pytest.raises(StoreError, match="schema version"):  # not "already in use"
+        RunStore(path, retention=10)
+
+
 def test_rejects_newer_schema_versions(tmp_path):
     path = tmp_path / "runs.sqlite3"
     conn = sqlite3.connect(path)

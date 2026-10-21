@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import ast
 import logging
+import os
 from collections.abc import AsyncIterator, Callable, Iterable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -126,6 +127,31 @@ class Runtime:
     frontend_dir: Path | None
 
 
+def _is_reserved(name: str) -> bool:
+    """Whether a first path segment names an API prefix (Windows ignores case and
+    trailing dots and spaces in file names)."""
+    return name.rstrip(". ").lower() in RESERVED_PREFIXES
+
+
+class _FrontendFiles(StaticFiles):
+    """The built frontend. Reserved top-level names are checked on the resolved path the
+    file system opens, so no spelling of the request path ('.', '..', 'api.', 'API ',
+    an NTFS stream suffix) reaches a file under them."""
+
+    def lookup_path(self, path: str) -> tuple[str, os.stat_result | None]:
+        full_path, stat_result = super().lookup_path(path)
+        if stat_result is None or self.directory is None:
+            return full_path, stat_result
+        root = Path(os.path.realpath(self.directory))
+        try:
+            parts = Path(full_path).relative_to(root).parts
+        except ValueError:
+            return "", None
+        if parts and _is_reserved(parts[0]):
+            return "", None
+        return full_path, stat_result
+
+
 def _close_provider(provider: Provider) -> None:
     try:
         provider.close()
@@ -181,7 +207,7 @@ def _build_runtime(overrides: _Overrides) -> Runtime:
         logger.warning(problem)
     frontend_dir = settings.frontend_dist.resolve() if settings.frontend_dist else None
     frontend = (
-        StaticFiles(directory=frontend_dir, html=True, check_dir=False) if frontend_dir else None
+        _FrontendFiles(directory=frontend_dir, html=True, check_dir=False) if frontend_dir else None
     )
     logger.info(
         "Run service started: provider=%s runner=%s max_pending=%d retention=%d",
@@ -204,7 +230,10 @@ def _shutdown(runtime: Runtime) -> None:
             logger.warning("The run in progress did not finish within %.1f s", grace)
     finally:
         # Closing the provider ends a generation that is still running (the local
-        # provider stops its worker process), which lets the workflow return.
+        # provider stops its worker process), which lets the workflow return. That run
+        # is recorded as interrupted, not with the error the closed provider causes.
+        if not stopped:
+            service.interrupt_current()
         _close_provider(service.provider)
         try:
             if not stopped and not service.join(timeout=grace):
@@ -308,7 +337,12 @@ def health(runtime: RuntimeDep) -> HealthResponse:
 )
 def analyze_code(request: AnalysisRequest) -> AnalysisResult:
     """Static heuristics only (no model, no execution)."""
-    return analyze(request.code)
+    try:
+        return analyze(request.code)
+    except MemoryError:
+        # analyze() reports the other parser failures itself; Python 3.11's parser raises
+        # MemoryError for deeply chained operators, which POST /api/v1/runs also rejects.
+        return AnalysisResult(syntax_valid=False, findings=[], error=errors.PARSER_LIMIT_REASON)
 
 
 @_route(
@@ -487,15 +521,27 @@ async def _serve_frontend(request: Request) -> Response | None:
     runtime = getattr(request.app.state, "runtime", None)
     if runtime is None or runtime.frontend is None or request.method not in ("GET", "HEAD"):
         return None
-    first = request.scope.get("path", "/").lstrip("/").split("/", 1)[0].lower()
-    if first in RESERVED_PREFIXES or not (runtime.frontend_dir / "index.html").is_file():
+    first = request.scope.get("path", "/").lstrip("/").split("/", 1)[0]
+    if _is_reserved(first) or not (runtime.frontend_dir / "index.html").is_file():
         return None
     try:
         return await runtime.frontend.get_response(
             runtime.frontend.get_path(request.scope), request.scope
         )
-    except StarletteHTTPException:
+    except (StarletteHTTPException, OSError, ValueError):
+        # OSError: a name the file system cannot use (on Windows '*', '"', '<', '|' or a
+        # component over 255 characters); such a file cannot exist, so this is a 404.
         return None
+
+
+def _body_decode_problem(exc: StarletteHTTPException) -> str | None:
+    """Why the JSON body could not be decoded, when that caused FastAPI's bare 400
+    ("There was an error parsing the body"); malformed JSON is a validation_error."""
+    if isinstance(exc.__cause__, UnicodeDecodeError):
+        return errors.BODY_NOT_UTF8
+    if isinstance(exc.__cause__, RecursionError):
+        return errors.BODY_TOO_DEEP
+    return None
 
 
 async def _handle_api_error(request: Request, exc: Exception) -> Response:
@@ -518,6 +564,8 @@ async def _handle_http_error(request: Request, exc: Exception) -> Response:
         return _error_response(errors.method_not_allowed(allow))
     if exc.status_code == 413:
         return _error_response(errors.payload_too_large())
+    if exc.status_code == 400 and (reason := _body_decode_problem(exc)) is not None:
+        return _error_response(errors.body_not_decodable(reason))
     message = exc.detail if isinstance(exc.detail, str) and exc.detail else "HTTP error."
     error = errors.ApiError(exc.status_code, errors.ErrorCode.HTTP_ERROR, message)
     error.headers = dict(exc.headers or {})

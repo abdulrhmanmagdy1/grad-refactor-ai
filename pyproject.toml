@@ -28,3 +28,7 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.ruff.lint.isort]
 # The datasets/ directory holds data; "datasets" imports refer to the Hugging Face package.
 known-third-party = ["datasets"]
+
+[tool.ruff.format]
+# Markdown code blocks show real tool output (for example ast.unparse quoting); do not rewrite them.
+exclude = ["*.md"]

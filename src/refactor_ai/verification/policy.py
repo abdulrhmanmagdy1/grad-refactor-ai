@@ -84,7 +84,7 @@ def admission_problems(candidate: str) -> list[str]:
         if (
             isinstance(node, ast.Name)
             and isinstance(node.ctx, ast.Load)
-            and node.id in guard_clauses.DENIED_CALLS
+            and (node.id in guard_clauses.DENIED_CALLS or node.id in ATTRIBUTE_BUILTINS)
             and node.id not in bound
             and id(node) not in called
         ):

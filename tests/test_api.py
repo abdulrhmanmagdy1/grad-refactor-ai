@@ -151,6 +151,28 @@ def test_invalid_syntax_and_empty_input():
     assert client.post("/api/v1/analyze", json={"code": "x" * 20000}).status_code == 200
 
 
+@pytest.mark.parametrize(
+    "code",
+    [
+        "(" * 10000 + ")" * 10000,
+        "-" * 19999 + "1",
+        "+".join(["1"] * 9000),
+        "not " * 4999 + "x",
+    ],
+    ids=["parentheses", "unary", "binary", "not-chain"],
+)
+def test_parser_limits_are_reported_as_invalid_syntax(code):
+    """The same inputs the run API rejects as invalid_syntax; on Python 3.11 the parser
+    raises MemoryError for deeply chained unary operators."""
+    lenient = TestClient(app, raise_server_exceptions=False)  # a 500 is a failure, not an error
+    response = lenient.post("/api/v1/analyze", json={"code": code})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["syntax_valid"] is False
+    assert body["findings"] == []
+    assert body["error"]
+
+
 def test_long_async_function():
     code = "async def work():\n" + "    x = 1\n" * 31
     result = client.post("/api/v1/analyze", json={"code": code}).json()
@@ -175,3 +197,14 @@ def test_analyze_example_matches_the_endpoint():
     )
     expected = json.loads((EXAMPLES / "analyze_response.json").read_text(encoding="utf-8"))
     assert client.post("/api/v1/analyze", json={"code": code}).json() == expected
+
+
+def test_flat_elif_chain_is_not_deep_nesting():
+    from refactor_ai.analysis import analyze
+
+    chain = (
+        "def grade(score):\n    if score >= 90:\n        return 'A'\n"
+        "    elif score >= 80:\n        return 'B'\n    elif score >= 70:\n        return 'C'\n"
+        "    elif score >= 60:\n        return 'D'\n    return 'F'\n"
+    )
+    assert analyze(chain).findings == []

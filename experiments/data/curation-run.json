@@ -1,25 +1,22 @@
 {
   "command": "python -m uv run python scripts/curate_dataset.py",
   "seed": 20261020,
-  "git_head": "23c384b7bf3052f0710db567526523ec9c8f5ac5",
+  "git_head": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
   "uncommitted_curation_sources": [
-    "scripts/curate_dataset.py",
-    "src/refactor_ai/data/content.py",
-    "src/refactor_ai/data/curate.py",
-    "src/refactor_ai/data/manifest.py",
-    "src/refactor_ai/task_format.py"
+    "src/refactor_ai/task_format.py",
+    "src/refactor_ai/tasks/guard_clauses.py"
   ],
   "python": "3.11.9",
   "implementation": "cpython",
   "platform": "Windows",
   "test_split_frozen": true,
-  "rendering_refrozen_in_this_run": true,
+  "rendering_refrozen_in_this_run": false,
   "outputs_sha256": {
-    "datasets/guard_clauses/v1/manifest.json": "48496fb9dcfc8dc87ba3113739bd252e2607ce79e1a2125e5fe13ac1d625425e",
+    "datasets/guard_clauses/v1/manifest.json": "885bab9a39008440d7a823c110696d0fbb9530841d3ec739932a7f96212bb7c3",
     "datasets/guard_clauses/v1/metadata.jsonl": "87c57b634f3cd25b566cec1c43346065f71d6b4901d0ff3511ea9bb6fb0f38a9",
     "datasets/guard_clauses/v1/records.jsonl": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
     "experiments/data/curation-log.json": "ffbd87385f8356f3f6dce7da8369082447da039ea509645349f46a554cd64eec",
-    "experiments/data/test-split-freeze.json": "adb1001436b0a84f23878f462472cc531c40e14a624525fe070e5ef1fd40ac56"
+    "experiments/data/test-split-freeze.json": "7195d4016c2ed56fa6233b64a76376a37c859bdc29ae99b5ee4a46c46a682e6b"
   },
   "note": "Run record. Every output listed above is reproduced byte for byte by rerunning the command with the same inputs; this run record is not."
 }

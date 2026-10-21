@@ -4,7 +4,7 @@ The core environment runs on CPU and does not download a model. Training uses a 
 
 ## Requirements
 
-Install Git, Python 3.11, and [uv](https://docs.astral.sh/uv/getting-started/installation/) from their official sources. Repository access is required. Node.js will be needed when the product interface is implemented; there is no frontend application in this foundation.
+Install Git, Python 3.11, and [uv](https://docs.astral.sh/uv/getting-started/installation/) from their official sources. Repository access is required. To build the web interface in `frontend/`, also install Node.js 24.12.0 or a newer 24.x release with npm 11.6 or newer (the versions `frontend/package.json` requires).
 
 ## Setup
 
@@ -14,6 +14,12 @@ cd grad-refactor-ai
 uv sync --frozen
 uv run python scripts/doctor.py
 uv run pytest
+
+cd frontend
+npm ci
+npm run build
+cd ..
+
 uv run uvicorn refactor_ai.api:app --reload --host 127.0.0.1
 ```
 
@@ -25,7 +31,7 @@ These uv commands also work in Windows PowerShell without activating the virtual
 uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
 ```
 
-Start it from the repository root, because relative paths in the settings are resolved against the working directory. With `--reload`, a code change restarts the process and any run in progress is recorded as interrupted.
+Start it from the repository root, because relative paths in the settings are resolved against the working directory. With `--reload`, a code change restarts the process: the run in progress gets up to 10 seconds to finish and is otherwise recorded as interrupted, and runs still waiting are recorded as interrupted. Only one service process can use a run database: a second start with the same REFACTOR_AI_DB (for example in another terminal) stops at startup with "The run database ... is already in use by another service process" and leaves the running service's runs untouched. The lock is held on a file next to the database with `.lock` appended to its name (by default `runs/app/runs.sqlite3.lock`).
 
 **Fake mode (default).** The deterministic fake provider stands in for the model and labels every text `FAKE PROVIDER (not a model):`. GET /health reports `"mode": "fake"`. Use it for development and tests; its output is never evidence of model behavior.
 
@@ -54,7 +60,7 @@ An invalid value stops startup with a message that names the variable; an empty 
 
 **Using the run API.** POST /api/v1/runs with `{"code": "...", "workflow_mode": "multi_role"}` returns 202 with a `run_id`; poll GET /api/v1/runs/{run_id} until `status` is `completed` or `failed`, then read the diff and the verification results, download GET /api/v1/runs/{run_id}/proposal and record a decision with POST /api/v1/runs/{run_id}/decision. GET /api/v1/reference-cases lists the demonstration cases whose trusted tests can run. The [contracts](../architecture/contracts.md), the [example JSON](../architecture/examples/README.md) and the [backend notes](../report/notes/backend.md) describe every field and error.
 
-**Web interface.** When `frontend/dist` exists, the same process serves the built interface at http://127.0.0.1:8000/. During frontend development the API accepts browser requests only from `http://127.0.0.1:5173` and `http://localhost:5173`.
+**Web interface.** When `frontend/dist` exists, the same process serves the built interface at http://127.0.0.1:8000/. A fresh clone has no `frontend/dist` (Git ignores it), so run `npm ci` and `npm run build` in `frontend/` first; without the build, GET / answers the JSON 404 `not_found`. The [frontend guide](frontend.md) covers frontend development. During frontend development the API accepts browser requests only from `http://127.0.0.1:5173` and `http://localhost:5173`.
 
 **Run history.** Delete one run with DELETE /api/v1/runs/{run_id}. To clear everything, stop the service and delete `runs/app/`, or point REFACTOR_AI_DB at another file.
 

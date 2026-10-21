@@ -46,6 +46,17 @@ def test_strip_code_fence():
     assert parsing.strip_code_fence('{"a": 1}') == ('{"a": 1}', False)
 
 
+def test_strip_code_fence_only_removes_a_fence_around_the_whole_text():
+    inner = '{"s": "```python\\nx\\n```"}'
+    assert parsing.strip_code_fence(f"```json\n{inner}\n```") == (f"{inner}\n", True)
+    trailing = '{"a": 1}\n```\ndef f(x):\n    return x\n```'
+    assert parsing.strip_code_fence(trailing) == (trailing, False)
+    assert parsing.strip_code_fence('```python\n{"a": 1}\n```\nDone.') == (
+        '{"a": 1}\n```\nDone.',
+        True,
+    )
+
+
 # --- Analysis ------------------------------------------------------------------------
 
 
@@ -69,7 +80,12 @@ def test_application_fields_written_by_the_model_are_ignored():
         (f"```json\n{analysis()}\n```", ["code_fence_removed"]),
         (f"```\n{analysis()}\n```", ["code_fence_removed"]),
         (f"Here is my analysis:\n{analysis()}\nHope it helps.", ["json_object_extracted"]),
-        (f"Result:\n```json\n{analysis()}\n```", ["code_fence_removed"]),
+        # A fence that does not start the output is not a surrounding fence; the object
+        # is extracted from the text as a whole.
+        (f"Result:\n```json\n{analysis()}\n```", ["json_object_extracted"]),
+        (f"Lines {{2-5}}:\n```json\n{analysis()}\n```", ["json_object_extracted"]),
+        (f"{analysis()}\n```\ndef f(x):\n    return x\n```", ["json_object_extracted"]),
+        (f"```python\n{analysis()}\n```\nDone.", ["code_fence_removed", "json_object_extracted"]),
         (f"```json\n{analysis()}", ["code_fence_removed"]),
         (
             f"```json\nAnswer: {analysis()} end\n```",
@@ -217,6 +233,39 @@ def test_review_repair(text, verdict, repairs):
     assert result.result.verdict.value == verdict
 
 
+FENCED_SUGGESTION = "```python\nif weight <= 0:\n    raise ValueError('x')\n```"
+DICT_BLOCK = '```\ndef f(x):\n    return {"x": 1}\n```'
+
+
+@pytest.mark.parametrize(
+    ("text", "repairs"),
+    [
+        # A ``` inside a string value does not close the surrounding fence.
+        (
+            f"```json\n{review('reject', suggestion=FENCED_SUGGESTION)}\n```",
+            ["code_fence_removed"],
+        ),
+        # A code block after bare JSON is not a fence around it.
+        (f"{review('reject')}\n```\ndef f(x):\n    return x\n```", ["json_object_extracted"]),
+        (f"{review('reject')}\n{DICT_BLOCK}", ["json_object_extracted"]),
+        # JSON in a fence with another tag, followed by prose.
+        (
+            f"```python\n{review('reject')}\n```\nThat is my verdict.",
+            ["code_fence_removed", "json_object_extracted"],
+        ),
+        # Braces in prose before the JSON are skipped when they are not valid JSON.
+        (f"Checked {{weight}}:\n```json\n{review('reject')}\n```", ["json_object_extracted"]),
+    ],
+)
+def test_review_json_next_to_other_fences_is_not_lost(text, repairs):
+    result = parsing.parse_review(text)
+    assert result.error is None, result.error
+    assert result.result.verdict == ReviewVerdict.REJECT
+    assert result.repaired is True and result.repairs == repairs
+    if "raise ValueError" in text:
+        assert result.result.suggested_correction == FENCED_SUGGESTION
+
+
 @pytest.mark.parametrize(
     ("text", "message"),
     [
@@ -253,3 +302,9 @@ def test_deeply_nested_json_is_a_parse_error_not_a_crash():
 def test_review_parsing_never_guesses_a_verdict():
     for text in ("ACCEPT", "accept", "The verdict is accept."):
         assert parsing.parse_review(text).result is None
+
+
+def test_an_object_inside_invalid_json_is_not_used():
+    text = '{verdict: reject, "example": {"verdict": "accept"}}'
+    assert parsing.parse_review(text).result is None
+    assert parsing.parse_review(f"```json\n{text}\n```").result is None
