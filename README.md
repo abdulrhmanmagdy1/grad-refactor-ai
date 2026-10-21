@@ -45,7 +45,7 @@ Fine-tuning is the large effect (C vs A: 65 cases accepted only with the adapter
 - No supervisor review has been held yet. The team's packs for [R1](docs/supervisor-reviews/r1-scope-and-feasibility.md) to [R5](docs/supervisor-reviews/r5-delivery.md) are prepared, with the feedback fields left empty.
 - The university report template, the official deadline and the presentation format are not yet confirmed ([delivery checklist](docs/delivery/checklist.md)).
 - Each student still has to inspect and accept their workstream ([handover](docs/delivery/implementation-handover.md)).
-- Cross-machine reproduction is untested (only clean checkouts on the demonstration laptop), the redistribution license of the team-authored data is a team decision, and the adapter is not published. The reference runner has no operating-system network, file system or privilege boundary ([runner safety](docs/development/runner-safety.md#honest-limits)).
+- Cross-machine reproduction is untested (a [clean clone](experiments/qa/2026-10-21-clean-clone-reproduction.md) passed on the demonstration laptop only), the redistribution license of the team-authored data is a team decision, and the adapter is not published. The reference runner has no operating-system network, file system or privilege boundary ([runner safety](docs/development/runner-safety.md#honest-limits)).
 
 ## Quickstart
 
@@ -125,8 +125,10 @@ Neither the core tests nor CI download a model or need a GPU; the real-model pro
 | [Data plan](docs/data-and-training/data-plan.md), [training plan](docs/data-and-training/training-plan.md) and [model card](docs/data-and-training/model-card.md) | Dataset, fine-tuning and model provenance |
 | [Evaluation protocol](docs/evaluation/protocol.md) | Arms, measures and the freezing procedure |
 | Report notes: [backend](docs/report/notes/backend.md), [workflow](docs/report/notes/workflow.md), [model](docs/report/notes/model.md), [data and evaluation](docs/report/notes/data-evaluation.md), [frontend](docs/report/notes/frontend.md) | Each workstream's technical notes and evidence |
+| [Report](docs/report/report.md), [slides](docs/delivery/slides/grad-refactor-ai-presentation.pptx) and [demonstration script](docs/delivery/demo-script.md) | The graduation report, the presentation and the live demonstration |
+| [Implementation handover](docs/delivery/implementation-handover.md) | What was built, how to run it, results, known defects and what each owner inspects |
 | [Delivery checklist](docs/delivery/checklist.md) and [acceptance and handover](docs/agent-execution/06-acceptance-and-handover.md) | What delivery requires |
-| [Supervisor reviews](docs/supervisor-reviews/README.md) | How reviews are held and recorded; the R1 to R4 packs are prepared |
+| [Supervisor reviews](docs/supervisor-reviews/README.md) | How reviews are held and recorded; the R1 to R5 packs are prepared |
 | [Experiment records](experiments/README.md) | Hardware, data, model, training and evaluation records; for example the [model records](experiments/models/README.md) and [training records](experiments/training/README.md) |
 | [Documentation index](docs/README.md) | Every document |
 

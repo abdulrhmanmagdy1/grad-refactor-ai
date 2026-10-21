@@ -2,7 +2,9 @@
 
 Status: prepared on 2026-10-21 by a coding agent for Dania El-Walily (T27). It is an outline, not the slides. The department's presentation length and format were not confirmed at preparation ([R1 review pack](../supervisor-reviews/r1-scope-and-feasibility.md), question 6), so the timings assume about 15 minutes of slides plus the 9.5-minute [demonstration](demo-script.md). Shorten the slides, not the demonstration, if less time is given.
 
-Each member presents their own workstream ([team delivery plan](../planning/assignments.md)). No results existed at preparation. Slides 9 and 12 have explicit gaps that must be filled from committed records only. If a record does not exist on the day, the slide says "pending", not a number.
+The slides built from this outline are in [slides/](slides/grad-refactor-ai-presentation.pptx) (17 slides, with a [PDF copy](slides/grad-refactor-ai-presentation.pdf)); `slides/build_slides.py` rebuilds them from the committed records, and each slide's speaker notes name its source. The results take two slides there (12 and 13), so the interface, demonstration and closing slides are 14 to 16, and 17 is for questions.
+
+Each member presents their own workstream ([team delivery plan](../planning/assignments.md)). No results existed at preparation. The gaps on slides 9 and 12 have since been filled from the committed training record and the test-split summary.
 
 ## Speakers
 
@@ -78,7 +80,8 @@ Six points from the [reading table](../research/related-work.md):
 - The pilot: saved, reloaded in a fresh process, interrupted and resumed ([training records](../../experiments/training/README.md)).
 - The full run failed on the laptop after 22 of 237 steps (out of virtual memory) and moved to Kaggle's T4 in fp32 ([Kaggle lane](../../training/kaggle/README.md)).
 - The validation-only selection rule was written before any comparison.
-- Fill from the committed records: training duration, losses, adapter checksum and the validation decision. Until then: "pending".
+- From the [training record](../../experiments/training/full-2026-10-21.json): 627 training records, 3 epochs, 120 optimizer steps with an effective batch of 16, 20.5 GPU minutes on a Kaggle T4, training loss 0.69 to 0.01, best validation loss 0.036; adapter weights sha256 `dff9ae02…`.
+- The validation decision: arm C 69 of 84 against arm A 6 of 84, so the adapter was adopted ([selection record](../../experiments/training/validation-selection-2026-10-20.json)).
 
 ### 10. Dataset and splits (Shahd Abdelhay, 1:00)
 
@@ -98,10 +101,10 @@ Six points from the [reading table](../research/related-work.md):
 
 ### 12. Results (Shahd Abdelhay; Abdelrahman Adel for C vs A and D vs B, 2:00)
 
-- Fill only from the committed evaluation folder (`experiments/evaluation/<evaluation-id>/summary.md`, tables, figures) and the protocol freeze record.
+- From the [test-split summary](../../experiments/evaluation/test-2026-10-21/targets-report/summary.md) and the [freeze record](../../experiments/evaluation/protocol-freeze.json): `proposal_ready` A 7, B 1, C 70, D 35 of 88; C vs A 65 against 2 discordant cases, D vs C 1 against 36, D vs B 34 against 0 (all Holm-adjusted p < 0.0001), B vs A 0 against 6 (p = 0.031); 11 of 12 targets met, D's floor missed; median latency A 3.0 s, C 7.7 s, B 16.0 s, D 17.9 s.
 - Show: the arm table with N and every disposition; the four paired comparisons with p-values; the targets and whether they were met; family-level results; cost (calls, latency); two failure examples.
 - Label validation results as validation, and never mix them with test results.
-- No result existed at preparation.
+- The slides split this into a results slide and a comparisons slide.
 
 ### 13. Interface (Dania El-Walily, 0:45)
 
@@ -159,11 +162,11 @@ It is not a sandbox for hostile code: there is no operating-system network, file
 
 **Why train on Kaggle if the system is local?** (Abdelrahman Adel) The full run failed on the laptop after 22 of 237 steps, when Windows ran out of virtual memory with other work running ([record](../../experiments/training/full-2026-10-20-local-attempt1-failed.json)). Training and the validation evaluation moved to a private Kaggle lane with hash-checked bundles. The T4 runs in fp32, and the precision is recorded. Inference for the demonstration stays on the laptop. Whether this is acceptable is one of the questions prepared for R3 (the meeting has not taken place).
 
-**Is the difference between the arms significant?** (Shahd Abdelhay) Each comparison uses a paired exact McNemar test with a Holm adjustment over the four comparisons. The 88 cases come from 16 source groups and are not independent, so results are also reported by family, and conclusions are limited to this task, these cases and this model. Fill in the p-values from the results.
+**Is the difference between the arms significant?** (Shahd Abdelhay) Each comparison uses a paired exact McNemar test with a Holm adjustment over the four comparisons. The 88 cases come from 16 source groups and are not independent, so results are also reported by family, and conclusions are limited to this task, these cases and this model. Fine-tuning (C vs A, D vs B) and adding the review step (D vs C) differ with Holm-adjusted p < 0.0001; B vs A gives p = 0.031 in favor of A.
 
-**What does the multi-role workflow cost?** (Shahd Abdelhay) Up to 5 model calls instead of 1. The evaluation records calls, tokens and latency per case. Fill in the measured medians from the results, and compare them with the gain (R8).
+**What does the multi-role workflow cost?** (Shahd Abdelhay) Up to 5 model calls instead of 1. On the test split, arm D used 3.43 calls per case and a median of 17.9 s, against 1 call and 7.7 s for arm C, and it was accepted less often (35 against 70), so with the untuned review role the extra cost bought no gain (R8).
 
-**What if fine-tuning did not help?** (Abdelrahman Adel) The pre-written rule then keeps the base model, and the result is reported as found. The proposal treats improvement as a hypothesis, and negative results are part of the contribution.
+**What if fine-tuning had not helped?** (Abdelrahman Adel) The pre-written rule would have kept the base model, and the result would have been reported as found. It did help: 70 against 7 accepted test cases. The negative finding of the study is the review step, which lowered acceptance with both models, and it is reported as such.
 
 **Could the demonstration be staged?** (Dania El-Walily) In fake mode, the service runs the deterministic reference transformation with a placeholder review. `/health` reports the mode, the interface shows a permanent banner, and every fake text starts with `FAKE PROVIDER (not a model):`. The live demonstration runs in local-model mode, with the model identity in the header and in every run record.
 
@@ -182,7 +185,7 @@ It is not a sandbox for hostile code: there is no operating-system network, file
 
 ## Before presenting
 
-- Replace every "pending" on slides 9 and 12 with numbers from committed records, or keep "pending".
+- Check that the numbers on the slides still match the committed records (rebuild them with `slides/build_slides.py` after any change).
 - Confirm the format and the length with the supervisor, and adjust the timings.
 - Rehearse the slides and the demonstration together, once, in local-model mode.
 - Each speaker rereads their workstream notes in `docs/report/notes/` and the review packs.

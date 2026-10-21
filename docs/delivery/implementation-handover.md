@@ -63,4 +63,4 @@ The five supervisor reviews ([packs](../supervisor-reviews/README.md)), the univ
 | Abdullah Tarek | Role prompts, coordinator budgets and correction, verification, the runner's isolation checks, the [acceptance matrix](acceptance-matrix.md) |
 | Abdelrahman Adel | Model choice, the prompt-format study, training on Kaggle, adapter checksums, the provider |
 | Shahd Abdelhay | Data provenance and licenses, splits and leakage checks, the frozen protocol, targets and results |
-| Dania El-Walily | The interface states, the [report](../report/report.md), the [demo script](demo-script.md) and the slides |
+| Dania El-Walily | The interface states, the [report](../report/report.md), the [demo script](demo-script.md) and the [slides](slides/grad-refactor-ai-presentation.pptx) |

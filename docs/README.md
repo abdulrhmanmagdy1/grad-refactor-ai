@@ -1,6 +1,6 @@
 # Documentation index
 
-These documents describe the Multi-Agent Refactoring for Python project: what it must do, how the implemented system works, how it is built and checked, and how the research comparison is run. The service, the web interface, the dataset and the evaluation harness are implemented; the full fine-tuning run and the final comparison of arms A to D are still running, so no evaluation results exist yet. Each document says which parts are implemented, measured or still planned. The [project README](../README.md) gives the current status and the quickstart.
+These documents describe the Multi-Agent Refactoring for Python project: what it must do, how the implemented system works, how it is built and checked, and how the research comparison is run. The service, the web interface, the dataset and the evaluation harness are implemented, the LoRA adapter is trained, and arms A to D have been compared once on the frozen test split; the [report](report/report.md) presents the results. Each document says which parts are implemented, measured or still planned. The [project README](../README.md) gives the current status and the quickstart.
 
 ## Start here
 
@@ -34,7 +34,7 @@ These documents describe the Multi-Agent Refactoring for Python project: what it
 |---|---|
 | [Environment setup](development/setup.md) | Core environment, settings, run API and checks before a pull request |
 | [Frontend development](development/frontend.md) | Toolchain, scripts, tests and building the web interface |
-| [Testing](development/testing.md) | Foundation test notes and the first-release test plan; each workstream's test evidence is in its report notes |
+| [Testing](development/testing.md) | Test commands, what the suites cover, CI and the clean-clone record |
 | [Runner safety](development/runner-safety.md) | How trusted reference tests are isolated, the self-checks and their honest limits |
 
 ## Data, training and evaluation
@@ -45,20 +45,21 @@ These documents describe the Multi-Agent Refactoring for Python project: what it
 | [Dataset notice](../datasets/guard_clauses/v1/NOTICE.md) | Licenses and attribution of the `guard_clauses` v1 records |
 | [Training plan](data-and-training/training-plan.md) | Training environment, LoRA configuration, preparation and selection |
 | [Kaggle lane](../training/kaggle/README.md) | Running training and validation evaluations on Kaggle's free GPU with checksummed results |
-| [Model card](data-and-training/model-card.md) | Model provenance, intended use, measured facts and limitations; no adapter trained on the curated dataset yet |
+| [Model card](data-and-training/model-card.md) | Model and adapter provenance, checksums, intended use, test results and limitations |
 | [Evaluation protocol](evaluation/protocol.md) | Arms A to D, measures, statistics and the freezing procedure |
-| [Experiment records](../experiments/README.md) | Committed records: [hardware](../experiments/hardware/2026-10-20-demonstration-laptop.json), [data](../experiments/data/manual-inspection-2026-10-20.md), [models](../experiments/models/README.md), [training](../experiments/training/README.md) and [evaluation](../experiments/evaluation/2026-10-20-harness-plumbing-check.json) |
+| [Experiment records](../experiments/README.md) | Committed records: [hardware](../experiments/hardware/2026-10-20-demonstration-laptop.json), [data](../experiments/data/manual-inspection-2026-10-20.md), [models](../experiments/models/README.md), [training](../experiments/training/README.md), the [test-split evaluation](../experiments/evaluation/test-2026-10-21/targets-report/summary.md) and the [clean-clone reproduction](../experiments/qa/2026-10-21-clean-clone-reproduction.md) |
 
 ## Report material
 
 | Document | Main use |
 |---|---|
+| [Report](report/report.md) | The graduation report draft with the final results |
 | [Backend notes](report/notes/backend.md) | Run API, storage, recovery, errors and their evidence |
 | [Workflow notes](report/notes/workflow.md) | Coordinator, verification, demonstration cases and their evidence |
 | [Model notes](report/notes/model.md) | Model choice, benchmark, local provider and LoRA work |
 | [Data and evaluation notes](report/notes/data-evaluation.md) | Dataset, splits and the evaluation harness |
 | [Frontend notes](report/notes/frontend.md) | Interface design decisions, states and test evidence |
-| [Screenshots](report/screenshots/) | 26 interface screenshots taken on 2026-10-21 in fake mode, light and dark, desktop and phone |
+| [Screenshots](report/screenshots/) | 26 interface screenshots taken on 2026-10-21 with the fine-tuned model, light and dark, desktop and phone |
 | [Related work](research/related-work.md) | Literature review and reading table |
 | [References](references.md) | Methodology and tool sources |
 
@@ -68,6 +69,9 @@ These documents describe the Multi-Agent Refactoring for Python project: what it
 |---|---|
 | [User guide](delivery/user-guide.md) | Use the web interface and the API |
 | [Delivery checklist](delivery/checklist.md) | Prepare the release, report and demonstration |
+| [Implementation handover](delivery/implementation-handover.md) | Commands, component map, results, known defects and what each owner inspects |
+| [Acceptance matrix](delivery/acceptance-matrix.md) and [acceptance status](delivery/acceptance-status.md) | Each requirement and checklist item traced to its evidence |
+| [Slides](delivery/slides/grad-refactor-ai-presentation.pptx), [presentation outline](delivery/presentation-outline.md) and [demonstration script](delivery/demo-script.md) | The presentation, likely questions and the live demonstration |
 | [Acceptance and handover](agent-execution/06-acceptance-and-handover.md) | What each workstream must show before delivery is accepted |
 
 ## Planning and team

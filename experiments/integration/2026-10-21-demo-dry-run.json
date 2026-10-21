@@ -1,0 +1,281 @@
+{
+  "record": "Dry run of the demonstration cases against the running service with the fine-tuned model (not a rehearsal, not an evaluation)",
+  "recorded_at": "2026-10-21T12:54:38+00:00",
+  "git_head": "3d761cc1fe99f81222e154137c7442c2683cafd2",
+  "code": "The service process was started before commit 74daf25 from the working tree; src/refactor_ai, frontend and configs are identical between bad4095 and 3d761cc except src/refactor_ai/data/leakage.py, which the service does not import. git_head is the commit at the end of the dry run.",
+  "note": "Run by the coordinating coding agent through the HTTP API on the demonstration laptop. Each case ran once per workflow; greedy decoding, but outcomes on the day are expected, not guaranteed, to match.",
+  "settings": "Service defaults (WorkflowSettings): refactoring 1024 new tokens, review 768 new tokens and 4096 input tokens; these differ from the evaluation protocol's limits (review 384 new tokens).",
+  "precision": "bfloat16 on the laptop GPU; the evaluation ran in float32 on a Kaggle T4.",
+  "health": {
+    "mode": "local_model",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "adapter_id": "full-2026-10-21",
+    "adapter_sha256": "dff9ae024f0314224d84759772918b59a3fa9037ecbf7ad7a7d43357e1b1d5d2",
+    "device": "cuda:0 (NVIDIA GeForce RTX 2050)",
+    "refactor_use_adapter": true,
+    "runner_enabled": true
+  },
+  "runs": [
+    {
+      "case": "demo-library-fine",
+      "workflow_mode": "single_role",
+      "run_id": "89e618f10d124c5abf4bdc883764199f",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "6/6",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 19.2
+    },
+    {
+      "case": "demo-print-job",
+      "workflow_mode": "single_role",
+      "run_id": "2616b1b1fc30479ba9bb218bfa88cca9",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "8/8",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 22.2
+    },
+    {
+      "case": "demo-wifi-signal",
+      "workflow_mode": "single_role",
+      "run_id": "3f1d1bc334c346a88443302d18e9938a",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "11/11",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 25.1
+    },
+    {
+      "case": "demo-port-number",
+      "workflow_mode": "single_role",
+      "run_id": "1629ba23c2d54853bf6264d385bdcf29",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "11/11",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 20.2
+    },
+    {
+      "case": "demo-recycling-points",
+      "workflow_mode": "single_role",
+      "run_id": "68ad404564554c04bcc6b61c5ed15586",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "6/6",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 26.2
+    },
+    {
+      "case": "demo-dice-score",
+      "workflow_mode": "single_role",
+      "run_id": "58c8cce536a945d48a68be65c18b783a",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "single_role_complete",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "10/10",
+      "model_review": "not_run",
+      "call_count": 1,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 29.2
+    },
+    {
+      "case": "demo-library-fine",
+      "workflow_mode": "multi_role",
+      "run_id": "1e77bc374ef645a094f7743811bbd6a5",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "6/6",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 23.2
+    },
+    {
+      "case": "demo-print-job",
+      "workflow_mode": "multi_role",
+      "run_id": "cc9d0bfd6f7146d7942079eb7f3d50b1",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "8/8",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 31.2
+    },
+    {
+      "case": "demo-wifi-signal",
+      "workflow_mode": "multi_role",
+      "run_id": "b25d4bb6906242baad4eaf1e89ba77bf",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "11/11",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 34.3
+    },
+    {
+      "case": "demo-port-number",
+      "workflow_mode": "multi_role",
+      "run_id": "98c6be6373634f3d8a87154cb54e9b0f",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "11/11",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 30.3
+    },
+    {
+      "case": "demo-recycling-points",
+      "workflow_mode": "multi_role",
+      "run_id": "1816dd1a282b43569fa8e4b58a2ac1a3",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "6/6",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 36.2
+    },
+    {
+      "case": "demo-dice-score",
+      "workflow_mode": "multi_role",
+      "run_id": "dd2b51b7d46b41299a2cac189840e64c",
+      "status": "completed",
+      "disposition": "proposal_ready",
+      "reasons": [
+        "ready"
+      ],
+      "stop_reason": "no_correction_needed",
+      "error": null,
+      "syntax": "pass",
+      "rubric": "pass",
+      "reference_tests": "10/10",
+      "model_review": "accept",
+      "call_count": 3,
+      "attempt_count": 1,
+      "adapter_used_for_refactoring": true,
+      "wall_s": 43.4
+    },
+    {
+      "case": "sign (unsupported input)",
+      "workflow_mode": "multi_role",
+      "run_id": "8c574e59a33948c8970eeb88dcb2d1af",
+      "status": "completed",
+      "disposition": "no_change",
+      "reasons": [
+        "no_opportunity"
+      ],
+      "stop_reason": "unsupported_input",
+      "error": null,
+      "syntax": "not_run",
+      "rubric": "not_run",
+      "reference_tests": "not_run",
+      "model_review": "not_run",
+      "call_count": 0,
+      "attempt_count": 0,
+      "adapter_used_for_refactoring": null,
+      "wall_s": 0.0
+    }
+  ]
+}
