@@ -93,7 +93,7 @@ In bash the same can be written as `cd frontend && npm ci && npm run build`; Win
 uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
 ```
 
-Open http://127.0.0.1:8000/ for the web interface and http://127.0.0.1:8000/docs for the interactive API reference. In fake mode the header shows "Fake provider (test only)", a warning banner stays at the top of the page, GET /health reports `"mode": "fake"`, and every explanation and review starts with `FAKE PROVIDER (not a model):`. The fake refactoring is the deterministic reference transformation and the fake review is a placeholder `accept`, so fake results show that the plumbing works and nothing about a model.
+Open http://127.0.0.1:8000/ for the web interface and http://127.0.0.1:8000/docs for the interactive API reference. In fake mode the header pill shows "Demo mode", the banner "Demo mode: results come from a test stub, not the AI model." stays at the top of the page, GET /health reports `"mode": "fake"`, and every explanation and review starts with `FAKE PROVIDER (not a model):`. The fake refactoring is the deterministic reference transformation and the fake review is a placeholder `accept`, so fake results show that the plumbing works and nothing about a model.
 
 ### Local model mode
 
@@ -187,26 +187,37 @@ Only one service process can use a run database. A second start with the same `R
 
 ## Using the web interface
 
-Open http://127.0.0.1:8000/. The labels below are those of the interface after its redesign on 2026-10-21. On a wide screen the input panel and the history sit beside the run panel; in a narrow window or on a phone the panels form one column and the progress steps are listed vertically. The page follows the operating system's light or dark theme and loads nothing from the internet.
+Open http://127.0.0.1:8000/. The labels below are those of the simplified interface of 2026-10-21 (commit `bad4095`). On a wide screen the input panel sits on the left and the result on the right, with the history below; in a narrow window or on a phone the panels form one column. The page follows the operating system's light or dark theme and loads nothing from the internet.
 
-![The page in fake mode after a multi-role run of the Wi-Fi demonstration case: the header, the fake-provider bar, the input panel with the linked case, the completed stepper and the outcome with the indentation outline](../report/screenshots/s05-proposal-ready-light.png)
+The interface uses short names for the two workflows: **With review** is the multi-role workflow (analysis, refactoring and review roles, at most one correction) and **Fast** is the single-role workflow (one refactoring call). The rest of this guide uses the technical names multi-role and single-role, as the API and the run records do.
 
-The screenshots in this guide were taken on 2026-10-21 with the fake provider, so the results they show come from fixed rules, not from a model. All 26 screenshots, in light and dark themes and at phone width, are in [docs/report/screenshots](../report/screenshots/); the [frontend notes](../report/notes/frontend.md#interface-states-and-screenshots-to-take) list how each state was produced.
+![The page with the fine-tuned model after a Fast run of the Library fine case: the status pill, the input panel with the linked case, and the result with the four check chips and the diff](../report/screenshots/s05-proposal-ready-light.png)
+
+The screenshots in this guide were taken on 2026-10-21 with the fine-tuned model (adapter `full-2026-10-21`, bf16) on the demonstration laptop. Each shows one real run, not a typical result. All 26 screenshots, in light and dark themes and at phone width, are in [docs/report/screenshots](../report/screenshots/); the [frontend notes](../report/notes/frontend.md#interface-states-and-screenshots-to-take) list how each state was produced.
 
 ### The header
 
-The header shows what the service is actually running, read from GET /health:
+The header holds the title and a status pill, read from GET /health:
+
+| Pill | Meaning |
+|---|---|
+| "Fine-tuned model ready" | The local model is loaded and the refactoring role uses the fine-tuned adapter |
+| "Base model ready" | The local model is loaded without the adapter |
+| "Demo mode" | Fake mode: a test stub answers, not a model |
+| "Loading", "Adapter missing", "Not ready" | The model cannot serve runs yet; a notice under the header gives the service's own reason |
+
+Select the pill to open the details:
 
 | Item | Shows |
 |---|---|
-| Provider | "Fake provider (test only)" or "Local model" |
+| Provider | "AI model" or "Demo mode (no AI model)" |
 | Model | Model id, "at revision" and the start of the revision, and the device |
-| Refactoring role | "Base model", "Fine-tuned LoRA adapter" (with the adapter id and the start of its checksum), "Adapter requested, none configured", or "Fixed rules (fake provider)" |
-| Model status | "Ready", "Loading", "Adapter missing" or "Not ready". When it is not ready, a notice under the header gives the service's own reason |
+| Refactoring role | "Fine-tuned LoRA adapter" with the adapter id and the start of its checksum ("Analysis and review use the base model."), "Base model", "Adapter requested, none configured", or "Fixed rules (fake provider)" |
+| Model status | "Ready", "Loading", "Adapter missing" or "Not ready" |
 | Reference tests | "Runner enabled", or "Runner disabled" with the reason |
 | Queue | "N of M waiting": unfinished runs against the queue limit, with the API version |
 
-In fake mode an amber bar under the header reads "Fake provider: these are not language-model results." It stays at the top of the window while you scroll, so no screenshot of a fake result can leave it out.
+In fake mode an amber bar under the header reads "Demo mode: results come from a test stub, not the AI model." It stays at the top of the window while you scroll, so no screenshot of a fake result can leave it out.
 
 "Service unreachable" means the page cannot reach the service; start it, then choose "Check again". Right after startup the reference runner is reported as disabled for a few seconds with "The reference runner is still running its isolation self-checks; execution is not enabled yet." (about 5 to 10 s on the demonstration laptop). A run submitted meanwhile waits for the runner.
 
@@ -214,36 +225,45 @@ In fake mode an amber bar under the header reads "Fake provider: these are not l
 
 The input panel, from top to bottom:
 
-- **Demonstration case.** Choose a case in the list (each entry shows its number of reference tests) and select "Load case". The case code replaces the editor content; if you had other code, "Restore previous code" brings it back. A notice says that the code is linked to the case and how many trusted reference tests will run. The link holds only while the code equals the case exactly: an edit removes it with a notice, where "Restore the case code" brings the case code back and "Dismiss" keeps your edited code without the link. Without a link, reference tests are `not_available`.
-- **Python function.** Paste or type one function. Tab inserts four spaces; press Esc and then Tab to move to the next control. The counter above the editor shows "N of 20,000 characters" and the number of lines. Above 20,000 characters submission is blocked; above the task's 3,000 characters or 60 lines a warning says the run will end with no change (`too_long`).
-- **Refactoring task.** The only option is "Replace nested conditionals with guard clauses".
-- **Action bar.** The workflow choice and the main button stay in view at the bottom of the panel. "Multi-role (default)" runs the analysis, refactoring and review roles with at most one correction; "Single-role" makes one refactoring call with no analysis or review.
+- **Demonstration case.** Choose a case in the list (each entry shows its number of reference tests) and select "Load case". The case code replaces the editor content; if you had other code, "Restore previous code" brings it back. A notice such as "Demo case Library fine (easy: two guard clauses): 6 tests will run." says that the code is linked to the case. The link holds only while the code equals the case exactly: an edit removes it with the notice "You changed the demo code, so the tests of ... will not run.", where "Restore the case code" brings the case code back and "Dismiss" keeps your edited code without the link. Without a link, reference tests are `not_available`.
+- **Python function.** Paste or type one function. Tab adds four spaces; press Esc and then Tab to move to the next control. The counter above the editor shows "N of 20,000 characters" and the number of lines. Above 20,000 characters submission is blocked; above the task's 3,000 characters or 60 lines a warning says the run will end with no change (`too_long`).
+- **Refactoring task.** The only option is "Flatten nested if statements (guard clauses)".
+- **Workflow and button.** They stay in view at the bottom of the panel: "With review (default)" (find, rewrite, then review; slower) or "Fast" (one rewrite step), and the main button **Improve code**.
 
-Select **Propose refactoring**. The page follows one run at a time: while it runs, the button is disabled, and you can keep editing.
+Select **Improve code**. The page follows one run at a time: while it runs, the button is disabled, and you can keep editing.
 
 If the service refuses the submission, an error box appears above the editor with a title, the service's message and error code, and the note "Your code was not changed." For a syntax error it gives the line and column and a "Go to line N" button that selects that line. For a problem with the demonstration case it offers "Restore the case code", "Reload cases" or "Remove the case link"; for a temporary problem such as a full queue it offers "Submit again". "Dismiss" closes the box. Every code is explained under [errors](#errors).
 
-![A rejected submission: the error box above the editor gives the line and column of the syntax error and a Go to line 1 button, while the run panel still shows the previous run](../report/screenshots/s09-invalid-syntax-light.png)
+![A refused submission: the error box above the editor gives the line and column of the syntax error and a Go to line 1 button; the notice above it says the demonstration case link was removed, and the result panel still shows the previous run](../report/screenshots/s09-invalid-syntax-light.png)
 
 ### Following a run
 
-The run panel names the run (a short id and the creation time) and lists the workflow, the provider and the reference case, with "Edit this input" to load the run's code into the editor. A stepper shows Queued, Analysis (multi-role only), Refactoring, "Verification and review" (multi-role) or "Verification" (single-role), then the result, together with the elapsed time; placeholder shapes stand in for the result until it arrives. A correction appears as "Refactoring (correction)". The page polls the service, first after 750 ms and then less often, up to every 3 s. Connection problems are retried automatically. After 20 minutes (or twice the run's time limit, if that is longer) the page stops checking and offers "Check again"; the run may still be in progress on the server.
+The result panel names the run (a short id and the creation time), shows the workflow and the provider as small tags, and offers "Edit this input" to load the run's code into the editor. While the run is in progress, a stepper shows Queued, Find (With review only), Rewrite, "Check and review" (With review) or "Check" (Fast), then Result, together with the elapsed time. A correction appears as "Rewrite (retry)". The page polls the service, first after 750 ms and then less often, up to every 3 s. Connection problems are retried automatically. After 20 minutes (or twice the run's time limit, if that is longer) the page stops checking and offers "Check again"; the run may still be in progress on the server.
 
 ### The result
 
 A completed run shows, from top to bottom:
 
-1. **Outcome**: the disposition with a short explanation and "Reasons given by the service", tagged "Fake provider output" in fake mode. When there is a proposal, an outline beside it draws the indentation of the original and of the proposed code to the same scale and names the deepest indentation level of each. The outline is a display aid measured from the text; the rubric check "Reduces the nesting depth" remains the verdict.
-2. **Warnings recorded for this run**, if any.
-3. **Proposed change**: a unified diff or, with "Side by side", the full original and proposed code with the lines flagged by the analysis. "Copy proposed code" and "Download proposal" are in this section. A run without a proposal shows the original input instead.
-4. **Verification**: the four checks Syntax, Task rubric, Reference tests and Model review, listed one below the other, each with its own status (see [reading the results](#reading-the-results)). Only a pass or an accept is drawn in green with a check mark; missing evidence has a dashed outline and its own words.
-5. **Explanation** and **Findings**: the model's explanation and the analysis findings with their line ranges.
-6. **Your decision**: "Accept proposal" and "Reject proposal".
-7. **Run record**: identity, settings, timings and every generation attempt.
+1. **The verdict**: a colored box with the outcome in plain words and one sentence of advice:
 
-![The proposed change of the same run as a unified diff, with the Unified and Side by side switch, Copy proposed code and Download proposal; the history is on the left](../report/screenshots/s05b-diff-and-verification-light.png)
+   | Box title | Outcome (disposition) |
+   |---|---|
+   | "Ready to use" | `proposal_ready`: all checks passed; read the change before you accept it |
+   | "Not safe to use" | `rejected`: a check failed; do not use this change |
+   | "Not sure" | `uncertain`: nothing failed, but some checks could not run |
+   | "Nothing to change" | `no_change`: the tool cannot improve this code (the reason follows) |
+   | "Something went wrong" | `failed`: the run stopped before it made a change |
 
-A failed run shows "The run failed" with the error code, the message, an explanation of the code and the step where it stopped ("Stopped during: ..."), followed by "Try again" (the same code, workflow and case as a new run) and "Edit this input" (loads the run's code into the editor; "Restore previous code" undoes that). The original input and any findings stay visible below.
+2. **Four check chips**: "Valid Python" (syntax), "Guard clauses" (the task rubric), "Tests" (reference tests, for example "6/6 passed") and "Review" (the model review). Each chip has its own status: "Passed", "Failed", "Not checked", "No tests", "Could not check", "Skipped (Fast)" for the review of a single-role run, or "Demo only" for the fake provider's placeholder review. Only a pass or an accept is drawn in green with a check mark; missing evidence has a dashed outline. The line under the chips reminds you that tests check examples, not every possible input.
+3. **Proposed change**: a unified diff or, with "Side by side", the full original and proposed code, with the number of added and removed lines. "Copy proposed code" and "Download proposal" are in this section. A run without a proposal shows your code instead, with "Your code stays as it is."
+4. **Your decision**: "Accept proposal" and "Reject proposal" (see [downloading, accepting and rejecting](#downloading-accepting-and-rejecting)).
+5. **Details** (closed by default): an outline that draws the indentation of the original and the proposal to the same scale; "Why", the reasons given by the service; "Verification", the four checks in full (the eight rubric checks, the test counts and failures, the review's reasons; see [reading the results](#reading-the-results)); the model's "Explanation" and the analysis "Findings"; and the "Run record" with identity, settings, timings and the raw output of every generation attempt.
+
+![The result of the same run: the verdict, the four check chips, the unified diff with Copy proposed code and Download proposal, the decision buttons and the closed Details section](../report/screenshots/s05b-diff-and-verification-light.png)
+
+The explanation is written by the model and is not checked. In the recorded run above, it states that the guard `days_overdue > 0` returns 0, while the proposed code returns `min(days_overdue * rate, 1500)` there; read the diff, not the explanation.
+
+A failed run shows "Something went wrong" with an explanation of the error code and the step where it stopped, followed by "Try again" (the same code, workflow and case as a new run) and "Edit this input" (loads the run's code into the editor; "Restore previous code" undoes that). Your code stays visible below.
 
 ## The demonstration cases
 
@@ -264,8 +284,8 @@ A short demonstration that covers the main outcomes:
 
 | Step | Input | Expected outcome |
 |---|---|---|
-| Success path | Load "Library fine" (`demo-library-fine`), Multi-role, Propose refactoring | Fake mode with the runner enabled: `proposal_ready`, 6 of 6 reference tests passed. Local model: depends on the model's proposal |
-| Missing evidence | Paste the `shipping_cost` example above (no case), Single-role | `uncertain` with reason `tests_not_available` |
+| Success path | Load "Library fine" (`demo-library-fine`), With review or Fast, Improve code | Fake mode with the runner enabled: `proposal_ready`, 6 of 6 reference tests passed. Fine-tuned model: `proposal_ready` with 6 of 6 tests in the recorded Fast runs; it depends on the model's proposal |
+| Missing evidence | Paste the `shipping_cost` example above (no case), Fast | `uncertain` with reason `tests_not_available` |
 | Unsupported input | `def sign(x):` with `if x > 0: return 1`, `elif x < 0: return -1`, `return 0` | `no_change` with reason `no_opportunity`, zero model calls |
 | Invalid input | `def broken(x)` without the colon | Rejected before a run starts: `invalid_syntax` at line 1, column 14 |
 | Edited case | Load a case and change one character | The link is removed; reference tests become `not_available` |
@@ -292,7 +312,7 @@ The four dimensions are never merged into one verdict. Only `pass` and `accept` 
 | | `error` | The runner could not complete the tests |
 | | `not_available` | No demonstration case was linked, or the case has no tests |
 | | `not_run` | The runner is disabled (by configuration or because an isolation check failed), the proposal does not parse, it leaves the task constraints (for example adds an import or a denied call) and was therefore never executed, or the run's own time ran out before the tests finished |
-| Model review | `accept`, `reject`, `uncertain` | The review role's verdict and reasons (multi-role only). In fake mode this is a fixed placeholder `accept`, which the interface shows as "Accepted (placeholder)" and draws as missing evidence |
+| Model review | `accept`, `reject`, `uncertain` | The review role's verdict and reasons (multi-role only). In fake mode this is a fixed placeholder `accept`, which the interface shows as "Demo only" on the chip and "Accepted (placeholder)" in the details, drawn as missing evidence |
 | | `error` | The review output could not be parsed |
 | | `not_run` | Single-role run, or the run stopped before the review |
 
@@ -381,7 +401,7 @@ The run record at the bottom of a result lists the run id; workflow, task and re
 
 ### What to expect from the model
 
-Model results are still being produced, so treat these figures as early, validation-only observations rather than evaluation results. In the validation-only prompt-format study (24 validation records, base model, refactoring role only, the code-first format the service now uses), every output contained parseable code, but 14 outputs returned the input unchanged and only 2 of 24 passed syntax, the rubric and the reference tests ([selection record](../../experiments/models/2026-10-20-prompt-format-selection.md)). With the base model, many proposals can therefore be expected to fail the rubric or the tests. The effect of the fine-tuned adapter and of the multi-role workflow will be reported in the evaluation once it has run.
+On the frozen test split of 88 cases with reference tests, run once on a Kaggle T4 under protocol eval-v1, the fine-tuned model in the single-role workflow (Fast) reached `proposal_ready` in 70 cases (79.5%), against 7 (8.0%) for the base model. The multi-role workflow (With review) reached it in 35 cases with the fine-tuned model and in 1 with the base model, mainly because the review role, which uses the base model, often repeats itself until its token limit and its verdict then counts as an error, which makes the outcome `uncertain` ([test results](../../experiments/evaluation/test-2026-10-21/targets-report/summary.md), [report](../report/report.md)). For your own code, which has no reference tests, the best possible outcome is `uncertain`. The evaluation used shorter generation limits than the service defaults, and the laptop serves the adapter in bfloat16, so single runs can differ.
 
 Time per model call depends on the output length: on the demonstration laptop, pilot generations of 80 to 137 tokens took 3.1 to 9.1 s, and 1,024 generated tokens took 55.4 s. A multi-role run makes three model calls, or five with a correction.
 
@@ -499,7 +519,7 @@ To submit your own function, write `{"code": "...", "workflow_mode": "single_rol
 
 ### Errors returned by the API
 
-These come back immediately as an HTTP error; nothing is stored for a rejected submission. The web interface shows them under the Propose refactoring button and keeps your code.
+These come back immediately as an HTTP error; nothing is stored for a rejected submission. The web interface shows them in an error box above the editor and keeps your code.
 
 | Code | HTTP | Meaning | What to do |
 |---|---|---|---|

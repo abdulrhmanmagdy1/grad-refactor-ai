@@ -175,7 +175,8 @@ It is not a sandbox for hostile code: there is no operating-system network, file
 
 - The core environment is locked (`uv.lock`), and the model revision and weights are pinned and hash-checked.
 - Curation is seeded and rebuilds byte for byte (`curate_dataset.py --check`), and CI runs on Linux and Windows.
-- Gaps: reproduction was on the same laptop only, and two curation files hash differently on a fresh checkout because of line endings ([data plan](../data-and-training/data-plan.md)).
+- A clean clone from GitHub passed every check, the dataset rebuild and a complete run ([clean-clone record](../../experiments/qa/2026-10-21-clean-clone-reproduction.md)); the first attempt found a line-ending defect in two curation hashes, fixed in `74daf25`.
+- Gap: reproduction was on the same laptop only.
 
 **What did coding agents do, and what did you do?** (each speaker for their own workstream) Coding agents implemented the workstreams in parallel on agreed contracts, one per workstream (ADR16, [team allocation](../agent-execution/team-allocation.md)). Each student owns, inspects and must be able to explain their workstream. Use the declaration agreed with the supervisor, and do not overstate either part.
 

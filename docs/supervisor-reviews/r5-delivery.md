@@ -2,7 +2,7 @@
 
 Status: Prepared by the team; the meeting has not taken place; no supervisor feedback is recorded.
 
-This pack follows the [review template](review-template.md). A coding agent drafted it on 2026-10-21 for the coordinator, Abdelrahman Magdy. At that time the final evaluation, the report and the release did not exist, so most of this pack is a structure to fill from the records once they exist. It holds no results. Every number added later must come from a committed record and be linked to it. The meeting fields are deliberately left empty.
+This pack follows the [review template](review-template.md). A coding agent drafted it on 2026-10-21 for the coordinator, Abdelrahman Magdy. At that time the final evaluation, the report and the release did not exist, so most of this pack was a structure to fill from the records. It was updated after commit `74daf25` with the committed results: every number below comes from the [test-split summary](../../experiments/evaluation/test-2026-10-21/targets-report/summary.md) or the records it links. The meeting fields are deliberately left empty.
 
 ## Phase, date, and attendees
 
@@ -16,31 +16,31 @@ This pack follows the [review template](review-template.md). A coding agent draf
 
 ## Release or code SHA and links to the demonstration and results
 
-- Release: record the tag and its commit. At preparation no tag existed, and local `main` was at `ee87a11`.
+- Release: record the tag and its commit. At preparation no tag existed, and local `main` was at `ee87a11`; at the update `main` was past `74daf25`, still without a tag.
 - Demonstration: the [demonstration script](../delivery/demo-script.md), run against the tagged commit in the delivered configuration, with the [presentation outline](../delivery/presentation-outline.md).
-- Results: link the evaluation folder written by `scripts/report_evaluation.py` (`experiments/evaluation/<evaluation-id>/`) and the protocol freeze record (`experiments/evaluation/protocol-freeze.json`). Neither existed at preparation.
+- Results: link the evaluation folder written by `scripts/report_evaluation.py` (`experiments/evaluation/<evaluation-id>/`) and the protocol freeze record (`experiments/evaluation/protocol-freeze.json`). Neither existed at preparation. Both exist now: the [test-split evaluation](../../experiments/evaluation/test-2026-10-21/) and the [freeze record](../../experiments/evaluation/protocol-freeze.json).
 
-| Evidence to link when it exists | Owner | State at preparation |
-|---|---|---|
-| Protocol freeze record with targets | Shahd Abdelhay | Not written; the protocol is a [draft](../evaluation/protocol.md) |
-| Test-split evaluation folder (records, summary, tables, figures) | Shahd Abdelhay | Not run |
-| Validation evaluation and selection record | Shahd Abdelhay, Abdelrahman Adel | Running on Kaggle; not committed ([R3](r3-integration-and-training.md)) |
-| Training record and adapter checksum; updated [model card](../data-and-training/model-card.md) | Abdelrahman Adel | Not committed; the model card said "not trained" |
-| Clean-clone setup record (same laptop or second machine) | Abdelrahman Magdy | Not recorded for the current state |
-| Acceptance matrix and `docs/delivery/implementation-handover.md` | Abdullah Tarek, Abdelrahman Magdy | Working drafts of the [acceptance matrix](../delivery/acceptance-matrix.md) and the [acceptance status](../delivery/acceptance-status.md) exist, uncommitted and pending inspection. The handover file was not written ([R4](r4-first-release.md)) |
-| Report in the university template | Dania El-Walily | Not assembled; workstream notes exist in `docs/report/notes/` |
-| Slides, rehearsed demonstration, backup recording | Dania El-Walily | Outline and script prepared; rehearsal and recording pending |
-| Release notes, checksums, artifact retrieval instructions | Abdelrahman Magdy | Not written |
+| Evidence to link when it exists | Owner | State at preparation | State after `74daf25` |
+|---|---|---|---|
+| Protocol freeze record with targets | Shahd Abdelhay | Not written; the protocol is a [draft](../evaluation/protocol.md) | [Frozen](../../experiments/evaluation/protocol-freeze.json) as eval-v1 with twelve targets |
+| Test-split evaluation folder (records, summary, tables, figures) | Shahd Abdelhay | Not run | [Run once](../../experiments/evaluation/test-2026-10-21/) from the clean commit `9582c66` |
+| Validation evaluation and selection record | Shahd Abdelhay, Abdelrahman Adel | Running on Kaggle; not committed ([R3](r3-integration-and-training.md)) | [Validation baseline](../../experiments/evaluation/validation-2026-10-21/provenance.json) and [selection record](../../experiments/training/validation-selection-2026-10-20.json) committed |
+| Training record and adapter checksum; updated [model card](../data-and-training/model-card.md) | Abdelrahman Adel | Not committed; the model card said "not trained" | [Training record](../../experiments/training/full-2026-10-21.json) and model card committed |
+| Clean-clone setup record (same laptop or second machine) | Abdelrahman Magdy | Not recorded for the current state | [Same-laptop clean clone](../../experiments/qa/2026-10-21-clean-clone-reproduction.md) at `74daf25` |
+| Acceptance matrix and `docs/delivery/implementation-handover.md` | Abdullah Tarek, Abdelrahman Magdy | Working drafts of the [acceptance matrix](../delivery/acceptance-matrix.md) and the [acceptance status](../delivery/acceptance-status.md) exist, uncommitted and pending inspection. The handover file was not written ([R4](r4-first-release.md)) | All three committed and refreshed ([handover](../delivery/implementation-handover.md)); pending inspection |
+| Report in the university template | Dania El-Walily | Not assembled; workstream notes exist in `docs/report/notes/` | [Report](../report/report.md) assembled in Markdown; the template is not confirmed |
+| Slides, rehearsed demonstration, backup recording | Dania El-Walily | Outline and script prepared; rehearsal and recording pending | Unchanged |
+| Release notes, checksums, artifact retrieval instructions | Abdelrahman Magdy | Not written | Not written; checksums are in the model card |
 
 ## Completed and incomplete outcomes
 
-| Task | Planned output | State at preparation |
-|---|---|---|
-| T24 Independent final evaluation | Complete results, figures, evaluation section | Not run. The harness refuses the test split without `--i-confirm-frozen-test`, `--protocol-version eval-v1`, a frozen protocol, the local model and matching split hashes ([protocol](../evaluation/protocol.md)). |
-| T25 Clean setup and critical fixes | Setup evidence, labelled by hardware coverage | Foundation checks passed on the demonstration laptop on 2026-10-20 ([R1](r1-scope-and-feasibility.md)). CI runs on Linux and Windows. No clean-clone reproduction of the current state was recorded, and no second physical machine has been used. |
-| T26 Report and guides | Academic report, user and developer guides | Guides exist ([user guide](../delivery/user-guide.md), [setup](../development/setup.md)). The report is not assembled, and the university template is not confirmed ([delivery checklist](../delivery/checklist.md)). |
-| T27 Presentation and repeatable demonstration | Slides, demonstration, backup recording | [Demonstration script](../delivery/demo-script.md) and [presentation outline](../delivery/presentation-outline.md) prepared on 2026-10-21. Rehearsal, local-model screenshots and the backup recording are pending. |
-| T28 Initial delivery release | Tag, release notes, checksums | Not started. |
+| Task | Planned output | State at preparation | State after `74daf25` |
+|---|---|---|---|
+| T24 Independent final evaluation | Complete results, figures, evaluation section | Not run. The harness refuses the test split without `--i-confirm-frozen-test`, `--protocol-version eval-v1`, a frozen protocol, the local model and matching split hashes ([protocol](../evaluation/protocol.md)). | Done once on Kaggle; results below; the planned qualitative review of sampled proposals has no record yet |
+| T25 Clean setup and critical fixes | Setup evidence, labelled by hardware coverage | Foundation checks passed on the demonstration laptop on 2026-10-20 ([R1](r1-scope-and-feasibility.md)). CI runs on Linux and Windows. No clean-clone reproduction of the current state was recorded, and no second physical machine has been used. | Same-laptop clean clone passed; its first attempt found a line-ending defect in two curation hashes, fixed in `74daf25`; CI passed for every push; no second machine |
+| T26 Report and guides | Academic report, user and developer guides | Guides exist ([user guide](../delivery/user-guide.md), [setup](../development/setup.md)). The report is not assembled, and the university template is not confirmed ([delivery checklist](../delivery/checklist.md)). | Report assembled in Markdown; guides and the testing page updated; template not confirmed |
+| T27 Presentation and repeatable demonstration | Slides, demonstration, backup recording | [Demonstration script](../delivery/demo-script.md) and [presentation outline](../delivery/presentation-outline.md) prepared on 2026-10-21. Rehearsal, local-model screenshots and the backup recording are pending. | Screenshots with the fine-tuned model taken; slides, rehearsal and recording pending |
+| T28 Initial delivery release | Tag, release notes, checksums | Not started. | Not started |
 
 ### Results to present (fill from the records)
 
@@ -48,17 +48,19 @@ Fill these tables only from the `summary.md`, CSV tables and `report.json` that 
 
 | Arm | N | `proposal_ready` | `rejected` | `uncertain` | `no_change` | `failed` | Syntax valid | Rubric pass | Tests pass | Median latency | Calls per case |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| A | | | | | | | | | | | |
-| B | | | | | | | | | | | |
-| C | | | | | | | | | | | |
-| D | | | | | | | | | | | |
+| A | 88 | 7 | 80 | 0 | 0 | 1 | 87 | 13 | 68 | 3.03 s | 1.00 |
+| B | 88 | 1 | 85 | 2 | 0 | 0 | 88 | 9 | 69 | 16.02 s | 4.93 |
+| C | 88 | 70 | 18 | 0 | 0 | 0 | 88 | 88 | 70 | 7.74 s | 1.00 |
+| D | 88 | 35 | 19 | 34 | 0 | 0 | 88 | 88 | 69 | 17.86 s | 3.43 |
+
+Source: the [test-split summary](../../experiments/evaluation/test-2026-10-21/targets-report/summary.md), protocol eval-v1, Kaggle T4 in float32. Validation results are in the [selection record](../../experiments/training/validation-selection-2026-10-20.json) (84 cases per arm) and are not test results.
 
 | Paired comparison | Only first arm accepts | Only second arm accepts | Exact McNemar p | Holm-adjusted p |
 |---|---|---|---|---|
-| B vs A (coordination, original model) | | | | |
-| C vs A (fine-tuning, single role) | | | | |
-| D vs C (coordination, adapted role) | | | | |
-| D vs B (fine-tuning, multi-role) | | | | |
+| B vs A (coordination, original model) | 0 | 6 | 0.0312 | 0.0312 |
+| C vs A (fine-tuning, single role) | 65 | 2 | < 0.0001 | < 0.0001 |
+| D vs C (coordination, adapted role) | 1 | 36 | < 0.0001 | < 0.0001 |
+| D vs B (fine-tuning, multi-role) | 34 | 0 | < 0.0001 | < 0.0001 |
 
 Also report:
 
@@ -68,15 +70,18 @@ Also report:
 - the targets from the freeze record, and whether they were met;
 - the qualitative failure review described in the protocol.
 
+From the records: arm C was accepted in 67 of 84 template cases, 2 of 3 MBPP cases and the one HumanEval case, and arm A in 7 of 84 template cases and none of the real-source cases (results by source group in `by_source_group.csv` of the [targets report](../../experiments/evaluation/test-2026-10-21/targets-report/)). The only failed run was one `unparseable_output` in arm A; no run timed out. Eleven of the twelve targets were met; arm D's `proposal_ready` floor (at least 43.52%) was missed with 35 of 88 (39.8%). The three expected directions were confirmed; for B against A no direction was expected, and A was accepted more often (Holm-adjusted p = 0.031). The qualitative review has not been done.
+
 ## Problems and alternatives
 
-Known before the evaluation; add what the evaluation shows.
+Known before the evaluation; what the evaluation showed is item 6.
 
 1. **The result may be negative or mixed.** Before any adapter, the base model returned 14 of 24 validation inputs unchanged in the prompt study. Arms A and B may therefore score low, and the effects of fine-tuning and coordination may be small with 88 cases. The [proposal](../proposal/project-proposal.md) treats improvement as a hypothesis, and negative findings are part of the contribution.
 2. **Threats to validity.** The template families share one generator design. Held-out families measure transfer to unseen domains, not unseen categories. Real code is a four-case probe, and pretraining overlap cannot be excluded. Reference tests have documented gaps: an untested branch in the card-checksum records, and float-rounding mutants in two test cases ([data plan](../data-and-training/data-plan.md)). The multi-role arms receive oracle feedback from the failing tests in the correction ([R2](r2-data-and-baseline.md), question 6).
 3. **Reproduction coverage.** Only one laptop exists. A clean clone on the same laptop proves clean setup only ([roadmap](../planning/roadmap.md)). Training and evaluation may run on Kaggle hardware with another precision ([R3](r3-integration-and-training.md)).
 4. **Publication is not settled.** The repository is private and has no open-source license ([NOTICE](../../NOTICE.md)). The team-authored data has no license yet. The adapter's redistribution terms have not been reviewed ([model card](../data-and-training/model-card.md)). Base-model weights are never committed.
 5. **Dates and format are unconfirmed.** The official deadline, the report template and the presentation format were not recorded at preparation ([R1](r1-scope-and-feasibility.md), question 6).
+6. **What the evaluation showed.** Fine-tuning helped clearly (C against A). Adding the analysis and review roles lowered acceptance with both models (B against A, D against C), mainly because the untuned review role often repeated itself until the 384-token limit, its verdict became an error and the run ended `uncertain` (34 of D's 88 cases). A reliable review role, or a review that is not taken from the original model, is a prerequisite for the multi-role workflow to help ([report](../report/report.md)).
 
 ## Questions requiring a decision
 

@@ -4,7 +4,7 @@ Prepared on 2026-10-21 for the team's inspection, as required by [acceptance and
 
 ## Version
 
-Branch `main` on GitHub (`abdulrhmanmagdy1/grad-refactor-ai`). Every commit was checked in a clean worktree before it was pushed ([verification record](../../experiments/qa/2026-10-21-clean-worktree-verification.md)). The frozen evaluation ran from commit `9582c66`; the latest state is the head of `main`.
+Branch `main` on GitHub (`abdulrhmanmagdy1/grad-refactor-ai`). Every code commit was checked in a clean worktree before it was pushed; three commits with only records and documentation (`911ca3c`, `dd1b0fa`, `90462d3`) were checked by the link checker and CI instead, and GitHub Actions passed for every push ([verification record](../../experiments/qa/2026-10-21-clean-worktree-verification.md)). A clean clone from GitHub at `74daf25` passed every check, the dataset rebuild and a complete run ([clean-clone record](../../experiments/qa/2026-10-21-clean-clone-reproduction.md)). The frozen evaluation ran from commit `9582c66`; the latest state is the head of `main`.
 
 ## Commands
 
@@ -48,7 +48,7 @@ Demonstration laptop: Windows 11, AMD Ryzen 7 7435HS, 7.8 GB RAM, NVIDIA RTX 205
 - The multi-role review uses the original model and often repeats itself until the 384-token limit, so its verdict becomes an error and the outcome `uncertain`.
 - The reference runner is a hardening layer for server-owned cases, not a sandbox for hostile code ([runner safety](../development/runner-safety.md)).
 - Code pasted by a user has no reference tests, so it can at best end as `uncertain`.
-- Reproduction was checked only on the demonstration laptop; a second machine is untested.
+- Reproduction was checked only on the demonstration laptop (a same-laptop clean clone); a second machine is untested.
 - The adapter and the team-authored data are not published; their redistribution terms are a team decision.
 
 ## Pending human decisions

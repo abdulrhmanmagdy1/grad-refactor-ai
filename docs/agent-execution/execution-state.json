@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "status": "pending_human",
-  "last_verified_commit": "see experiments/qa/2026-10-21-clean-worktree-verification.md (every pushed commit was checked in a clean worktree)",
+  "last_verified_commit": "74daf25 (clean clone from GitHub: experiments/qa/2026-10-21-clean-clone-reproduction.md; per-commit checks and CI runs: experiments/qa/2026-10-21-clean-worktree-verification.md)",
   "branch": "main",
   "hardware_report": "experiments/hardware/2026-10-20-demonstration-laptop.json",
   "environment_records": [
@@ -68,7 +68,7 @@
       "blockers": [
         "Owners' inspection and acceptance of their workstreams",
         "R5 supervisor review, university template and dates",
-        "Second-machine reproduction untested",
+        "Second-machine reproduction untested (a same-laptop clean clone passed)",
         "Data license and adapter publication are team decisions"
       ]
     }
