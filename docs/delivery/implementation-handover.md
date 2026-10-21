@@ -53,7 +53,7 @@ Demonstration laptop: Windows 11, AMD Ryzen 7 7435HS, 7.8 GB RAM, NVIDIA RTX 205
 
 ## Pending human decisions
 
-The five supervisor reviews ([packs](../supervisor-reviews/README.md)), the university template and dates, the data license, whether to publish the adapter, and each owner's acceptance of their workstream.
+The five supervisor reviews ([packs](../supervisor-reviews/README.md)), the university template and dates, the data license, whether to publish the adapter, and each owner's acceptance of their workstream. The release is not tagged; its notes are drafted in [release-notes-draft.md](release-notes-draft.md).
 
 ## What each owner should inspect
 
