@@ -282,6 +282,7 @@ export const TASK_REASON_TEXT: Record<string, string> = {
   match_present: "match statements are outside the supported scope.",
   dunder_access: "Access to double-underscore names is outside the supported scope.",
   no_opportunity: "No nested conditional can be flattened with guard clauses.",
+  too_complex: "The input is nested too deeply to analyze.",
 };
 
 export interface ReasonParts {
