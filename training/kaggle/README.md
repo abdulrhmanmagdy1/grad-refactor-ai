@@ -43,7 +43,7 @@ python training/kaggle/lane.py fetch <slug>
    - `eval` and `smoke`: `scripts/evaluate.py --split validation --provider local` with a model config that points the LocalProvider at `sys.executable`, the downloaded model and the bundled adapter, followed by `scripts/report_evaluation.py`.
 6. Writes `status.json` (every step with its duration and any error), the logs and `outputs-manifest.json`, and exits with an error when a step failed.
 
-The split is fixed to `validation` in the kernel; this lane never evaluates the test split.
+Evaluation jobs use the validation split. The single final evaluation of the frozen test split is the only exception: `lane.py push --job eval --split test --i-confirm-frozen-test --protocol-version <version>` refuses to push unless the uploaded bundle was built from a clean, committed tree, the kernel refuses a dirty bundle again, and `scripts/evaluate.py` additionally requires the frozen protocol record (`experiments/evaluation/protocol-freeze.json`, included in the bundle) and matching split hashes. Kaggle has no Git, so the evaluation records' `code_sha` is empty there; the bundle manifest's `git_head` (with `git_dirty: false`) in `status.json` identifies the code, linked to every record by its `evaluation_id`.
 
 ## Precision on Kaggle
 

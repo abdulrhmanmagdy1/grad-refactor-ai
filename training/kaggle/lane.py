@@ -1,4 +1,4 @@
-"""Kaggle lane: run training and validation evaluations on Kaggle's free GPU.
+"""Kaggle lane: run training and evaluations on Kaggle's free GPU.
 
 Run with the system Python that has uv (standard library only), from the repository root:
 
@@ -194,10 +194,20 @@ def upload() -> None:
 
 def push(args) -> str:
     state = json.loads(STATE.read_text(encoding="utf-8"))
+    if args.split == "test":
+        # The single final evaluation: only on demand, against a frozen protocol, and
+        # from a bundle built from a committed, clean tree so the code is identifiable.
+        if args.job != "eval" or not args.i_confirm_frozen_test or not args.protocol_version:
+            raise SystemExit(
+                "a test-split job needs --job eval, --i-confirm-frozen-test and --protocol-version"
+            )
+        if state.get("git_dirty", True):
+            raise SystemExit("rebuild the bundle from a clean, committed tree for the test split")
     job = {
         "kind": "train" if args.job == "train" else "eval",
         "name": args.job,
-        "split": "validation",
+        "split": args.split,
+        "protocol_version": args.protocol_version,
         "bundle_sha256": state["bundle_sha256"],
         "arms": args.arms,
         "case_ids": args.case_ids or [],
@@ -311,6 +321,9 @@ def main() -> int:
     p.add_argument("--adapter-id")
     p.add_argument("--adapter-sha256")
     p.add_argument("--timeout-min", type=int, default=240)
+    p.add_argument("--split", choices=("validation", "test"), default="validation")
+    p.add_argument("--i-confirm-frozen-test", action="store_true")
+    p.add_argument("--protocol-version")
     w = sub.add_parser("wait")
     w.add_argument("slug")
     w.add_argument("--poll-s", type=int, default=60)

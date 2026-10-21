@@ -12,12 +12,14 @@ private script kernel. On Kaggle it:
 4. downloads Qwen/Qwen2.5-Coder-0.5B-Instruct at the pinned revision and verifies the
    SHA-256 of model.safetensors;
 5. runs one job: "train" (training/train_lora.py with configs/training.full.json),
-   "eval" (scripts/evaluate.py on the VALIDATION split, then report_evaluation.py) or
+   "eval" (scripts/evaluate.py on the job's split, then report_evaluation.py) or
    "smoke" (the same evaluation on a few validation cases);
 6. writes logs, hardware.json, status.json and outputs-manifest.json (SHA-256 of every
    output file) to /kaggle/working, and exits non-zero when a step failed.
 
-The test split is never evaluated here: the split is fixed to "validation" below.
+Evaluation jobs use the validation split unless the job names the test split; a test job
+needs a frozen protocol version, an explicit confirmation and a bundle built from a clean
+commit, and scripts/evaluate.py applies its own frozen-test guard on top.
 """
 
 import hashlib
@@ -35,7 +37,7 @@ from pathlib import Path
 
 JOB = {}  # replaced by lane.py
 
-SPLIT = "validation"  # never "test" in this lane
+SPLITS = ("validation", "test")  # test only for the single frozen-protocol final run
 MODEL_ID = "Qwen/Qwen2.5-Coder-0.5B-Instruct"
 MODEL_REVISION = "ea3f2471cf1b1f0db85067f1ef93848e38e88c25"
 MODEL_SHA256 = "f9523886352217ded3aeeef552b381af79d568c6d49a4b9e423288cea56b0a44"
@@ -313,7 +315,7 @@ def evaluate() -> None:
         "utf8",
         "scripts/evaluate.py",
         "--split",
-        SPLIT,
+        JOB.get("split", "validation"),
         "--provider",
         "local",
         "--model-config",
@@ -328,6 +330,10 @@ def evaluate() -> None:
     ]
     if JOB.get("case_ids"):
         command += ["--case-ids", *JOB["case_ids"]]
+    if JOB.get("split") == "test":
+        if STATUS.get("bundle", {}).get("git_dirty", True):
+            raise RuntimeError("the test split needs a bundle built from a clean commit")
+        command += ["--i-confirm-frozen-test", "--protocol-version", JOB["protocol_version"]]
     env = dict(os.environ, PYTHONPATH=str(REPO / "src"))
     code = run(command, "evaluate", cwd=REPO, env=env)
     records = WORK / "evaluation" / evaluation_id / "records.jsonl"
@@ -366,8 +372,10 @@ def main() -> int:
     TMP.mkdir(parents=True, exist_ok=True)
     ok = True
     try:
-        if JOB.get("split", SPLIT) != SPLIT:
-            raise ValueError("this lane evaluates the validation split only")
+        if JOB.get("split", "validation") not in SPLITS:
+            raise ValueError(f"unknown split {JOB.get('split')!r}")
+        if JOB.get("split") == "test" and JOB.get("kind") != "eval":
+            raise ValueError("only an evaluation job may read the test split")
         with Step("hardware"):
             STATUS["hardware"] = hardware()
             (WORK / "hardware.json").write_text(
