@@ -83,6 +83,8 @@ OPTIONAL = {
     "max_steps": (int, -1),
     "gradient_checkpointing": (bool, False),
     "precision": (str, "auto"),
+    "load_best_model_at_end": (bool, False),
+    "max_runtime_minutes": (float, None),
 }
 MIN_FREE_MB = 1500
 
@@ -116,8 +118,8 @@ def load_config(path: Path) -> dict:
         raise SystemExit(f"Choose {', '.join(unresolved)} after the hardware and license review")
     if len(config["model_revision"]) != 40:
         raise SystemExit("model_revision must be the exact 40-character commit")
-    if config["precision"] not in ("auto", "bf16", "fp16"):
-        raise SystemExit("precision must be auto, bf16 or fp16")
+    if config["precision"] not in ("auto", "bf16", "fp16", "fp32"):
+        raise SystemExit("precision must be auto, bf16, fp16 or fp32")
     modules = config["target_modules"]
     if not modules or not all(isinstance(m, str) and m for m in modules):
         raise SystemExit("target_modules must be a non-empty list of module names")
@@ -289,11 +291,14 @@ def main() -> int:
         raise SystemExit("CUDA GPU required by this script; review hardware before training")
     transformers.set_seed(config["seed"])
     precision = config["precision"]
+    # Native bf16 needs compute capability 8.0 or newer; recent PyTorch also reports
+    # emulated bf16 as supported on older GPUs, which is slow, so it is not used.
+    native_bf16 = torch.cuda.get_device_capability(0)[0] >= 8
     if precision == "auto":
-        precision = "bf16" if torch.cuda.is_bf16_supported() else "fp16"
-    if precision == "bf16" and not torch.cuda.is_bf16_supported():
-        raise SystemExit("This GPU does not support bf16; use precision fp16")
-    load_dtype = torch.bfloat16 if precision == "bf16" else torch.float16
+        precision = "bf16" if native_bf16 else "fp16"
+    if precision == "bf16" and not native_bf16:
+        raise SystemExit("This GPU has no native bf16 (compute capability below 8.0)")
+    load_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[precision]
     gpu_before_load = gpu_used_mib()
     model = AutoModelForCausalLM.from_pretrained(
         model_path, dtype=load_dtype, local_files_only=True, device_map={"": "cuda:0"}
@@ -338,6 +343,24 @@ def main() -> int:
                     "peak_reserved_mib": round(torch.cuda.max_memory_reserved() / 2**20, 1),
                 }
             )
+
+    class TimeCap(TrainerCallback):
+        """Hard wall-clock cap: checkpoint and stop once the training time is used up."""
+
+        def __init__(self, minutes: float) -> None:
+            self.seconds = minutes * 60
+            self.started = time.perf_counter()
+            self.hit_at_step: int | None = None
+
+        def on_train_begin(self, args, state, control, **kwargs):
+            self.started = time.perf_counter()
+
+        def on_step_end(self, args, state, control, **kwargs):
+            if time.perf_counter() - self.started > self.seconds and self.hit_at_step is None:
+                self.hit_at_step = state.global_step
+                control.should_save = True
+                control.should_evaluate = True
+                control.should_training_stop = True
 
     class StopAfter(TrainerCallback):
         """Simulated interruption: checkpoint and stop at a step, schedule unchanged."""
@@ -393,11 +416,18 @@ def main() -> int:
         dataloader_num_workers=0,
         remove_unused_columns=False,
         gradient_checkpointing=False,  # enabled on the base model above when configured
+        load_best_model_at_end=config["load_best_model_at_end"],
+        metric_for_best_model="eval_loss" if config["load_best_model_at_end"] else None,
+        greater_is_better=False if config["load_best_model_at_end"] else None,
     )
     meter = StepMeter()
     callbacks = [meter]
     if args.stop_after_steps is not None:
         callbacks.append(StopAfter(args.stop_after_steps))
+    time_cap = None
+    if config["max_runtime_minutes"] is not None:
+        time_cap = TimeCap(config["max_runtime_minutes"])
+        callbacks.append(time_cap)
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -489,6 +519,17 @@ def main() -> int:
         duration_seconds=round(duration, 1),
         train_runtime_seconds=round(result.metrics.get("train_runtime", 0.0), 1),
         global_step=trainer.state.global_step,
+        epochs_completed=trainer.state.epoch,
+        time_cap_hit_at_step=None if time_cap is None else time_cap.hit_at_step,
+        best_model_checkpoint=(
+            Path(trainer.state.best_model_checkpoint).name
+            if trainer.state.best_model_checkpoint
+            else None
+        ),
+        best_eval_loss=trainer.state.best_metric,
+        saved_adapter="best checkpoint by eval_loss"
+        if config["load_best_model_at_end"]
+        else "final step",
         peak_memory_mb={
             "torch_peak_allocated_per_step_max": max(
                 (s["peak_allocated_mib"] for s in meter.steps), default=None

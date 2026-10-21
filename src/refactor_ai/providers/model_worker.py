@@ -335,9 +335,9 @@ class TorchBackend:
         if (
             settings.device == "cuda"
             and dtype is torch.bfloat16
-            and not torch.cuda.is_bf16_supported()
-        ):
-            raise LoadError("this GPU does not support bfloat16; configure float16")
+            and torch.cuda.get_device_capability(0)[0] < 8
+        ):  # emulated bf16 on older GPUs is slow; use float16 or float32 there
+            raise LoadError("this GPU has no native bfloat16; configure float16 or float32")
         self.tokenizer = AutoTokenizer.from_pretrained(settings.model_dir, local_files_only=True)
         model = AutoModelForCausalLM.from_pretrained(
             settings.model_dir,

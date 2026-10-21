@@ -1,0 +1,152 @@
+{
+  "status": "failed (local attempt 1)",
+  "run_id": "full-2026-10-20",
+  "code_sha": {
+    "head": "f8dc49cfd3c737712663db2e5768342098af1e59",
+    "dirty": true
+  },
+  "train_script_sha256": "222f64e8b78987ea87c46aabbd731c9957ba56f8e7650734e8140ed4de3f320a",
+  "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+  "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+  "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+  "split_manifest": {
+    "train": 627,
+    "validation": 84,
+    "test_excluded": 88
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 2050",
+    "nvidia_smi": "NVIDIA GeForce RTX 2050, 4096, 595.71",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.9"
+  },
+  "dependency_lock": {
+    "file": "training/requirements-cuda.txt",
+    "sha256": "99ce0f70911d6fa7750b1f15731d23e4b48244e8e3f78d1573166dad110e8eeb",
+    "packages": {
+      "torch": "2.14.1+cu126",
+      "transformers": "5.20.2",
+      "peft": "0.21.2",
+      "accelerate": "1.15.0",
+      "datasets": "5.1.0",
+      "huggingface-hub": "2.2.0",
+      "safetensors": "0.8.0",
+      "tokenizers": "0.23.3"
+    },
+    "cuda": "12.6"
+  },
+  "config": {
+    "run_id": "full-2026-10-20",
+    "model_id": "Qwen/Qwen2.5-Coder-0.5B-Instruct",
+    "model_revision": "ea3f2471cf1b1f0db85067f1ef93848e38e88c25",
+    "model_path": "../models/Qwen2.5-Coder-0.5B-Instruct",
+    "dataset": "../datasets/guard_clauses/v1/records.jsonl",
+    "output_dir": "../runs/training/full-2026-10-20",
+    "seed": 42,
+    "max_length": 1024,
+    "lora_rank": 8,
+    "lora_alpha": 16,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "learning_rate": 0.0002,
+    "epochs": 3,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "warmup_steps": 12,
+    "lr_scheduler_type": "cosine",
+    "weight_decay": 0.0,
+    "logging_steps": 5,
+    "eval_steps": null,
+    "save_steps": null,
+    "save_total_limit": 1,
+    "max_steps": -1,
+    "gradient_checkpointing": true,
+    "precision": "auto",
+    "load_best_model_at_end": true,
+    "max_runtime_minutes": 55.0,
+    "precision_resolved": "bf16"
+  },
+  "seed": 42,
+  "duration_seconds": 179.5,
+  "peak_memory_mb": null,
+  "validation_metrics": null,
+  "test_metrics": null,
+  "failures": [
+    {
+      "error": "RuntimeError: CUDA error: CUBLAS_STATUS_EXECUTION_FAILED when calling `cublasGemmEx( handle, opa, opb, m, n, k, &falpha, a, CUDA_R_16BF, lda, b, CUDA_R_16BF, ldb, &fbeta, c, std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16BF, ldc, compute_type, CUBLAS_GEMM_DEFAULT_TENSOR_OP)`"
+    }
+  ],
+  "artifact_url": null,
+  "artifact_sha256": null,
+  "evaluator": null,
+  "started_at": "2026-10-20T13:09:52+00:00",
+  "command": "python.exe training/train_lora.py --config configs/training.full.json --record experiments/training/full-2026-10-20.json",
+  "resumed_from_checkpoint": null,
+  "stop_after_steps": null,
+  "data": {
+    "dataset": "records.jsonl",
+    "dataset_sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+    "records": {
+      "train": 627,
+      "validation": 84,
+      "test_excluded": 88
+    },
+    "end_of_turn_token": "<|im_end|>",
+    "end_of_turn_id": 151645,
+    "template_suffix_after_completion": "<|im_end|>\n",
+    "eos_ids": [
+      151645,
+      151643
+    ],
+    "max_tokens": {
+      "train": 695,
+      "validation": 580
+    },
+    "mean_tokens": {
+      "train": 481.9,
+      "validation": 483.1
+    },
+    "max_length": 1024,
+    "records_over_max_length": [],
+    "revision_verified": true
+  },
+  "trainable_parameters": 4399104,
+  "total_parameters": 498431872,
+  "trainable_parameter_dtypes": [
+    "torch.float32"
+  ],
+  "traceback_tail": [
+    "  File \"C:\\Users\\abdel\\Desktop\\Projects\\grad-refactor-ai\\.venv-train\\Lib\\site-packages\\torch\\_tensor.py\", line 623, in backward",
+    "    torch.autograd.backward(",
+    "  File \"C:\\Users\\abdel\\Desktop\\Projects\\grad-refactor-ai\\.venv-train\\Lib\\site-packages\\torch\\autograd\\__init__.py\", line 395, in backward",
+    "    _engine_run_backward(",
+    "  File \"C:\\Users\\abdel\\Desktop\\Projects\\grad-refactor-ai\\.venv-train\\Lib\\site-packages\\torch\\autograd\\graph.py\", line 1072, in _engine_run_backward",
+    "    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass",
+    "           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
+    "RuntimeError: CUDA error: CUBLAS_STATUS_EXECUTION_FAILED when calling `cublasGemmEx( handle, opa, opb, m, n, k, &falpha, a, CUDA_R_16BF, lda, b, CUDA_R_16BF, ldb, &fbeta, c, std::is_same_v<C_Dtype, float> ? CUDA_R_32F : CUDA_R_16BF, ldc, compute_type, CUBLAS_GEMM_DEFAULT_TENSOR_OP)`"
+  ],
+  "failure_analysis": {
+    "steps_completed": 22,
+    "steps_planned": 237,
+    "logged_train_loss": {
+      "step 1": 0.7398,
+      "step 5": 0.6748,
+      "step 10": 0.5285,
+      "step 15": 0.2531,
+      "step 20": 0.102
+    },
+    "error": "CUBLAS_STATUS_EXECUTION_FAILED in backward, about 3 minutes into the run",
+    "windows_event": "System log 2026-10-20 16:11:13, Microsoft-Windows-Resource-Exhaustion-Detector Id 2004: low virtual memory; python.exe (PID 36352) consumed 7,604,318,208 bytes, the largest consumer (the training process; Windows spills GPU memory into system memory when VRAM runs out)",
+    "system_state_at_start": "available memory about 775 MB, commit charge about 24.9 GB of a 30.4 GB limit, while other workstreams were running",
+    "checkpoints": "none (the first save was due at the end of epoch 1)",
+    "next_step": "training moved to the Kaggle lane (training/kaggle/) with the same script, configuration and data, as the user directed for heavy GPU runs"
+  }
+}

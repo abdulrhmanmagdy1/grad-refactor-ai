@@ -1,0 +1,15 @@
+{
+  "record": "T22 validation-only selection of the refactoring-role model (base model or LoRA adapter)",
+  "selection_rule": "Adopt the LoRA adapter for the refactoring role if arm C's proposal_ready count on the full validation split (84 cases) is higher than arm A's; otherwise keep the base model and report it. Validation split only; the test split is never used for this decision.",
+  "selection_rule_written_at": "2026-10-20T12:47:17+00:00",
+  "written_before_any_comparison": true,
+  "dataset": {
+    "path": "datasets/guard_clauses/v1/records.jsonl",
+    "sha256": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
+    "validation_split_sha256": "d18845b04bf7800ac1db82bc2d93f441253b2a012d9a5cb6f058b0d8a111c2e5",
+    "validation_cases": 84
+  },
+  "candidate_adapter": "pending: produced by configs/training.full.json (T17)",
+  "results": null,
+  "decision": null
+}

@@ -1,0 +1,10 @@
+{
+  "dataset": "abdelrhmanadel208/grad-refactor-ai-bundle",
+  "private": true,
+  "bundle_sha256": "4266ab631d143284d20b8d32de9eba5c5d88bd3679bdb2a8a2cd1b8c46a56f29",
+  "zip_sha256": "6db671a17f9fed29c657b889211007e37c285ce4db85730d4c08610639e65274",
+  "adapter": null,
+  "git_head": "f8dc49cfd3c737712663db2e5768342098af1e59",
+  "git_dirty": true,
+  "uploaded_at": "2026-10-21T08:11:51+00:00"
+}

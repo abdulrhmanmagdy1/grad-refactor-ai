@@ -567,3 +567,18 @@ def test_shipped_cases_through_the_workflow(runner, case, mode):
         assert outcome.verification.reference_tests.passed == len(case.tests)
     else:
         assert outcome.verification.disposition == Disposition.NO_CHANGE
+
+
+def test_privilege_drop_only_under_root(monkeypatch):
+    from refactor_ai.verification import runner as runner_module
+
+    monkeypatch.setattr(runner_module.os, "geteuid", lambda: 0, raising=False)
+    assert runner_module.privilege_drop() == {
+        "user": runner_module.UNPRIVILEGED_ID,
+        "group": runner_module.UNPRIVILEGED_ID,
+        "extra_groups": [],
+    }
+    monkeypatch.setattr(runner_module.os, "geteuid", lambda: 1000, raising=False)
+    assert runner_module.privilege_drop() == {}
+    monkeypatch.delattr(runner_module.os, "geteuid", raising=False)
+    assert runner_module.privilege_drop() == {}

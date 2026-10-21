@@ -235,6 +235,22 @@ def _reap(process: subprocess.Popen, timeout_s: float = 10.0) -> bool:
     return True
 
 
+UNPRIVILEGED_ID = 65534  # "nobody" on Linux
+
+
+def privilege_drop() -> dict:
+    """Popen arguments that start the test process as an unprivileged user under root.
+
+    RLIMIT_NPROC does not bind the root user, so a service running as root (for example
+    in a container or a Kaggle session) would otherwise leave process creation unlimited
+    and the process-limit self-check fails. Elsewhere the child keeps the caller's user.
+    """
+    geteuid = getattr(os, "geteuid", None)
+    if geteuid is None or geteuid() != 0:
+        return {}
+    return {"user": UNPRIVILEGED_ID, "group": UNPRIVILEGED_ID, "extra_groups": []}
+
+
 def _kill_group(pgid: int) -> None:
     try:
         os.killpg(pgid, signal.SIGKILL)
@@ -524,6 +540,12 @@ class SubprocessReferenceRunner:
     def _run_posix(
         self, command: list[str], payload: bytes, workdir: str, wall_s: float
     ) -> Execution:
+        drop = privilege_drop()
+        if drop:
+            try:
+                os.chown(workdir, UNPRIVILEGED_ID, UNPRIVILEGED_ID)
+            except OSError as exc:
+                return Execution(outcome="start_failed", detail=f"workdir owner: {exc}")
         try:
             process = subprocess.Popen(
                 command,
@@ -534,6 +556,7 @@ class SubprocessReferenceRunner:
                 env={},
                 start_new_session=True,
                 close_fds=True,
+                **drop,
             )
         except OSError as exc:
             return Execution(outcome="start_failed", detail=f"start: {exc}")
