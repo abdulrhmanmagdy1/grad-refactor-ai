@@ -202,6 +202,15 @@ def install() -> None:
     )
     if code != 0:
         raise RuntimeError("pip install failed")
+    # Kaggle's image ships torchao 0.10, and peft 0.21 raises ImportError while creating
+    # LoRA layers whenever an older torchao is installed. The project does not use torchao.
+    code = run(
+        [sys.executable, "-m", "pip", "uninstall", "--yes", "--quiet", "torchao"],
+        "pip-uninstall-torchao",
+    )
+    if code != 0:
+        raise RuntimeError("pip uninstall torchao failed")
+    STATUS["removed_packages"] = ["torchao"]
     check = subprocess.run(
         [
             sys.executable,
@@ -251,6 +260,9 @@ def train() -> None:
         output_dir=str(out),
         run_id=run_id,
         precision=training_precision,
+        # The laptop's 55-minute cap does not apply here; the kernel's own session
+        # limit (lane.py push --timeout-min) bounds the job on Kaggle.
+        max_runtime_minutes=200,
     )
     path = TMP / "training.kaggle.json"
     path.write_text(json.dumps(config, indent=2), encoding="utf-8")

@@ -1,10 +1,10 @@
 {
   "dataset": "abdelrhmanadel208/grad-refactor-ai-bundle",
   "private": true,
-  "bundle_sha256": "4266ab631d143284d20b8d32de9eba5c5d88bd3679bdb2a8a2cd1b8c46a56f29",
-  "zip_sha256": "6db671a17f9fed29c657b889211007e37c285ce4db85730d4c08610639e65274",
-  "adapter": null,
-  "git_head": "f8dc49cfd3c737712663db2e5768342098af1e59",
+  "bundle_sha256": "74a6ad84fbc5416dcf6425c6e73ae935d7af616c655e60f22b9bc16011b425fb",
+  "zip_sha256": "65c4f1b1e502d01e4852815b4dd9995f9f44c3d0a40f97daead85f87ae05e798",
+  "adapter": "runs/training/kaggle-grad-refactor-ai-train-11708b80/training/full-2026-10-21/adapter",
+  "git_head": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
   "git_dirty": true,
-  "uploaded_at": "2026-10-21T08:11:51+00:00"
+  "uploaded_at": "2026-10-21T08:44:50+00:00"
 }
