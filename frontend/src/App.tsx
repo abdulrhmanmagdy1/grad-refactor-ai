@@ -22,6 +22,7 @@ import { AppHeader, FakeProviderBanner } from "./components/AppHeader";
 import type { DecisionState } from "./components/DecisionPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { InputPanel, type SubmissionFailure } from "./components/InputPanel";
+import { ProjectView } from "./components/ProjectView";
 import { type RetryState, RunPanel } from "./components/RunPanel";
 import { RunPoller } from "./components/RunPoller";
 import { useResource } from "./hooks/useResource";
@@ -62,6 +63,7 @@ export function App() {
   const [failure, setFailure] = useState<SubmissionFailure | null>(null);
   const [retry, setRetry] = useState<RetryState>(NO_RETRY);
   const [decisions, setDecisions] = useState<Record<string, DecisionState>>({});
+  const [view, setView] = useState<"function" | "project">("function");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const runHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -208,6 +210,29 @@ export function App() {
       </a>
       <AppHeader health={health.data} error={health.error} loading={health.loading} onRetry={health.refresh} />
       {fakeMode ? <FakeProviderBanner /> : null}
+      <nav className="mode-tabs" aria-label="What to review">
+        <button
+          type="button"
+          className="mode-tabs__tab"
+          aria-pressed={view === "function"}
+          onClick={() => setView("function")}
+        >
+          One function
+        </button>
+        <button
+          type="button"
+          className="mode-tabs__tab"
+          aria-pressed={view === "project"}
+          onClick={() => setView("project")}
+        >
+          Whole project
+        </button>
+      </nav>
+      {view === "project" ? (
+        <main id="main-content" className="layout layout--project" tabIndex={-1}>
+          <ProjectView />
+        </main>
+      ) : (
       <main id="main-content" className="layout" tabIndex={-1}>
         <div className="layout__input">
           <InputPanel
@@ -255,6 +280,7 @@ export function App() {
           />
         </div>
       </main>
+      )}
       <footer className="app-footer">
         <p>
           Runs on this machine. Your code is never executed by the web service.

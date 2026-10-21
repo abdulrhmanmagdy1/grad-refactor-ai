@@ -71,8 +71,10 @@ export function toApiError(error: unknown): ApiError {
 export const DEFAULT_TIMEOUT_MS = 15_000;
 export const DOWNLOAD_TIMEOUT_MS = 30_000;
 
-interface RequestOptions {
+export interface RequestOptions {
   body?: unknown;
+  /** A body sent as-is (for example an uploaded zip), with its media type. */
+  raw?: { data: Blob; type: string };
   signal?: AbortSignal | undefined;
   timeoutMs?: number;
   accept?: string;
@@ -208,7 +210,7 @@ async function errorFromResponse(response: Response): Promise<ApiError> {
  * Sends one request and reads the response with `read`, under one timeout that covers
  * both the headers and the body. The caller's signal cancels the request.
  */
-async function request<T>(
+export async function request<T>(
   method: string,
   path: string,
   options: RequestOptions,
@@ -254,7 +256,10 @@ async function request<T>(
     cache: "no-store",
     credentials: "same-origin",
   };
-  if (options.body !== undefined) {
+  if (options.raw !== undefined) {
+    headers["Content-Type"] = options.raw.type;
+    init.body = options.raw.data;
+  } else if (options.body !== undefined) {
     headers["Content-Type"] = "application/json";
     init.body = JSON.stringify(options.body);
   }
@@ -283,7 +288,7 @@ function invalidResponse(message: string): ApiError {
   return new ApiError({ kind: "invalid_response", code: "invalid_response", message });
 }
 
-async function readJson(response: Response, what: string): Promise<unknown> {
+export async function readJson(response: Response, what: string): Promise<unknown> {
   const text = await response.text();
   try {
     return JSON.parse(text) as unknown;
@@ -292,7 +297,7 @@ async function readJson(response: Response, what: string): Promise<unknown> {
   }
 }
 
-function expectShape<T>(value: unknown, guard: (value: unknown) => value is T, what: string): T {
+export function expectShape<T>(value: unknown, guard: (value: unknown) => value is T, what: string): T {
   if (!guard(value)) throw invalidResponse(`The service sent ${what} in an unexpected format.`);
   return value;
 }

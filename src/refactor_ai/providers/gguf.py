@@ -55,6 +55,11 @@ class GgufModelSettings(LocalModelSettings):
 class ReleasableLocalProvider(LocalProvider):
     """LocalProvider that can free the GPU and load again on its next call."""
 
+    @property
+    def last_error(self) -> str | None:
+        """The last load error, if the model failed to load."""
+        return self._last_error
+
     def release(self) -> None:
         """Stop the worker but keep the provider usable. A running call finishes first."""
         with self._call_lock:
@@ -171,7 +176,18 @@ class PooledProvider:
         return self.inner.mode
 
     def info(self) -> ProviderInfo:
-        return self.inner.info()
+        """The inner provider's information; a model stopped because the other member
+        holds the GPU is reported as paused, not as failed."""
+        info = self.inner.info()
+        other_active = self.pool.active is not None and self.pool.active is not self.inner
+        if not info.ready and other_active and not self.inner.last_error:
+            return info.model_copy(
+                update={
+                    "detail": "Paused: the other model is using the GPU; this model loads "
+                    "again on its next call."
+                }
+            )
+        return info
 
     def warm_up(self) -> ProviderInfo:
         if not self.pool.acquire(self.inner, timeout_s=self.inner.settings.load_timeout_s):

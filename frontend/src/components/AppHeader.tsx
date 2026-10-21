@@ -18,7 +18,7 @@ function BrandMark() {
   );
 }
 
-export type ModelState = "ready" | "loading" | "adapter_missing" | "not_ready";
+export type ModelState = "ready" | "loading" | "adapter_missing" | "not_ready" | "paused";
 
 /** How far the model is from serving runs, from GET /health. */
 export function modelState(health: HealthResponse): ModelState {
@@ -27,6 +27,8 @@ export function modelState(health: HealthResponse): ModelState {
     return "adapter_missing";
   }
   if (provider.ready) return "ready";
+  // The service pauses this model while the project review model uses the GPU.
+  if ((provider.detail ?? "").startsWith("Paused:")) return "paused";
   return /\bloading\b/i.test(provider.detail ?? "") ? "loading" : "not_ready";
 }
 
@@ -71,6 +73,7 @@ const MODEL_STATE_TEXT: Record<ModelState, { label: string; tone: string; notice
   loading: { label: "Loading", tone: "progress", notice: "The model is loading" },
   adapter_missing: { label: "Adapter missing", tone: "fail", notice: "The fine-tuned adapter is missing" },
   not_ready: { label: "Not ready", tone: "warn", notice: "The model is not ready" },
+  paused: { label: "Paused", tone: "neutral", notice: "" },
 };
 
 interface AppHeaderProps {
@@ -186,7 +189,7 @@ function HealthDetails({ health, stale }: { health: HealthResponse; stale: boole
         </div>
       </dl>
       </details>
-      {state !== "ready" ? (
+      {state !== "ready" && state !== "paused" ? (
         <p className="service__notice" data-tone={stateText.tone} role="status">
           <strong>{stateText.notice}.</strong> {provider.detail ?? "The service gave no reason."}
         </p>

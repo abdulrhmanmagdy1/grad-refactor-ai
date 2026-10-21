@@ -180,6 +180,38 @@ def test_the_pool_keeps_one_model_loaded(stub):
         large.close()
 
 
+def test_a_model_stopped_for_the_other_member_is_reported_as_paused(stub):
+    pool = ModelPool()
+    small = PooledProvider(make_local(stub), pool)
+    large = PooledProvider(make_gguf(stub), pool)
+    try:
+        assert small.info().detail is None or not small.info().detail.startswith("Paused:")
+        assert small.generate(request("a")).error is None
+        assert large.generate(request("b")).error is None
+        paused = small.info()
+        assert paused.ready is False and paused.detail.startswith("Paused:")
+        assert large.info().ready is True
+        assert small.generate(request("c")).error is None
+        assert small.info().ready is True and large.info().detail.startswith("Paused:")
+    finally:
+        small.close()
+        large.close()
+
+
+def test_a_model_that_failed_to_load_is_not_reported_as_paused(stub):
+    pool = ModelPool()
+    broken = PooledProvider(make_local(stub, model_id="stub/load-error"), pool)
+    large = PooledProvider(make_gguf(stub), pool)
+    try:
+        assert broken.generate(request("a")).error is not None
+        assert broken.inner.last_error
+        assert large.generate(request("b")).error is None
+        assert not broken.info().detail.startswith("Paused:")
+    finally:
+        broken.close()
+        large.close()
+
+
 def test_a_call_waiting_for_the_pool_too_long_is_busy(stub):
     pool = ModelPool()
     provider = PooledProvider(make_local(stub), pool)
