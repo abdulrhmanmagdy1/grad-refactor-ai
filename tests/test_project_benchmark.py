@@ -379,6 +379,40 @@ def test_arm_summary_and_paired_comparison():
     }
 
 
+def test_judged_pairs_are_blind_and_confirm_detection(tmp_path):
+    project = make_project(tmp_path)
+    located = record("calc", ["B1"])
+    located["findings"][0].update(
+        {"file": "calc/ops.py", "line_start": 8, "title": "Mutable default", "explanation": "x"}
+    )
+    other_arm = json.loads(json.dumps(located))
+    other_arm["findings"][0]["id"] = "F009"  # ids differ between arms; the pair does not
+    other_arm["matching"]["detected"] = {"B1": ["F009"]}
+    other_arm["matching"]["finding_issues"] = {"F009": ["B1"]}
+    pairs = benchmark.adjudication_pairs([located, other_arm], {"calc": project})
+    assert len(pairs) == 1
+    [pair] = pairs
+    assert "source" not in pair["finding"] and pair["problem"]["code"].startswith("    if value")
+    assert pair["finding"]["title"] == "Mutable default" and pair["problem"]["lines"] == [8, 9]
+
+    manifests = {"calc": project.manifest}
+    assert benchmark.confirmed(located, {}) == {"B1": None}
+    same = {pair["pair"]: {"same": True}}
+    different = {pair["pair"]: {"same": False}}
+    assert benchmark.confirmed(located, same) == {"B1": True}
+    assert benchmark.confirmed(located, different) == {"B1": False}
+    assert benchmark.confirmed(record("calc", []), {}) == {"B1": False}
+    summary = benchmark.summarize_arm([located], manifests, different)
+    assert summary["issues"]["count"] == 1 and summary["confirmed"]["issues"]["count"] == 0
+    assert summary["confirmed"]["by_category"]["bug"]["total"] == 1
+    unjudged = benchmark.summarize_arm([located], manifests, {})
+    assert unjudged["confirmed"]["issues_located_but_not_judged"] == 1
+    assert benchmark.summarize_arm([located], manifests)["confirmed"] is None
+    paired = benchmark.compare_detection([located], [other_arm], manifests, different)
+    assert paired["neither"] == 1
+    assert benchmark.compare_detection([located], [other_arm], manifests, same)["both"] == 1
+
+
 def test_wilson_and_mcnemar():
     assert benchmark.wilson(0, 0) is None
     low, high = benchmark.wilson(8, 10)

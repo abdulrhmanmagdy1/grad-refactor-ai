@@ -1,4 +1,4 @@
-"""Prompts and output parsers of the project review agents (prompt version project-v1).
+"""Prompts and output parsers of the project review agents (prompt version project-v2).
 
 Six model roles, each with its own prompt and a strict parser:
 
@@ -25,7 +25,9 @@ from dataclasses import dataclass, field
 from refactor_ai.contracts import ChatMessage
 from refactor_ai.task_format import parse_refactor_output
 
-PROMPT_VERSION = "project-v1"
+PROMPT_VERSION = "project-v2"
+# How much of the project README the finders see as the description of intended behavior.
+MAX_DESCRIPTION = 800
 SEVERITIES = ("high", "medium", "low")
 MAX_TEXT = 400
 
@@ -43,6 +45,10 @@ REVIEWER_SYSTEM = (
 )
 
 BUG_PATTERNS = (
+    "code that does not do what its docstring, its name or the project description says: "
+    "compare every condition, boundary and formula with the documented behavior",
+    "a value that should be updated (a counter, a list of open items, a total) but is not",
+    "a wrong variable, field or attribute used in a calculation",
     "conditions that test the wrong thing (`is` instead of `==`, inverted tests, off-by-one "
     "boundaries)",
     "a list or dict changed while a loop iterates over it",
@@ -62,15 +68,25 @@ def numbered(code: str, first_line: int) -> str:
     return "\n".join(f"{first_line + i:>{width}} | {line}" for i, line in enumerate(lines))
 
 
+def _description(description: str | None) -> str:
+    if not description:
+        return ""
+    text = description.strip()[:MAX_DESCRIPTION]
+    return f"Project description (from its README):\n{text}\n\n"
+
+
 def _known(known: list[str]) -> str:
     if not known:
         return "Already reported: nothing."
     return "Already reported (do not repeat these):\n" + "\n".join(f"- {k}" for k in known)
 
 
-def bug_messages(qualname: str, code: str, first_line: int, known: list[str]) -> list[ChatMessage]:
+def bug_messages(
+    qualname: str, code: str, first_line: int, known: list[str], description: str | None = None
+) -> list[ChatMessage]:
     patterns = "\n".join(f"- {p}" for p in BUG_PATTERNS)
     user = (
+        f"{_description(description)}"
         f"Find real bugs in the Python function `{qualname}`. File line numbers are on the left.\n"
         f"Look for:\n{patterns}\n{_known(known)}\n\n"
         'Return JSON: {"findings": [{"line": <line number>, "code": "<the exact code on that '
@@ -85,12 +101,18 @@ def bug_messages(qualname: str, code: str, first_line: int, known: list[str]) ->
     ]
 
 
-def quality_messages(file: str, code: str, first_line: int, known: list[str]) -> list[ChatMessage]:
+def quality_messages(
+    file: str, code: str, first_line: int, known: list[str], description: str | None = None
+) -> list[ChatMessage]:
     user = (
+        f"{_description(description)}"
         f"Review lines {first_line} to {first_line + code.count(chr(10))} of `{file}` for "
         "security and code-quality problems. File line numbers are on the left.\n"
         "Security: unsafe eval/exec, shell commands built from input, SQL built with string "
-        "formatting, secrets in the code, unsafe deserialization, disabled certificate checks.\n"
+        "formatting, file paths built from input without checking that they stay inside the "
+        "intended folder, secrets in the code or compared with == instead of a constant-time "
+        "comparison, tokens or passwords made with the random module, a missing permission or "
+        "ownership check, unsafe deserialization, disabled certificate checks.\n"
         "Quality: functions doing several unrelated things, copy-pasted logic, error handling "
         "that hides failures, magic numbers that should be named, misleading names.\n"
         f"{_known(known)}\n\n"
@@ -159,8 +181,10 @@ def fix_messages(title: str, explanation: str, line: int | None, code: str) -> l
         f"Function:\n```python\n{code.rstrip()}\n```\n\n"
         "Return the whole corrected function in one ```python code block, then one line that "
         'starts with "Explanation:". Keep the function name and parameters unless the problem '
-        "is in them. If the fix needs a new import, put the import line before the function in "
-        "the same code block. Do not add comments or other functions."
+        "is in them. Keep every other condition, check and output as it is. Leave imports "
+        "where they are (an import inside the function stays there); only if the fix needs a "
+        "new name, put the new import line before the function in the same code block. Do not "
+        "add comments or other functions."
     )
     return [
         ChatMessage(role="system", content=FIXER_SYSTEM),
@@ -174,7 +198,8 @@ def fix_review_messages(title: str, explanation: str, diff: str) -> list[ChatMes
         f"Proposed change (unified diff of one function):\n```diff\n{diff.rstrip()}\n```\n\n"
         "Accept only if the change fixes this problem and changes nothing else about what the "
         "function does for other inputs. Reject if it does not fix the problem, adds new "
-        "behavior, or breaks callers.\n"
+        "behavior, removes or changes a condition, check or output that the problem does not "
+        "mention, moves an import, or breaks callers.\n"
         'Return JSON: {"verdict": "accept|reject|uncertain", "reasons": ["<one sentence>"]}'
     )
     return [

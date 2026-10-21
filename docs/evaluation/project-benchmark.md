@@ -191,9 +191,19 @@ A finding points at a seeded place when it is in the same file and its lines com
 architecture finding also counts when it names at least two of the issue's modules (or
 the only one), or when it is a file-level finding about one of the issue's files.
 
-- Issue found: at least one finding points at it. Reported per category with a 95%
-  Wilson interval; "right category" counts the issues found by a finding of the same
+- Issue located: at least one finding points at it. Reported per category with a 95%
+  Wilson interval; "right category" counts the issues located by a finding of the same
   category.
+- Issue found (the primary measure): located by a finding that a judge confirmed is about
+  this problem. A finding can land on the right lines and be about something else (on the
+  first dev run, "loan.isbn is a boolean" landed inside the function with the seeded
+  bug), so location alone overcounts. `scripts/project_benchmark.py pairs` exports every
+  located (issue, finding) pair across the runs once, keyed by a hash so that the same
+  finding in two arms is one pair, in hash order and without the arm or the finding's
+  source. A separate judge (a language model given only `benchmark.JUDGE_INSTRUCTIONS`
+  and the pairs, never the arms or the review code) labels each pair `same` or not, and
+  `report --labels` uses the labels. A located issue whose pairs are not all judged is
+  reported as not judged, never as found.
 - Findings are split into: on a seeded issue, on a decoy (a false alarm for certain), and
   elsewhere (unlabelled: a false alarm or a real problem nobody seeded; these are listed
   for reading, not counted as either).
@@ -208,12 +218,15 @@ the only one), or when it is a file-level finding about one of the issue's files
   checks held back.
 - Model findings dropped by the finding checker are scored with the same rule, to see
   whether the checker drops real problems.
-- Static and full are compared on the same issues with an exact McNemar test.
+- Static and full are compared on the same issues with an exact McNemar test, on judged
+  detection and on location.
 
 ## Limits
 
 The projects are small and synthetic, written for the benchmark, and their authors are
 language models too, which may share blind spots with the reviewer's model. Seeded
 problems are cleaner than real ones, and a project that is clean outside the seeded places
-is unusual. "Unlabelled" findings are not adjudicated automatically. The results say how
-the mode behaves on this kind of code, not how it would do on a large real codebase.
+is unusual. The judge is a language model as well, judging one pair at a time; its labels
+are committed with the results so they can be checked. "Unlabelled" findings (not on any
+seeded place) are not judged. The results say how the mode behaves on this kind of code,
+not how it would do on a large real codebase.

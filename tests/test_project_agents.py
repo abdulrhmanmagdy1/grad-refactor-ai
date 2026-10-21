@@ -34,6 +34,19 @@ def test_prompts_carry_the_code_and_the_known_findings():
     assert "(line 7 of the file)" in fix[1].content and "import line before" in fix[1].content
     review = agents.fix_review_messages("t", "p", "--- a\n+++ b\n")
     assert "```diff" in review[1].content and "accept|reject|uncertain" in review[1].content
+    assert "Project description" not in user
+
+
+def test_finders_see_the_project_description_shortened():
+    readme = "Fines start the day after the due date. " + "x" * 2000
+    for messages in (
+        agents.bug_messages("f", "def f():\n    pass\n", 1, [], readme),
+        agents.quality_messages("a.py", "x = 1\n", 1, [], readme),
+    ):
+        user = messages[1].content
+        assert user.startswith("Project description (from its README):\nFines start the day")
+        assert "x" * agents.MAX_DESCRIPTION not in user and "x" * 700 in user
+    assert agents.PROMPT_VERSION == "project-v2"
 
 
 # --- parsing --------------------------------------------------------------------------

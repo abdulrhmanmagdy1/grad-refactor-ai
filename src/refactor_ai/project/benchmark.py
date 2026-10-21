@@ -666,9 +666,93 @@ def _rate(successes: int, total: int) -> dict:
     }
 
 
-def summarize_arm(records: list[dict], manifests: dict[str, Manifest]) -> dict:
+# --- adjudication ----------------------------------------------------------------------------
+
+# A finding that lands on a seeded place may still be about something else ("this function is
+# complex" next to an off-by-one bug). Every (issue, finding) pair that the location rule
+# matched is therefore judged once, blind to the arm, with these instructions.
+JUDGE_INSTRUCTIONS = (
+    "Each item pairs a known problem in a Python project with a finding that an automated "
+    "review reported at the same place. Decide whether the finding identifies this problem. "
+    "Answer same=true when it names the same defect or its direct consequence, even in other "
+    "words or with a different suggested fix. Answer same=false when it is about something "
+    "else at that place, is wrong, or is too vague to show the problem was understood (for "
+    "example 'this function is complex' for an off-by-one bug). For a quality or architecture "
+    "problem, a finding that describes the same structural issue counts (nested conditions "
+    "for a deep-nesting problem, a cycle between the same modules, the same duplicated logic). "
+    "Judge each item on its own, from its text only."
+)
+
+
+def pair_id(project: str, issue_id: str, finding: dict) -> str:
+    """Stable id of an (issue, finding) pair; the same finding in two arms gets one id."""
+    parts = [project, issue_id, finding.get("source"), finding.get("file")]
+    parts += [finding.get("line_start"), finding.get("title"), finding.get("explanation")]
+    return hashlib.sha256(json.dumps(parts).encode("utf-8")).hexdigest()[:16]
+
+
+def adjudication_pairs(records: list[dict], projects: dict[str, BenchProject]) -> list[dict]:
+    """Every located (issue, finding) pair across the runs, once, without the arm or the
+    finding's source, in an order that does not depend on the arm."""
+    pairs: dict[str, dict] = {}
+    for record in records:
+        project = projects[record["project"]]
+        issues = {issue.id: issue for issue in project.manifest.issues}
+        for finding in record["findings"]:
+            for issue_id in record["matching"]["finding_issues"].get(finding["id"], []):
+                issue = issues[issue_id]
+                lines = (project.project_dir / issue.file).read_text(encoding="utf-8")
+                start, end = issue.lines
+                pairs[pair_id(project.name, issue_id, finding)] = {
+                    "pair": pair_id(project.name, issue_id, finding),
+                    "problem": {
+                        "file": issue.file,
+                        "lines": list(issue.lines),
+                        "category": issue.category,
+                        "description": issue.description,
+                        "code": "\n".join(lines.splitlines()[start - 1 : end][:20]),
+                    },
+                    "finding": {
+                        "file": finding.get("file"),
+                        "line": finding.get("line_start"),
+                        "category": finding.get("category"),
+                        "title": finding.get("title"),
+                        "explanation": finding.get("explanation"),
+                        "evidence": finding.get("evidence"),
+                        "recommendation": finding.get("recommendation"),
+                    },
+                }
+    return [pairs[key] for key in sorted(pairs)]
+
+
+def confirmed(record: dict, labels: dict[str, dict]) -> dict[str, bool | None]:
+    """Per issue: found by a finding the judge called the same problem (True), found only by
+    findings judged different (False, also when nothing was located), or located but not
+    judged yet (None)."""
+    by_id = {finding["id"]: finding for finding in record["findings"]}
+    result: dict[str, bool | None] = {}
+    for issue_id, keys in record["matching"]["detected"].items():
+        verdicts = [
+            labels.get(pair_id(record["project"], issue_id, by_id[key]), {}).get("same")
+            for key in keys
+            if key in by_id
+        ]
+        if any(verdict is True for verdict in verdicts):
+            result[issue_id] = True
+        elif any(verdict is None for verdict in verdicts):
+            result[issue_id] = None
+        else:
+            result[issue_id] = False
+    return result
+
+
+def summarize_arm(
+    records: list[dict], manifests: dict[str, Manifest], labels: dict[str, dict] | None = None
+) -> dict:
     """Detection, false alarms, fixes and cost of one arm over its records."""
     by_category: dict[str, list[int]] = {}
+    judged: dict[str, list[int]] = {}
+    unjudged = 0
     right = Counter()
     findings_total = Counter()
     sources = Counter()
@@ -681,12 +765,18 @@ def summarize_arm(records: list[dict], manifests: dict[str, Manifest]) -> dict:
     for record in records:
         manifest = manifests[record["project"]]
         matching = record["matching"]
+        verdicts = confirmed(record, labels) if labels is not None else {}
         for issue in manifest.issues:
             counts = by_category.setdefault(issue.category, [0, 0])
             counts[1] += 1
             if matching["detected"][issue.id]:
                 counts[0] += 1
                 right[issue.category] += bool(matching["right_category"][issue.id])
+            if labels is not None:
+                judged_counts = judged.setdefault(issue.category, [0, 0])
+                judged_counts[1] += 1
+                judged_counts[0] += verdicts[issue.id] is True
+                unjudged += verdicts[issue.id] is None
         for finding in record["findings"]:
             key = finding["id"]
             kind = (
@@ -721,6 +811,17 @@ def summarize_arm(records: list[dict], manifests: dict[str, Manifest]) -> dict:
     all_findings = sum(findings_total.values())
     ready_fixes = sum(n for (disposition, _), n in fix_table.items() if disposition == READY)
     times = sorted(record["review_s"] for record in records)
+    confirmed_summary = None
+    if labels is not None:
+        confirmed_summary = {
+            "issues": _rate(
+                sum(found for found, _ in judged.values()), sum(t for _, t in judged.values())
+            ),
+            "by_category": {
+                category: _rate(found, total) for category, (found, total) in sorted(judged.items())
+            },
+            "issues_located_but_not_judged": unjudged,
+        }
     return {
         "projects": len(records),
         "issues": _rate(issues_found, issues_total),
@@ -728,6 +829,7 @@ def summarize_arm(records: list[dict], manifests: dict[str, Manifest]) -> dict:
             category: {**_rate(found, total), "right_category": right[category]}
             for category, (found, total) in sorted(by_category.items())
         },
+        "confirmed": confirmed_summary,
         "findings": {
             "total": all_findings,
             **dict(findings_total),
@@ -753,15 +855,25 @@ def summarize_arm(records: list[dict], manifests: dict[str, Manifest]) -> dict:
 
 
 def compare_detection(
-    first: list[dict], second: list[dict], manifests: dict[str, Manifest]
+    first: list[dict],
+    second: list[dict],
+    manifests: dict[str, Manifest],
+    labels: dict[str, dict] | None = None,
 ) -> dict:
-    """Paired detection of the same issues by two arms (exact McNemar test)."""
-    a = {r["project"]: r["matching"]["detected"] for r in first}
-    b = {r["project"]: r["matching"]["detected"] for r in second}
+    """Paired detection of the same issues by two arms (exact McNemar test); with labels,
+    an issue counts as found only when the judge confirmed it."""
+
+    def found(record: dict) -> dict[str, bool]:
+        if labels is None:
+            return {issue: bool(keys) for issue, keys in record["matching"]["detected"].items()}
+        return {issue: verdict is True for issue, verdict in confirmed(record, labels).items()}
+
+    a = {r["project"]: found(r) for r in first}
+    b = {r["project"]: found(r) for r in second}
     both = only_first = only_second = neither = 0
     for project in sorted(set(a) & set(b)):
         for issue in manifests[project].issues:
-            found_a, found_b = bool(a[project][issue.id]), bool(b[project][issue.id])
+            found_a, found_b = a[project][issue.id], b[project][issue.id]
             both += found_a and found_b
             only_first += found_a and not found_b
             only_second += found_b and not found_a

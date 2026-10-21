@@ -6,7 +6,10 @@
         --model-config configs/model.project.local.json
     python -m uv run python scripts/project_benchmark.py freeze \
         --model-config configs/model.project.local.json
-    python -m uv run python scripts/project_benchmark.py report RUN_DIR [RUN_DIR ...]
+    python -m uv run python scripts/project_benchmark.py pairs RUN_DIR [RUN_DIR ...] \
+        --out pairs.jsonl
+    python -m uv run python scripts/project_benchmark.py report RUN_DIR [RUN_DIR ...] \
+        [--labels labels.json]
 
 The test split runs only when the freeze record matches the dataset, the code, the review
 settings and the model; see docs/evaluation/project-benchmark.md.
@@ -221,7 +224,12 @@ def _percent(rate: dict) -> str:
     return f"{rate['count']}/{rate['total']} ({rate['rate']:.0%}, {low:.0%} to {high:.0%})"
 
 
-def render(runs: list[tuple[dict, list[dict]]], summaries: dict, comparison: dict | None) -> str:
+def render(
+    runs: list[tuple[dict, list[dict]]],
+    summaries: dict,
+    comparison: dict | None,
+    judged: dict | None = None,
+) -> str:
     lines = [f"# {benchmark.PROTOCOL_ID} results", ""]
     for run, _ in runs:
         frozen = "frozen" if run["frozen"] else "not frozen"
@@ -235,7 +243,7 @@ def render(runs: list[tuple[dict, list[dict]]], summaries: dict, comparison: dic
         lines.append(f"| {label} | " + " | ".join(value(s) for s in summaries.values()) + " |")
 
     row("Projects", lambda s: str(s["projects"]))
-    row("Seeded issues found", lambda s: _percent(s["issues"]))
+    row("Seeded issues located (a finding on the place)", lambda s: _percent(s["issues"]))
     categories = sorted({c for s in summaries.values() for c in s["issues_by_category"]})
     for category in categories:
         row(
@@ -244,30 +252,50 @@ def render(runs: list[tuple[dict, list[dict]]], summaries: dict, comparison: dic
                 _percent(s["issues_by_category"][c]) if c in s["issues_by_category"] else "n/a"
             ),
         )
+    if all(s.get("confirmed") for s in summaries.values()):
+        row(
+            "Seeded issues found (judge confirmed)",
+            lambda s: _percent(s["confirmed"]["issues"]),
+        )
+        for category in categories:
+            row(
+                f"... {category}",
+                lambda s, c=category: (
+                    _percent(s["confirmed"]["by_category"][c])
+                    if c in s["confirmed"]["by_category"]
+                    else "n/a"
+                ),
+            )
+        row(
+            "Located issues not judged yet",
+            lambda s: str(s["confirmed"]["issues_located_but_not_judged"]),
+        )
     row("Findings", lambda s: str(s["findings"]["total"]))
     row("... on a seeded issue", lambda s: _percent(s["findings"]["on_issue_share"]))
     row("... on a decoy", lambda s: str(s["findings"].get("on_decoy", 0)))
     row("... elsewhere (unlabelled)", lambda s: str(s["findings"].get("unlabelled", 0)))
     row("Decoys flagged", lambda s: _percent(s["decoys_hit"]))
     row(
-        "Fixable bugs fixed by the ready fixes",
+        "Fixable issues fixed by the ready fixes",
         lambda s: _percent(s["fixable_issues"]["resolved_by_ready_fixes"]),
     )
     row(
-        "Fixable bugs fixed by some fix",
+        "Fixable issues fixed by some fix",
         lambda s: _percent(s["fixable_issues"]["resolved_by_some_fix"]),
     )
     row("Ready fixes", lambda s: str(s["ready_fixes"]))
     row("Ready fixes that break a test", lambda s: str(len(s["ready_harmful"])))
     row("Median review time (s)", lambda s: str(s["review_s"]["median"]))
     row("Model calls", lambda s: str(s["model_calls"]))
-    if comparison:
+    for label, paired in (("located", comparison), ("judge confirmed", judged)):
+        if not paired:
+            continue
         lines += [
             "",
-            "Paired detection (first arm vs second arm, same issues): "
-            f"both {comparison['both']}, only first {comparison['only_first']}, "
-            f"only second {comparison['only_second']}, neither {comparison['neither']}, "
-            f"exact McNemar p = {comparison['mcnemar_p']}.",
+            f"Paired detection, {label} (first arm vs second arm, same issues): "
+            f"both {paired['both']}, only first {paired['only_first']}, "
+            f"only second {paired['only_second']}, neither {paired['neither']}, "
+            f"exact McNemar p = {paired['mcnemar_p']}.",
         ]
     lines += ["", "## Per project", "", "| Arm | Project | Found | Missed | Decoys | Fixed |"]
     lines.append("|---|---|---|---|---|---|")
@@ -290,27 +318,64 @@ def render(runs: list[tuple[dict, list[dict]]], summaries: dict, comparison: dic
     return "\n".join(lines) + "\n"
 
 
-def command_report(args: argparse.Namespace) -> int:
-    runs = [load_run(Path(folder)) for folder in args.runs]
+def load_runs(folders: list[str]) -> tuple[list, dict[str, benchmark.BenchProject]]:
+    runs = [load_run(Path(folder)) for folder in folders]
     splits = {run["split"] for run, _ in runs}
     if len(splits) != 1:
-        raise SystemExit("report runs of one split at a time")
-    manifests = {
-        project.name: project.manifest
+        raise SystemExit("use runs of one split at a time")
+    projects = {
+        project.name: project
         for project in benchmark.load_split(splits.pop(), ROOT / benchmark.DATASET_ROOT)
     }
+    return runs, projects
+
+
+def command_pairs(args: argparse.Namespace) -> int:
+    runs, projects = load_runs(args.runs)
+    records = [record for _, record_list in runs for record in record_list]
+    pairs = benchmark.adjudication_pairs(records, projects)
+    out = Path(args.out)
+    with out.open("w", encoding="utf-8", newline="\n") as handle:
+        for pair in pairs:
+            handle.write(json.dumps(pair) + "\n")
+    print(f"wrote {len(pairs)} pairs to {out}")
+    print(f"Judge instructions: {benchmark.JUDGE_INSTRUCTIONS}")
+    return 0
+
+
+def load_labels(path: str | None) -> dict[str, dict] | None:
+    """{"labels": {pair_id: {"same": bool, "reason": str}}} written by the judge."""
+    if not path:
+        return None
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    labels = data["labels"]
+    for key, value in labels.items():
+        if not isinstance(value, dict) or not isinstance(value.get("same"), bool):
+            raise SystemExit(f"label {key} has no boolean 'same'")
+    return labels
+
+
+def command_report(args: argparse.Namespace) -> int:
+    runs, projects = load_runs(args.runs)
+    manifests = {name: project.manifest for name, project in projects.items()}
+    labels = load_labels(args.labels)
     summaries = {}
     for run, records in runs:
         label = run["arm"] if run["arm"] not in summaries else f"{run['arm']}-{run['started_at']}"
-        summaries[label] = benchmark.summarize_arm(records, manifests)
-    comparison = None
+        summaries[label] = benchmark.summarize_arm(records, manifests, labels)
+    comparison = judged = None
     if len(runs) == 2:
         comparison = benchmark.compare_detection(runs[0][1], runs[1][1], manifests)
-    text = render(runs, summaries, comparison)
+        if labels is not None:
+            judged = benchmark.compare_detection(runs[0][1], runs[1][1], manifests, labels)
+    text = render(runs, summaries, comparison, judged)
     out = Path(args.out) if args.out else Path(args.runs[-1]) / "report.md"
     out.write_text(text, encoding="utf-8", newline="\n")
     (out.with_suffix(".json")).write_text(
-        json.dumps({"summaries": summaries, "paired": comparison}, indent=2) + "\n",
+        json.dumps(
+            {"summaries": summaries, "paired": comparison, "paired_judged": judged}, indent=2
+        )
+        + "\n",
         encoding="utf-8",
         newline="\n",
     )
@@ -340,8 +405,14 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--allow-unfrozen", action="store_true", help="run the test split anyway")
     run.set_defaults(handler=command_run)
 
+    pairs = commands.add_parser("pairs", help="export the (issue, finding) pairs to judge")
+    pairs.add_argument("runs", nargs="+")
+    pairs.add_argument("--out", required=True, help="JSONL file")
+    pairs.set_defaults(handler=command_pairs)
+
     report = commands.add_parser("report", help="summarize run folders")
     report.add_argument("runs", nargs="+")
+    report.add_argument("--labels", help="the judge's labels (JSON)")
     report.add_argument("--out", help="Markdown file (default: report.md in the last run)")
     report.set_defaults(handler=command_report)
 

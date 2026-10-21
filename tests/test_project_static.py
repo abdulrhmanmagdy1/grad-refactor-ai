@@ -12,7 +12,14 @@ from pathlib import Path
 import pytest
 
 from refactor_ai.project import rules, static
-from refactor_ai.project.index import build_index, complexity, module_names, project_map
+from refactor_ai.project.index import (
+    build_index,
+    complexity,
+    module_level_imports,
+    module_names,
+    project_map,
+    reaches,
+)
 from refactor_ai.project.models import Category, Severity
 from refactor_ai.project.workspace import (
     MAX_PYTHON_FILES,
@@ -223,6 +230,26 @@ def test_relative_imports_methods_tests_duplicates_and_parse_errors(tmp_path):
     assert [f.qualname for f in methods] == ["Cart.add"]
     assert [[f.qualname for f in group] for group in index.duplicates] == [["helper", "copy"]]
     assert index.modules["broken"].parse_error.startswith("SyntaxError")
+
+
+def test_module_level_imports_and_reachability(tmp_path):
+    files = {
+        "pkg/__init__.py": "",
+        "pkg/a.py": "import pkg.b\n",
+        "pkg/b.py": "def later():\n    from pkg import c\n",
+        "pkg/c.py": "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from pkg import a\n"
+        "else:\n    from . import b\n\n\nclass Holder:\n    from .a import b as _b\n",
+    }
+    index = build_index(extract_project(make_zip(files), tmp_path / "ws"))
+    c = index.modules["pkg.c"]
+    source = files["pkg/c.py"]
+    # TYPE_CHECKING imports and imports inside functions do not run when the module loads;
+    # class bodies do; `from . import b` also loads the package itself.
+    assert module_level_imports(source, c, index.modules) == {"pkg", "pkg.b", "pkg.a"}
+    assert module_level_imports(files["pkg/b.py"], index.modules["pkg.b"], index.modules) == set()
+    assert module_level_imports("def (", c, index.modules) == set()
+    assert reaches(index, "pkg.a", "pkg.c")  # a -> b -> c (the import inside a function counts)
+    assert not reaches(index, "pkg", "pkg.a") and not reaches(index, "missing", "pkg.a")
 
 
 def test_complexity_counts_decisions_and_boolean_operators():

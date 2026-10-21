@@ -10,7 +10,7 @@ Out of scope: other languages, projects larger than the limits below, fixes that
 
 ## Pipeline
 
-The implementation is in [src/refactor_ai/project/](../../src/refactor_ai/project/): `workspace.py` (intake), `index.py`, `rules.py` and `static.py` (deterministic analysis), `agents.py` (prompts and parsers, prompt version project-v1), `fixes.py` (applying and re-checking fixes), `testrun.py` (the project's tests) and `review.py` (the coordinator).
+The implementation is in [src/refactor_ai/project/](../../src/refactor_ai/project/): `workspace.py` (intake), `index.py`, `rules.py` and `static.py` (deterministic analysis), `agents.py` (prompts and parsers, prompt version project-v2), `fixes.py` (applying and re-checking fixes), `testrun.py` (the project's tests) and `review.py` (the coordinator).
 
 | Stage | Kind | Input | Output |
 |---|---|---|---|
@@ -18,10 +18,10 @@ The implementation is in [src/refactor_ai/project/](../../src/refactor_ai/projec
 | 2. Index | Deterministic | Every `.py` file | Modules, functions and classes with lines, sizes, cyclomatic complexity and nesting; the internal import graph, resolved through package folders and aliases, with cycles and fan-in and fan-out; duplicate function bodies; test files |
 | 3. Static scan | Deterministic | The workspace | Findings from ruff (a fixed rule set for bugs, security and quality; it parses and never executes), from three project rules that ruff's stable rules miss (a list changed while iterated, `is` on a computed value, a value only updated from itself), from the index (import cycles, large modules, high fan-out, complex, long or deeply nested functions, many parameters, duplicates, no tests) and from the guard-clause task check. Common rules get a plain-language recommendation |
 | 4. Architecture reviewer | Model | The project map from the index, never raw code | At most four issues about named modules. An import cycle the index already found is merged into it; an issue about "external" imports when every external import is standard library is dropped; every other issue goes to the architecture checker, and only issues it judges real are kept, at low severity (a model opinion) |
-| 5. Bug finder | Model | One function at a time (the riskiest first: static findings, complexity, size), numbered with file lines, with the findings already known | At most three suspected bugs, each quoting its line |
-| 6. Quality and security reviewer | Model | Windows of at most 160 lines, cut between top-level statements, riskiest files first | At most four problems, each quoting its line |
+| 5. Bug finder | Model | One function at a time (the riskiest first: static findings, complexity, size), numbered with file lines, with the findings already known and the start of the project README as the description of intended behavior | At most three suspected bugs, each quoting its line; the first thing it is asked to check is code that does not do what its docstring, name or the README says |
+| 6. Quality and security reviewer | Model | Windows of at most 160 lines, cut between top-level statements, riskiest files first, with the start of the README | At most four problems, each quoting its line |
 | 7. Finding checker | Model | One model finding with the 17 lines around it | `real`, `not_a_problem` or `unsure`; only `real` findings are kept. A finding whose quote does not match the file is dropped before this step |
-| 8. Fixer | Model, or the deterministic guard-clause rewrite | One function and one problem at a time | The whole corrected function (and any import it needs) and a one-line explanation. A function with several problems is fixed step by step; a step is kept only if the file still parses and no new static finding appears |
+| 8. Fixer | Model, or the deterministic guard-clause rewrite | One function and one problem at a time | The whole corrected function (and any import it needs) and a one-line explanation. A function with several problems is fixed step by step; a step is kept only if the file still parses, no new static finding appears and it adds no module-level import of a project module that imports this module back (an import cycle that can fail at import time) |
 | 9. Verifier | Deterministic | The project with the function's accepted steps applied | Syntax; the static re-check (the fixed findings' rules are gone and nothing new appears in the function); the project's tests before and after, when enabled |
 | 10. Fix reviewer | Model | The problems and the diff | `accept`, `reject` or `uncertain`, with reasons |
 

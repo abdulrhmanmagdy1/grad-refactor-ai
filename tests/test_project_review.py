@@ -297,6 +297,26 @@ def test_untested_function_and_review_doubt_make_a_fix_uncertain(tmp_path):
     assert "tests_not_available" in reasons and "review_uncertain" in reasons
 
 
+def test_a_fix_that_closes_an_import_cycle_is_rejected(tmp_path):
+    files = {
+        "README.md": "Averages are taken over the values given.",
+        "app/__init__.py": "",
+        "app/calc.py": CALC,
+        "app/report.py": "from app.calc import average\n\n\ndef summary(values):\n"
+        "    return round(average(values), 1)\n",
+        "tests/test_calc.py": TESTS,
+    }
+    workspace = extract_project(project_zip(files), tmp_path / "ws")
+    cyclic = f"```python\nfrom app.report import summary\n\n{FIXED_AVERAGE}```\nExplanation: ok."
+    provider = ScriptedProvider({"mutable data structures": cyclic})
+    outcome = ProjectReviewer(workspace, provider).run()
+    average = next(fix for fix in outcome.fixes if fix.symbol == "average")
+    assert average.disposition is Disposition.REJECTED and average.proposed is None
+    assert "app.report imports app.calc back" in average.static_recheck.detail
+    finder_prompts = [p for p in provider.prompts if "Find real bugs" in p]
+    assert finder_prompts and all("Averages are taken over" in p for p in finder_prompts)
+
+
 def test_findings_the_checker_drops_are_recorded(workspace):
     provider = ScriptedProvider(
         {"A reviewer claims this problem": '{"verdict": "not_a_problem", "reason": "fine"}'}

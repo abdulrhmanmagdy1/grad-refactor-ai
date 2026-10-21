@@ -12,6 +12,7 @@ from __future__ import annotations
 import ast
 import hashlib
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import PurePosixPath
 
@@ -206,6 +207,69 @@ def _resolve_relative(module: str, is_package: bool, level: int, target: str | N
     if target:
         return f"{base}.{target}" if base else target
     return base
+
+
+def _type_checking_block(node: ast.AST) -> bool:
+    test = getattr(node, "test", None) if isinstance(node, ast.If) else None
+    return (isinstance(test, ast.Name) and test.id == "TYPE_CHECKING") or (
+        isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING"
+    )
+
+
+def module_level_imports(source: str, info: ModuleInfo, modules: Iterable[str]) -> set[str]:
+    """Project modules that a module imports when it is loaded: imports outside functions and
+    outside `if TYPE_CHECKING:` blocks."""
+    known = set(modules)
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return set()
+    found: set[str] = set()
+    stack: list[ast.AST] = list(tree.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+            continue
+        if _type_checking_block(node):
+            stack.extend(node.orelse)
+            continue
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = (
+                _resolve_relative(info.name, info.is_package, node.level, node.module)
+                if node.level
+                else node.module or ""
+            )
+            names = [base, *(f"{base}.{alias.name}" for alias in node.names)]
+        else:
+            stack.extend(ast.iter_child_nodes(node))
+            continue
+        for name in names:
+            parts = name.split(".")
+            for end in range(len(parts), 0, -1):
+                candidate = ".".join(parts[:end])
+                if candidate in known:
+                    if candidate != info.name:
+                        found.add(candidate)
+                    break
+    return found
+
+
+def reaches(index: ProjectIndex, start: str, target: str) -> bool:
+    """Whether module `start` imports `target`, directly or through other project modules."""
+    seen, stack = {start}, [start]
+    while stack:
+        module = index.modules.get(stack.pop())
+        if module is None:
+            continue
+        for name in module.imports:
+            if name == target:
+                return True
+            if name not in seen:
+                seen.add(name)
+                stack.append(name)
+    return False
 
 
 def _imports(tree: ast.Module, info: ModuleInfo, known: dict[str, str]) -> None:

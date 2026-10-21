@@ -25,6 +25,7 @@ import time
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from pathlib import PurePosixPath
 
 from refactor_ai.contracts import (
     ChatMessage,
@@ -36,7 +37,14 @@ from refactor_ai.contracts import (
     Role,
 )
 from refactor_ai.project import agents, fixes, static
-from refactor_ai.project.index import FunctionInfo, ProjectIndex, build_index, project_map
+from refactor_ai.project.index import (
+    FunctionInfo,
+    ProjectIndex,
+    build_index,
+    module_level_imports,
+    project_map,
+    reaches,
+)
 from refactor_ai.project.models import (
     SEVERITY_ORDER,
     AgentCall,
@@ -175,6 +183,7 @@ class ProjectReviewer:
         self.budget = Budget(self.settings.max_calls, self.settings.time_limit_s, clock)
         self.lines: dict[str, list[str]] = {}
         self.index: ProjectIndex | None = None
+        self._readme: str | None = None
 
     # --- helpers -------------------------------------------------------------------------
 
@@ -186,6 +195,33 @@ class ProjectReviewer:
         if file not in self.lines:
             self.lines[file] = self.workspace.read(file).splitlines()
         return self.lines[file]
+
+    def _description(self) -> str | None:
+        """The project's README (the shallowest one), which says what the code should do."""
+        if self._readme is None:
+            readmes = sorted(
+                (f for f in self.workspace.files if PurePosixPath(f).stem.lower() == "readme"),
+                key=lambda f: (f.count("/"), f),
+            )
+            self._readme = self.workspace.read(readmes[0]) if readmes else ""
+        return self._readme or None
+
+    def _import_cycle(self, file: str, before: str, after: str) -> str | None:
+        """Why a fix step's new module-level import closes an import cycle, or None."""
+        module = self.index.by_file.get(file) if self.index else None
+        if module is None:
+            return None
+        names = self.index.modules
+        added = module_level_imports(after, module, names) - module_level_imports(
+            before, module, names
+        )
+        for target in sorted(added):
+            if reaches(self.index, target, module.name):
+                return (
+                    f"The fix imports {target} when the module loads, and {target} imports "
+                    f"{module.name} back: an import cycle that can fail at import time."
+                )
+        return None
 
     def _stage(self, name: str, started: float) -> None:
         self.outcome.stage_times.append(
@@ -397,7 +433,9 @@ class ProjectReviewer:
                 "bug_finder",
                 f"{function.file}:{function.qualname}",
                 Role.ANALYSIS,
-                agents.bug_messages(function.qualname, code, function.line_start, known),
+                agents.bug_messages(
+                    function.qualname, code, function.line_start, known, self._description()
+                ),
                 self.settings.finder_tokens,
             )
             if text is None:
@@ -468,7 +506,11 @@ class ProjectReviewer:
                 f"{file}:{begin}-{end}",
                 Role.ANALYSIS,
                 agents.quality_messages(
-                    file, code, begin, self._known_for(findings, file, begin, end)
+                    file,
+                    code,
+                    begin,
+                    self._known_for(findings, file, begin, end),
+                    self._description(),
                 ),
                 self.settings.finder_tokens,
             )
@@ -689,8 +731,9 @@ class ProjectReviewer:
             step = fixes.static_recheck(
                 finding_group, function.file, state.source, state.span, applied
             )
-            if step.status not in ("pass", "partial"):
-                note = f"{finding_group[0].id}: {step.detail}"
+            cycle = self._import_cycle(function.file, state.source, applied.patched)
+            if step.status not in ("pass", "partial") or cycle:
+                note = f"{finding_group[0].id}: {cycle or step.detail}"
                 notes.append(note)
                 failures["static"].append(note)
                 continue
