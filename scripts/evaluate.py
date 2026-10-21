@@ -13,7 +13,11 @@ Examples (from the repository root; prefix each with python -m uv run python):
         --protocol-version eval-v1
 
 Records go to runs/evaluation/<evaluation-id>/records.jsonl (Git-ignored) with a run
-manifest next to them; tables and figures come from scripts/report_evaluation.py.
+manifest next to them (run.json; each resumed segment writes its own run-<UTC time>.json);
+tables and figures come from scripts/report_evaluation.py. An interrupted run is resumed
+by repeating its command with --resume --evaluation-id <id> (the id is printed at start).
+On the test split, the run is refused unless it covers every test case, the reference
+runner is enabled, and the warm-up reports the model identity of the protocol freeze.
 """
 
 from __future__ import annotations
@@ -76,6 +80,13 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     arms = protocol.parse_arms(args.arms)
+    if args.resume and not args.evaluation_id:
+        print(
+            "Refused: --resume needs the --evaluation-id of the interrupted run (the name of "
+            "its directory under the output directory).",
+            file=sys.stderr,
+        )
+        return 2
     provider_mode = "fake" if args.provider == "fake" else "local_model"
     try:
         authorization = protocol.authorize_split(
@@ -85,6 +96,9 @@ def main(argv: list[str] | None = None) -> int:
             confirm_frozen_test=args.i_confirm_frozen_test,
             protocol_version=args.protocol_version,
             provider_mode=provider_mode,
+        )
+        protocol.check_test_options(
+            args.split, limit=args.limit, case_ids=args.case_ids, runner_mode=args.runner
         )
     except protocol.TestSplitRefused as exc:
         print(f"Refused: {exc}", file=sys.stderr)
@@ -102,6 +116,26 @@ def main(argv: list[str] | None = None) -> int:
     )
     out_dir = args.output_dir / evaluation_id
     output = out_dir / "records.jsonl"
+    if output.exists() and not args.resume:
+        print(
+            f"Refused: {output} exists; choose a new --evaluation-id or --resume.", file=sys.stderr
+        )
+        return 2
+    if args.resume and not output.exists():
+        print(
+            f"Refused: nothing to resume at {output}; check --evaluation-id and --output-dir.",
+            file=sys.stderr,
+        )
+        return 2
+    # One manifest per run segment: a resumed segment never overwrites an earlier one.
+    earlier = sorted(path.name for path in out_dir.glob("run*.json")) if out_dir.exists() else []
+    manifest_path = out_dir / "run.json"
+    copy = 1
+    while manifest_path.name in earlier:
+        suffix = f"-{copy}" if copy > 1 else ""
+        manifest_path = out_dir / f"run-{started:%Y%m%dT%H%M%SZ}{suffix}.json"
+        copy += 1
+    print(f"Evaluation {evaluation_id}: records go to {output}")
     if args.provider == "fake":
         print("FAKE PROVIDER: plumbing check only; results are not model evidence.")
     provider = make_provider(args.provider, args.model_config)
@@ -123,15 +157,48 @@ def main(argv: list[str] | None = None) -> int:
             f"({record.failure_type}, {record.call_count} calls, {record.latency_s:.1f} s)"
         )
 
-    if output.exists() and not args.resume:
-        print(
-            f"Refused: {output} exists; choose a new --evaluation-id or --resume.", file=sys.stderr
-        )
-        provider.close()
-        return 2
+    manifest = {
+        "evaluation_id": evaluation_id,
+        "command": [Path(sys.executable).name, *sys.argv],
+        "started_at": started.isoformat(timespec="seconds"),
+        "finished_at": None,
+        "resumed": args.resume,
+        "earlier_manifests": earlier,
+        "protocol": state,
+        "arms": {arm: protocol.arm_settings(arm).model_dump(mode="json") for arm in arms},
+        "dataset": str(
+            args.dataset.relative_to(ROOT) if args.dataset.is_relative_to(ROOT) else args.dataset
+        ),
+        "dataset_sha256": context.dataset_sha256,
+        "split": args.split,
+        "split_sha256": context.split_sha256,
+        "cases": [record["id"] for record in records],
+        "provider": None,
+        "runner": None,
+        "warm_up": None,
+        "arm_order": "rotated per case (case i starts with arm i mod number of arms)",
+        "code_sha": context.code_sha,
+        "test_authorization": authorization,
+        "summary": None,
+    }
+
+    def write_manifest() -> None:
+        manifest["provider"] = provider.info().model_dump(mode="json")
+        manifest["runner"] = runner.info().model_dump(mode="json")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        text = json.dumps(manifest, indent=2) + "\n"
+        manifest_path.write_text(text, encoding="utf-8")
+
     try:
-        warmup = harness.warm_up(provider, runner, arms)
-        summary = harness.run_evaluation(
+        manifest["warm_up"] = harness.warm_up(provider, runner, arms)
+        if authorization is not None:
+            try:
+                protocol.check_test_readiness(manifest["warm_up"], authorization)
+            except protocol.TestSplitRefused as exc:
+                print(f"Refused: {exc}", file=sys.stderr)
+                return 2
+        write_manifest()  # an interrupted segment still leaves its manifest
+        manifest["summary"] = harness.run_evaluation(
             records,
             arms,
             workflow=harness.default_workflow(),
@@ -142,33 +209,11 @@ def main(argv: list[str] | None = None) -> int:
             resume=args.resume,
             progress=progress,
         )
-        provider_info = provider.info().model_dump(mode="json")
+        manifest["finished_at"] = datetime.now(UTC).isoformat(timespec="seconds")
+        write_manifest()
     finally:
         provider.close()
-    manifest = {
-        "evaluation_id": evaluation_id,
-        "command": [Path(sys.executable).name, *sys.argv],
-        "started_at": started.isoformat(timespec="seconds"),
-        "finished_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "protocol": state,
-        "arms": {arm: protocol.arm_settings(arm).model_dump(mode="json") for arm in arms},
-        "dataset": str(
-            args.dataset.relative_to(ROOT) if args.dataset.is_relative_to(ROOT) else args.dataset
-        ),
-        "dataset_sha256": context.dataset_sha256,
-        "split": args.split,
-        "split_sha256": context.split_sha256,
-        "cases": [record["id"] for record in records],
-        "provider": provider_info,
-        "runner": runner.info().model_dump(mode="json"),
-        "warm_up": warmup,
-        "arm_order": "rotated per case (case i starts with arm i mod number of arms)",
-        "code_sha": context.code_sha,
-        "test_authorization": authorization,
-        "summary": summary,
-    }
-    (out_dir / "run.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(summary, indent=2))
+    print(json.dumps(manifest["summary"], indent=2))
     return 0
 
 

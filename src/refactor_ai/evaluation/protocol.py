@@ -184,3 +184,72 @@ def authorize_split(
             raise TestSplitRefused("The test split case content differs from the frozen content.")
     protocol_freeze = json.loads((root / PROTOCOL_FREEZE_PATH).read_text(encoding="utf-8"))
     return {"test_freeze": freeze, "protocol_freeze": protocol_freeze}
+
+
+FROZEN_MODEL_KEYS = ("model_id", "model_revision", "adapter_id", "adapter_sha256")
+
+
+def check_test_options(
+    split: str, *, limit: int | None, case_ids: list[str] | None, runner_mode: str
+) -> None:
+    """The one test-split run covers every test case with the reference runner enabled."""
+    if split != "test":
+        return
+    if limit is not None or case_ids:
+        raise TestSplitRefused(
+            "The test split is run once, on every test case: --limit and --case-ids are not "
+            "allowed (try the plumbing on the validation split)."
+        )
+    if runner_mode == "disabled":
+        raise TestSplitRefused(
+            "The test split needs the reference runner: --runner disabled is not allowed."
+        )
+
+
+def check_test_readiness(warmup: dict, authorization: dict) -> None:
+    """Refuse a test run before its first attempt if the runner or the model is unusable.
+
+    Every attempt of the single test run counts, so the run stops here when the runner's
+    isolation checks did not enable it, when a warm-up call failed (for example a missing
+    adapter), or when a warm-up call reports a model identity other than the "model"
+    object (model_id, model_revision, adapter_id, adapter_sha256) of the protocol freeze
+    record. The adapter fields are compared for adapter calls only.
+    """
+    problems = []
+    runner = warmup.get("runner") or {}
+    if not runner.get("enabled"):
+        reason = runner.get("reason") or "no runner"
+        problems.append(f"the reference runner is not enabled ({reason})")
+    frozen = (authorization.get("protocol_freeze") or {}).get("model")
+    if not isinstance(frozen, dict) or not all(frozen.get(key) for key in FROZEN_MODEL_KEYS[:2]):
+        problems.append(
+            "the protocol freeze record names no model identity (a 'model' object with "
+            + ", ".join(FROZEN_MODEL_KEYS)
+            + ")"
+        )
+        frozen = None
+    for call in warmup.get("provider_calls") or []:
+        state = f"use_adapter={str(call['use_adapter']).lower()}"
+        if call.get("error"):
+            detail = call.get("error_message") or call["error"]
+            problems.append(f"the warm-up call with {state} failed ({call['error']}: {detail})")
+            continue
+        model = call.get("model")
+        if not model:
+            problems.append(f"the warm-up call with {state} reported no model identity")
+            continue
+        if model.get("use_adapter") != call["use_adapter"]:
+            reported = str(model.get("use_adapter")).lower()
+            problems.append(f"the warm-up call with {state} reported use_adapter={reported}")
+        if frozen is not None:
+            keys = FROZEN_MODEL_KEYS if call["use_adapter"] else FROZEN_MODEL_KEYS[:2]
+            for key in keys:
+                if model.get(key) != frozen.get(key):
+                    problems.append(
+                        f"the warm-up call with {state} reported {key}={model.get(key)!r}, "
+                        f"the protocol freeze record has {frozen.get(key)!r}"
+                    )
+    if problems:
+        raise TestSplitRefused(
+            "The test run was stopped before its first attempt: " + "; ".join(problems) + "."
+        )

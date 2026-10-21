@@ -7,7 +7,9 @@ are measured by the harness itself rather than taken from the workflow's own cou
 The harness rechecks syntax and the task rubric of every final proposal without
 executing it; reference tests are executed only by the injected trusted runner inside
 the workflow. Records are appended and flushed one by one, and an existing output file
-is never overwritten, so every attempt is retained.
+is never overwritten, so every attempt is retained; a last line cut by an interrupted
+write is moved to a side file when the run is resumed, never dropped. A failed run has
+no final proposal, so its syntax, rubric and reference-test outcomes are not_run.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from refactor_ai.contracts import (
     ProviderInfo,
     ProviderMode,
     Role,
+    RunStatus,
     WorkflowOutcome,
     WorkflowRequest,
     WorkflowSettings,
@@ -40,6 +43,8 @@ from refactor_ai.evaluation.records import (
     EvaluationRecord,
     Recheck,
     ReferenceTestSummary,
+    jsonl_line,
+    read_jsonl,
 )
 from refactor_ai.tasks import guard_clauses
 
@@ -217,7 +222,9 @@ def build_record(
     nulls: dict[str, str] = {}
     calls = _calls(raw_calls)
     verification = outcome.verification if outcome is not None else None
-    if verification is not None:
+    run_completed = outcome is not None and outcome.status == RunStatus.COMPLETED
+    failed_run_checks: str | None = None
+    if verification is not None and run_completed:
         syntax = verification.syntax.status
         rubric = verification.rubric.status
         rubric_failed = sorted(k for k, ok in verification.rubric.checks.items() if not ok)
@@ -230,16 +237,41 @@ def build_record(
             errored=tests.errored,
             reason=tests.reason,
         )
+    else:
+        # A failed run has no final proposal, so syntax, rubric and tests are outcomes of
+        # nothing. The workflow may have checked its last proposal before the failure (for
+        # example when the review timed out); that is kept as a warning, never counted.
+        syntax = rubric = "not_run"
+        rubric_failed = []
+        workflow_tests = verification.reference_tests if verification is not None else None
+        if workflow_tests is None:
+            reason = harness_error or "the workflow returned no verification"
+        elif workflow_tests.status == "not_run" and workflow_tests.reason:
+            reason = workflow_tests.reason
+        else:
+            reason = "the run failed, so it has no final proposal to test"
+        test_summary = ReferenceTestSummary(status="not_run", reason=reason)
+        if verification is not None:
+            checked = {
+                "syntax": verification.syntax.status,
+                "rubric": verification.rubric.status,
+                "reference_tests": verification.reference_tests.status,
+            }
+            if any(status != "not_run" for status in checked.values()):
+                failed_run_checks = (
+                    "failed_run_checks: the workflow checked its last proposal before the run "
+                    "failed ("
+                    + ", ".join(f"{key}={status}" for key, status in checked.items())
+                    + "); the run has no final proposal, so these are not outcomes"
+                )
+    if verification is not None:
         review = verification.model_review.status
         disposition = verification.disposition.value
         disposition_reasons = list(verification.disposition_reasons)
     else:
-        syntax = rubric = review = "not_run"
-        rubric_failed = []
-        reason = harness_error or "the workflow returned no verification"
-        test_summary = ReferenceTestSummary(status="not_run", reason=reason)
+        review = "not_run"
         disposition = "failed"
-        disposition_reasons = [reason]
+        disposition_reasons = [test_summary.reason or "the workflow returned no verification"]
     proposed = outcome.proposed_code if outcome is not None else None
     if proposed is None:
         nulls["proposed_code"] = "the workflow produced no proposal"
@@ -254,6 +286,8 @@ def build_record(
     if gpu is None:
         nulls["gpu_memory_used_mb"] = gpu_reason or "unavailable"
     warnings = list(outcome.warnings) if outcome is not None else []
+    if failed_run_checks is not None:
+        warnings.append(failed_run_checks)
     warnings += _budget_warnings(arm, settings, calls)
     if harness_error:
         warnings.append(f"harness_exception: {harness_error}")
@@ -372,12 +406,51 @@ def evaluate_case(
 def existing_attempts(path: Path) -> set[tuple[str, str]]:
     if not path.exists():
         return set()
-    done = set()
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line.strip():
-            row = json.loads(line)
-            done.add((row["case_id"], row["arm"]))
-    return done
+    return {(row["case_id"], row["arm"]) for row in read_jsonl(path)}
+
+
+def repair_last_line(path: Path) -> dict | None:
+    """Make an interrupted records file appendable again; returns what was done, or None.
+
+    Each record is written as one LF-terminated line in one call, so a last line without
+    LF comes from an interrupted write. If it is a complete record, it only gets its LF.
+    Otherwise its bytes move to <name>.partial-at-byte-<offset> next to the file (kept,
+    never deleted), the file is cut back to its last complete record, and that attempt
+    counts as missing, so a resumed run attempts it.
+    """
+    data = path.read_bytes() if path.exists() else b""
+    if not data or data.endswith(b"\n"):
+        return None
+    offset = data.rfind(b"\n") + 1
+    tail = data[offset:]
+    try:
+        row = json.loads(tail.decode("utf-8"))
+        complete = isinstance(row, dict) and "case_id" in row and "arm" in row
+    except ValueError:  # JSONDecodeError and UnicodeDecodeError
+        complete = False
+    if complete:
+        with path.open("ab") as handle:
+            handle.write(b"\n")
+        return {"offset": offset, "bytes": len(tail), "moved_to": None}
+    moved = path.with_name(f"{path.name}.partial-at-byte-{offset}")
+    copy = 1
+    while moved.exists():
+        copy += 1
+        moved = path.with_name(f"{path.name}.partial-at-byte-{offset}-{copy}")
+    with moved.open("xb") as handle:
+        handle.write(tail)
+    with path.open("r+b") as handle:
+        handle.truncate(offset)
+    return {"offset": offset, "bytes": len(tail), "moved_to": str(moved)}
+
+
+def _worker_alive(provider) -> bool | None:
+    """Whether the provider's model worker is running; None if it has no worker."""
+    try:
+        pid = provider.worker_pid
+    except AttributeError:
+        return None
+    return pid is not None
 
 
 WARMUP_CODE = "def warm_up(flag):\n    if flag:\n        return 1\n    else:\n        return 2\n"
@@ -418,6 +491,7 @@ def warm_up(provider, runner, arms: list[str]) -> dict:
                 "use_adapter": use_adapter,
                 "elapsed_s": round(time.perf_counter() - start, 3),
                 "error": result.error.code.value if result.error else None,
+                "error_message": result.error.message if result.error else None,
                 "model": result.model.model_dump(mode="json") if result.model else None,
             }
         )
@@ -442,23 +516,42 @@ def run_evaluation(
     resume: bool = False,
     progress: Callable[[EvaluationRecord], None] | None = None,
 ) -> dict:
-    """Evaluate every case under every arm (case-major, rotated arm order); one line each."""
+    """Evaluate every case under every arm (case-major, rotated arm order); one line each.
+
+    When an attempt ends with the provider's model worker stopped (a generation timeout
+    or a worker crash), the untimed warm-up runs again before the next attempt, so the
+    model reload is not charged to another case; each re-warm-up is listed in the summary.
+    """
     if output_path.exists() and not resume:
         raise FileExistsError(f"{output_path} exists; use a new evaluation id or resume it")
+    repaired = repair_last_line(output_path) if resume else None
     done = existing_attempts(output_path) if resume else set()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     metered = provider if isinstance(provider, MeteredProvider) else MeteredProvider(provider)
     written: Counter = Counter()
+    rewarm: list[dict] = []
+    stopped_after: tuple[str, str] | None = None
     with output_path.open("a", encoding="utf-8", newline="\n") as handle:
         for index, record in enumerate(records):
             for position, arm in enumerate(arm_order(index, arms)):
                 if (record["id"], arm) in done:
                     continue
+                if stopped_after is not None:
+                    calls = warm_up(metered, None, arms)["provider_calls"]
+                    metered.take_calls()
+                    case_id, stopped_arm = stopped_after
+                    rewarm.append(
+                        {"after_case": case_id, "after_arm": stopped_arm, "provider_calls": calls}
+                    )
+                    stopped_after = None
+                alive_before = _worker_alive(metered)
                 result = evaluate_case(
                     record, arm, workflow=workflow, provider=metered, runner=runner, context=context
                 )
+                if alive_before and _worker_alive(metered) is False:
+                    stopped_after = (record["id"], arm)
                 result.order_position = position
-                handle.write(result.model_dump_json() + "\n")
+                handle.write(jsonl_line(result))
                 handle.flush()
                 written[arm] += 1
                 if progress is not None:
@@ -466,5 +559,7 @@ def run_evaluation(
     return {
         "written_by_arm": dict(sorted(written.items())),
         "skipped_existing": len(done),
+        "repaired_last_line": repaired,
+        "rewarm": rewarm,
         "output": str(output_path),
     }

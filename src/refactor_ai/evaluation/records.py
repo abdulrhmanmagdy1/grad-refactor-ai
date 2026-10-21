@@ -7,11 +7,60 @@ not be taken is null and null_reasons says why; nothing missing is ever written 
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 RECORD_SCHEMA_VERSION = 1
+# JSON writers may leave these raw inside strings, and str.splitlines() splits on them.
+RAW_LINE_BREAKS = {"\u0085": "\\u0085", "\u2028": "\\u2028", "\u2029": "\\u2029"}
+
+
+class RecordFileError(ValueError):
+    """A JSON-lines file holds a line that is not one complete JSON value."""
+
+
+def read_jsonl(path: Path) -> list[dict]:
+    """Parse a JSON-lines file, one value per LF-terminated line.
+
+    Lines are split on LF only: str.splitlines() would also split on U+0085, U+2028 and
+    U+2029, which may appear raw inside JSON strings. A line that does not parse raises
+    RecordFileError naming the file, line number and byte offset; an unterminated last
+    line is reported as a probable interrupted write.
+    """
+    data = path.read_bytes()
+    rows = []
+    offset = 0
+    for number, raw in enumerate(data.split(b"\n"), start=1):
+        start, offset = offset, offset + len(raw) + 1
+        if not raw.strip():
+            continue
+        try:
+            rows.append(json.loads(raw.decode("utf-8")))
+        except ValueError as exc:  # JSONDecodeError and UnicodeDecodeError
+            last = offset > len(data)
+            note = (
+                "; it is the last line and has no line ending, so an interrupted write "
+                "probably cut it (resuming the run moves it aside)"
+                if last
+                else ""
+            )
+            raise RecordFileError(
+                f"{path}: line {number} (byte offset {start}) is not a complete JSON "
+                f"record: {exc}{note}"
+            ) from exc
+    return rows
+
+
+def jsonl_line(record: BaseModel) -> str:
+    """One record as a JSON line whose only line break is the final LF."""
+    text = record.model_dump_json()
+    for raw, escaped in RAW_LINE_BREAKS.items():
+        text = text.replace(raw, escaped)
+    return text + "\n"
+
 
 FailureType = Literal[
     "none",

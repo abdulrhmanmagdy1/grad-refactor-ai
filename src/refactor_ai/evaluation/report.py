@@ -1,8 +1,10 @@
 """Tables and figures computed only from retained case-level evaluation records.
 
 Every rate uses the number of attempted cases of that arm as its denominator, so
-failures, timeouts and harness exceptions always count against the arm. Reference-test
-pass rates are also given over the cases whose tests actually executed. Paired
+failures, timeouts and harness exceptions always count against the arm; syntax, rubric
+and reference-test successes count only for completed runs. Reference-test pass rates
+are also given over the cases whose tests actually executed (at least one test produced
+a result; a runner error that ran no test is not an execution). Paired
 comparisons use only cases attempted by both arms; exact McNemar p-values (two-sided
 binomial test on the discordant pairs) are reported with a Holm adjustment over the
 comparisons shown. Small samples support limited conclusions, and passing reference
@@ -20,7 +22,7 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 from refactor_ai.evaluation.protocol import ARMS
-from refactor_ai.evaluation.records import TIMEOUT_FAILURES
+from refactor_ai.evaluation.records import TIMEOUT_FAILURES, RecordFileError, read_jsonl
 
 PAIRS = (("B", "A"), ("C", "A"), ("D", "C"), ("D", "B"))
 PAIR_MEANING = {
@@ -59,22 +61,33 @@ class ReportError(ValueError):
 def load_records(paths: list[Path]) -> list[dict]:
     rows = []
     for path in paths:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            if line.strip():
-                rows.append(json.loads(line))
+        try:
+            rows += read_jsonl(path)
+        except RecordFileError as exc:
+            raise ReportError(str(exc)) from exc
     return rows
 
 
+def _tests_executed(row: dict) -> bool:
+    """At least one reference test produced a result. A runner error that ran no test
+    (the test process could not start, the runner crashed) is not an execution."""
+    tests = row["reference_tests"]
+    results = sum(tests.get(key) or 0 for key in ("passed", "failed", "errored"))
+    return tests["status"] in ("pass", "fail", "error") and results > 0
+
+
 def _predicate(name: str, row: dict) -> bool:
-    tests = row["reference_tests"]["status"]
+    # A failed run has no final proposal: its syntax, rubric and tests never count.
+    completed = row["run_status"] == "completed"
+    executed = completed and _tests_executed(row)
     return {
-        "completed": row["run_status"] == "completed",
-        "failed": row["run_status"] != "completed",
+        "completed": completed,
+        "failed": not completed,
         "timeouts": row["failure_type"] in TIMEOUT_FAILURES,
-        "syntax_valid": row["syntax"] == "pass",
-        "rubric_pass": row["rubric"] == "pass",
-        "tests_pass": tests == "pass",
-        "tests_executed": tests in ("pass", "fail", "error"),
+        "syntax_valid": completed and row["syntax"] == "pass",
+        "rubric_pass": completed and row["rubric"] == "pass",
+        "tests_pass": executed and row["reference_tests"]["status"] == "pass",
+        "tests_executed": executed,
         "proposal_ready": bool(row["proposal_ready"]),
         "rejected": row["disposition"] == "rejected",
         "uncertain": row["disposition"] == "uncertain",
@@ -344,7 +357,9 @@ def markdown_summary(meta: dict, metrics: dict, paired: list[dict], by_source: l
         f"- Code: {', '.join(meta['code_shas'])}",
         "",
         "Every rate below uses all attempted cases of the arm as its denominator, so "
-        "failures and timeouts count against the arm. Passing reference tests supports "
+        "failures and timeouts count against the arm; syntax, rubric and reference-test "
+        "successes count only for completed runs. Reference tests count as executed when "
+        "at least one test produced a result. Passing reference tests supports "
         "behavior preservation only on the tested inputs.",
         "",
         "## Outcomes by arm",

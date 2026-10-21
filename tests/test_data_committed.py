@@ -8,10 +8,11 @@ from pathlib import Path
 import pytest
 
 from refactor_ai.contracts import ReferenceCase
-from refactor_ai.data import leakage
+from refactor_ai.data import leakage, refgen
 from refactor_ai.data.demo import build_demo_cases, demo_cases_json
 from refactor_ai.data.executor import Job, run_jobs
 from refactor_ai.tasks import guard_clauses as gc
+from refactor_ai.verification.runner_child import same_value
 
 ROOT = Path(__file__).resolve().parents[1]
 RECORDS = ROOT / "datasets" / "guard_clauses" / "v1" / "records.jsonl"
@@ -92,6 +93,62 @@ def test_reference_tests_hold_for_original_and_target(rows):
                     assert type(restored).__name__ == seen["type"], (row["id"], test)
                 else:
                     assert seen["exception"] == expect["exception"], (row["id"], test)
+
+
+# Known gaps of the committed reference tests, listed in docs/data-and-training/data-plan.md
+# ("Reference tests"): record id, code to replace, replacement, and a witness call. The
+# committed tests pass the changed function and the witness call tells it apart from the
+# original. Without a witness the change only removes float noise: an exact comparison
+# sees it, but the reference runner's float tolerance accepts every committed test.
+REFERENCE_TEST_GAPS = [
+    (
+        "gc1-recipe-scaling-07",
+        "return round(scaled, 1)",
+        "return scaled",
+        ("[100, 1]", "{'base_servings': 3}"),
+    ),
+    ("gc1-quiz-score-03", "if len(key) > 0:", "if len(key) >= 0:", ("[[], ()]", "{}")),
+    ("gc1-savings-goal-01", "if months > 240:", "if months >= 240:", ("[12000, 0, 50]", "{}")),
+    *[
+        (f"gc1-card-checksum-0{n}", "digit = digit - 9", "pass", ("['0000000000000050']", "{}"))
+        for n in range(1, 8)
+    ],
+    ("gc1-freight-quote-01", "return round(quote, 2)", "return quote", None),
+    ("gc1-freight-quote-06", "return round(quote, 2)", "return quote", None),
+]
+
+
+def test_documented_reference_test_gaps_hold(rows):
+    by_id = {row["id"]: row for row in rows}
+    jobs = []
+    for rid, old, new, witness in REFERENCE_TEST_GAPS:
+        row = by_id[rid]
+        assert row["original_code"].count(old) == 1, rid
+        calls = tuple((t["args"], t["kwargs"]) for t in row["tests"]) + (
+            (witness,) if witness else ()
+        )
+        changed = row["original_code"].replace(old, new)
+        jobs.append(Job(rid + "|o", row["original_code"], row["function_name"], calls))
+        jobs.append(Job(rid + "|c", changed, row["function_name"], calls))
+    results = run_jobs(jobs, workers=2)
+    for rid, _old, _new, witness in REFERENCE_TEST_GAPS:
+        tests = by_id[rid]["tests"]
+        assert results[rid + "|o"].error is None and results[rid + "|c"].error is None, rid
+        original = [refgen.outcome_key(seen) for seen in results[rid + "|o"].results]
+        changed = [refgen.outcome_key(seen) for seen in results[rid + "|c"].results]
+        if witness:
+            assert changed[: len(tests)] == original[: len(tests)], rid
+            assert changed[-1] != original[-1], rid
+            continue
+        assert changed != original, rid
+        for test, seen in zip(tests, results[rid + "|c"].results, strict=True):
+            expect = test["expect"]
+            assert seen["kind"] == expect["kind"], (rid, test)
+            if expect["kind"] == "raise":
+                assert seen["exception"] == expect["exception"], (rid, test)
+            else:
+                expected = ast.literal_eval(expect["value"])
+                assert same_value(expected, ast.literal_eval(seen["value"])), (rid, test)
 
 
 def test_demonstration_cases_are_valid_and_reproducible():

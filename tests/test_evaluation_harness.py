@@ -1,5 +1,6 @@
 """Evaluation harness: arms, test-split guard, case-level records, failures, resume."""
 
+import importlib.util
 import json
 from pathlib import Path
 
@@ -17,16 +18,20 @@ from refactor_ai.contracts import (
     Role,
     RubricCheck,
     RunError,
+    RunnerInfo,
     RunStatus,
     SyntaxCheck,
     VerificationResult,
     WorkflowMode,
     WorkflowOutcome,
 )
-from refactor_ai.evaluation import harness, protocol
-from refactor_ai.evaluation.records import EvaluationRecord
+from refactor_ai.evaluation import cases, harness, protocol, report
+from refactor_ai.evaluation.records import EvaluationRecord, RecordFileError
 from refactor_ai.providers import FakeProvider
+from refactor_ai.providers.base import failed_result
 from refactor_ai.tasks import guard_clauses
+
+EVALUATE_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "evaluate.py"
 
 ORIGINAL = (
     "def f(x):\n    if x > 0:\n        if x > 9:\n            return 9\n        else:\n"
@@ -348,3 +353,349 @@ def test_warm_up_runs_once_per_adapter_state():
     report = harness.warm_up(provider, None, ["A", "C", "D"])
     assert [call["use_adapter"] for call in report["provider_calls"]] == [False, True]
     assert len(provider.calls) == 2
+
+
+class StubRunner:
+    """Stands in for the trusted runner: every reference test passes (2 of 2)."""
+
+    def __init__(self, enabled=True, reason=None):
+        self._info = RunnerInfo(enabled=enabled, reason=reason)
+
+    def info(self):
+        return self._info
+
+    def run(self, case, candidate_code, *, timeout_s=None):
+        return ReferenceTestsResult(
+            status="pass", case_id=case.case_id, total=2, passed=2, failed=0, errored=0
+        )
+
+
+def test_a_run_that_fails_in_review_reports_no_checked_proposal():
+    from refactor_ai.agents.coordinator import run_workflow
+
+    timeout = ProviderError(code=ProviderErrorCode.TIMEOUT, message="slow")
+    provider = harness.MeteredProvider(FakeProvider(script={Role.REVIEW: [timeout]}))
+    record = harness.evaluate_case(
+        RECORD, "B", workflow=run_workflow, provider=provider, runner=StubRunner(), context=CONTEXT
+    )
+    assert record.run_status == "failed" and record.failure_type == "provider_timeout"
+    assert record.error["stage"] == "review" and record.proposed_code is None
+    # The workflow checked its last proposal before the review timed out, but the run has
+    # no final proposal, so none of these outcomes may count as a success.
+    assert (record.syntax, record.rubric, record.reference_tests.status) == ("not_run",) * 3
+    assert record.rubric_failed_checks == [] and not record.proposal_ready
+    kept = [w for w in record.warnings if w.startswith("failed_run_checks:")]
+    assert len(kept) == 1 and "reference_tests=pass" in kept[0]
+    rates = report.arm_metrics([json.loads(record.model_dump_json())])["B"]["rates"]
+    for name in ("syntax_valid", "rubric_pass", "tests_pass", "tests_executed"):
+        assert rates[name]["numerator"] == 0, name
+    assert rates["failed"]["numerator"] == 1 and rates["timeouts"]["numerator"] == 1
+
+
+LINE_SEPARATORS = "\u2028\u2029\u0085"
+
+
+def test_unicode_line_separators_in_model_output_keep_records_readable(tmp_path):
+    answer = "```python\n" + TARGET + "```\nExplanation: guard\u2028clauses\u2029done\u0085."
+
+    def with_separators(provider):
+        return completed(provider).model_copy(update={"explanation": "a\u2028b\u2029c\u0085d"})
+
+    output = tmp_path / "records.jsonl"
+    harness.run_evaluation(
+        [RECORD],
+        ["A"],
+        workflow=stub(with_separators),
+        provider=FakeProvider(script={Role.REFACTOR: [answer]}),
+        runner=None,
+        context=CONTEXT,
+        output_path=output,
+    )
+    raw = output.read_bytes()
+    assert raw.count(b"\n") == 1  # one physical line per record
+    assert not any(ch.encode("utf-8") in raw for ch in LINE_SEPARATORS)  # escaped by the writer
+    row = json.loads(raw)
+    assert row["calls"][0]["output"] == answer and row["explanation"] == "a\u2028b\u2029c\u0085d"
+    assert harness.existing_attempts(output) == {(RECORD["id"], "A")}
+
+    # A file from a JSON writer that leaves the characters raw is still one record per line.
+    other = tmp_path / "raw.jsonl"
+    other.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+    assert all(ch.encode("utf-8") in other.read_bytes() for ch in LINE_SEPARATORS)
+    assert harness.existing_attempts(other) == {(RECORD["id"], "A")}
+    assert cases.load_records(other) == [row]
+    resumed = harness.run_evaluation(
+        [RECORD],
+        ["A", "B"],
+        workflow=stub(completed),
+        provider=FakeProvider(),
+        runner=None,
+        context=CONTEXT,
+        output_path=other,
+        resume=True,
+    )
+    assert resumed["written_by_arm"] == {"B": 1} and resumed["skipped_existing"] == 1
+
+
+def test_resume_moves_an_interrupted_last_line_aside(tmp_path):
+    records = [dict(RECORD, id=f"gc1-case-{i:02d}") for i in range(2)]
+    output = tmp_path / "run" / "records.jsonl"
+
+    def workflow(request, *, provider, settings, runner):
+        return completed(provider)
+
+    def run(arms, resume):
+        return harness.run_evaluation(
+            records,
+            arms,
+            workflow=workflow,
+            provider=FakeProvider(),
+            runner=None,
+            context=CONTEXT,
+            output_path=output,
+            resume=resume,
+        )
+
+    run(["A"], resume=False)
+    data = output.read_bytes()
+    first_end = data.index(b"\n") + 1
+    partial = data[first_end : first_end + (len(data) - first_end) // 2]
+    output.write_bytes(data[:first_end] + partial)  # an interrupted write of record 2
+
+    with pytest.raises(RecordFileError, match=rf"line 2 \(byte offset {first_end}\)"):
+        harness.existing_attempts(output)
+    summary = run(["A"], resume=True)
+    assert summary["written_by_arm"] == {"A": 1} and summary["skipped_existing"] == 1
+    repaired = summary["repaired_last_line"]
+    assert repaired["offset"] == first_end and repaired["bytes"] == len(partial)
+    assert Path(repaired["moved_to"]).read_bytes() == partial  # kept, not deleted
+    rows = report.load_records([output])
+    assert [row["case_id"] for row in rows] == ["gc1-case-00", "gc1-case-01"]
+
+    # A complete last record that only lost its newline is kept and terminated.
+    output.write_bytes(output.read_bytes()[:-1])
+    summary = run(["A", "B"], resume=True)
+    assert summary["skipped_existing"] == 2 and summary["written_by_arm"] == {"B": 2}
+    assert summary["repaired_last_line"]["moved_to"] is None
+    assert len(report.load_records([output])) == 4
+
+
+class WorkerProvider(FakeProvider):
+    """A provider with a model worker: a timeout stops it, and the next call reloads it."""
+
+    def __init__(self, stop_on: str):
+        super().__init__()
+        self.alive = False
+        self.stop_on = stop_on
+        self.loads: list[str] = []  # the user message of each call that paid a model load
+
+    @property
+    def worker_pid(self):
+        return 4242 if self.alive else None
+
+    def generate(self, request):
+        content = request.messages[-1].content
+        if not self.alive:
+            self.alive = True
+            self.loads.append(content)
+        if self.stop_on in content:
+            self.alive = False
+            return failed_result(self.mode, ProviderErrorCode.TIMEOUT, "slow", 0.0)
+        return super().generate(request)
+
+
+def test_a_stopped_model_worker_is_warmed_up_again_before_the_next_attempt(tmp_path):
+    records = [dict(RECORD, id=f"gc1-case-{i:02d}") for i in range(3)]
+
+    def workflow(request, *, provider, settings, runner):
+        message = ChatMessage(role="user", content=request.reference_case.case_id)
+        result = provider.generate(
+            GenerationRequest(
+                role=Role.REFACTOR, messages=[message], use_adapter=settings.refactor_use_adapter
+            )
+        )
+        return timed_out(provider) if result.error else completed(provider)
+
+    provider = WorkerProvider(stop_on="gc1-case-00")
+    harness.warm_up(provider, None, ["A"])  # evaluate.py warms up before the first attempt
+    summary = harness.run_evaluation(
+        records,
+        ["A"],
+        workflow=workflow,
+        provider=provider,
+        runner=None,
+        context=CONTEXT,
+        output_path=tmp_path / "records.jsonl",
+    )
+    rows = report.load_records([tmp_path / "records.jsonl"])
+    assert [row["failure_type"] for row in rows] == ["provider_timeout", "none", "none"]
+    # Both model loads were paid by untimed warm-up calls, none by a timed attempt.
+    assert len(provider.loads) == 2 and all("def warm_up(" in m for m in provider.loads)
+    assert [(item["after_case"], item["after_arm"]) for item in summary["rewarm"]] == [
+        ("gc1-case-00", "A")
+    ]
+    assert summary["rewarm"][0]["provider_calls"][0]["error"] is None
+    assert [row["call_count"] for row in rows] == [1, 1, 1]
+
+
+# --- scripts/evaluate.py -------------------------------------------------------------
+
+
+@pytest.fixture
+def evaluate_script(monkeypatch):
+    spec = importlib.util.spec_from_file_location("evaluate_script", EVALUATE_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "git_head", lambda: None)
+    return module
+
+
+def cli(dataset: Path, out: Path, *extra: str) -> list[str]:
+    return ["--dataset", str(dataset), "--output-dir", str(out), *extra]
+
+
+def test_resume_needs_the_evaluation_id_of_an_existing_run(
+    tmp_path, monkeypatch, evaluate_script, capsys
+):
+    dataset = tmp_path / "records.jsonl"
+    write_dataset(dataset)
+    out = tmp_path / "out"
+
+    def no_provider(*_args):
+        raise AssertionError("no provider may be built for a refused run")
+
+    monkeypatch.setattr(evaluate_script, "make_provider", no_provider)
+    base = cli(dataset, out, "--split", "validation", "--provider", "fake", "--runner", "disabled")
+    assert evaluate_script.main([*base, "--resume"]) == 2
+    assert "--evaluation-id" in capsys.readouterr().err
+    assert evaluate_script.main([*base, "--resume", "--evaluation-id", "lost"]) == 2
+    assert "nothing to resume" in capsys.readouterr().err
+    assert not out.exists()
+
+
+def test_each_run_segment_keeps_its_own_manifest(tmp_path, evaluate_script, capsys):
+    dataset = tmp_path / "records.jsonl"
+    write_dataset(dataset)
+    out = tmp_path / "out"
+    base = cli(dataset, out, "--split", "validation", "--provider", "fake", "--runner", "disabled")
+    base += ["--evaluation-id", "seg"]
+    assert evaluate_script.main([*base, "--arms", "A"]) == 0
+    printed = capsys.readouterr().out
+    assert f"Evaluation seg: records go to {out / 'seg' / 'records.jsonl'}" in printed
+    first = json.loads((out / "seg" / "run.json").read_text(encoding="utf-8"))
+    assert evaluate_script.main([*base, "--arms", "B", "--resume"]) == 0
+    assert json.loads((out / "seg" / "run.json").read_text(encoding="utf-8")) == first
+    later = sorted((out / "seg").glob("run-*.json"))
+    assert len(later) == 1
+    second = json.loads(later[0].read_text(encoding="utf-8"))
+    assert list(first["arms"]) == ["A"] and list(second["arms"]) == ["B"]
+    assert first["summary"]["written_by_arm"] == {"A": 1} and first["finished_at"]
+    assert second["summary"]["skipped_existing"] == 1 and second["resumed"] is True
+    assert second["earlier_manifests"] == ["run.json"]
+    assert len(report.load_records([out / "seg" / "records.jsonl"])) == 2
+
+
+FROZEN_MODEL = {
+    "model_id": "fake-provider",
+    "model_revision": "fake-v1",
+    "adapter_id": "lora-guard-clauses",
+    "adapter_sha256": "a" * 64,
+}
+
+
+class ClosingProvider(FakeProvider):
+    """FakeProvider that remembers being closed, reports a given identity, can lack an adapter."""
+
+    def __init__(self, adapter_available=True, model=None):
+        super().__init__()
+        self.closed = False
+        self.adapter_available = adapter_available
+        self.model = model
+
+    def close(self):
+        self.closed = True
+
+    def generate(self, request):
+        if request.use_adapter and not self.adapter_available:
+            message = "use_adapter=true but no LoRA adapter is configured"
+            return failed_result(self.mode, ProviderErrorCode.UNAVAILABLE, message)
+        result = super().generate(request)
+        if self.model is not None:
+            identity = dict(self.model, use_adapter=request.use_adapter)
+            result = result.model_copy(update={"model": result.model.model_copy(update=identity)})
+        return result
+
+
+def test_a_test_split_run_stops_before_any_attempt_unless_it_is_complete_and_ready(
+    tmp_path, monkeypatch, evaluate_script, capsys
+):
+    dataset = tmp_path / "records.jsonl"
+    write_dataset(dataset)
+    freeze = tmp_path / protocol.PROTOCOL_FREEZE_PATH
+    freeze.parent.mkdir(parents=True)
+    freeze.write_text(
+        json.dumps({"status": "frozen", "protocol_version": "eval-v1", "model": FROZEN_MODEL}),
+        encoding="utf-8",
+    )
+    test_freeze = tmp_path / protocol.TEST_FREEZE_PATH
+    test_freeze.parent.mkdir(parents=True)
+    split_hash = protocol.split_sha256(dataset, "test")
+    test_freeze.write_text(json.dumps({"split_sha256": split_hash}), encoding="utf-8")
+    monkeypatch.setattr(evaluate_script, "ROOT", tmp_path)
+    out = tmp_path / "out"
+    built: list[ClosingProvider] = []
+    setup = {"provider": ClosingProvider, "runner": StubRunner}
+
+    def make_provider(kind, config):
+        built.append(setup["provider"]())
+        return built[-1]
+
+    monkeypatch.setattr(evaluate_script, "make_provider", make_provider)
+    monkeypatch.setattr(evaluate_script, "make_runner", lambda mode: setup["runner"]())
+    base = cli(dataset, out, "--split", "test", "--provider", "local", "--i-confirm-frozen-test")
+    base += ["--protocol-version", "eval-v1"]
+
+    # A partial test run or one without the runner is refused before any model loads.
+    for extra in (["--limit", "1"], ["--case-ids", "gc1-test"], ["--runner", "disabled"]):
+        assert evaluate_script.main([*base, *extra]) == 2
+        assert "Refused" in capsys.readouterr().err
+    assert built == []
+
+    def refused(arms: str, expected: str) -> None:
+        assert evaluate_script.main([*base, "--arms", arms]) == 2
+        error = capsys.readouterr().err
+        assert "before its first attempt" in error and expected in error, error
+        assert built[-1].closed
+
+    setup["runner"] = lambda: StubRunner(enabled=False, reason="isolation self-checks failed")
+    setup["provider"] = lambda: ClosingProvider(model=FROZEN_MODEL)
+    refused("A", "isolation self-checks failed")
+    setup["runner"] = StubRunner
+    setup["provider"] = lambda: ClosingProvider(adapter_available=False, model=FROZEN_MODEL)
+    refused("A,C", "use_adapter=true")
+    setup["provider"] = lambda: ClosingProvider(model=dict(FROZEN_MODEL, adapter_sha256="b" * 64))
+    refused("C", "adapter_sha256")
+    setup["provider"] = lambda: ClosingProvider(model=dict(FROZEN_MODEL, model_revision="other"))
+    refused("A", "model_revision")
+    assert not list(out.rglob("records.jsonl"))
+
+    # With the runner enabled and the frozen model identity, the run goes ahead.
+    setup["provider"] = lambda: ClosingProvider(model=FROZEN_MODEL)
+    assert evaluate_script.main([*base, "--arms", "A,C", "--evaluation-id", "final"]) == 0
+    rows = report.load_records([out / "final" / "records.jsonl"])
+    assert sorted((row["case_id"], row["arm"]) for row in rows) == [
+        ("gc1-test", "A"),
+        ("gc1-test", "C"),
+    ]
+    assert all(row["reference_tests"]["status"] == "pass" for row in rows)
+
+
+def test_test_readiness_needs_the_frozen_model_identity():
+    call = {"use_adapter": True, "error": None, "model": dict(FROZEN_MODEL, use_adapter=False)}
+    warmup = {"runner": {"enabled": True, "reason": None}, "provider_calls": [call]}
+    with pytest.raises(protocol.TestSplitRefused, match="reported use_adapter=false"):
+        protocol.check_test_readiness(warmup, {"protocol_freeze": {"model": FROZEN_MODEL}})
+    with pytest.raises(protocol.TestSplitRefused, match="names no model identity"):
+        protocol.check_test_readiness(warmup, {"protocol_freeze": {"status": "frozen"}})
+    call["model"]["use_adapter"] = True
+    protocol.check_test_readiness(warmup, {"protocol_freeze": {"model": FROZEN_MODEL}})

@@ -1,9 +1,11 @@
 """Evaluation report: denominators, paired tests, consistency checks and figures."""
 
 import csv
+import importlib.util
 import io
 import json
 import xml.etree.ElementTree as ElementTree
+from pathlib import Path
 
 import pytest
 
@@ -42,7 +44,13 @@ def make(case: str, arm: str, *, ready: bool, failure: str = "none", latency: fl
         "failure_type": failure,
         "syntax": "not_run" if failed else "pass",
         "rubric": "not_run" if failed else ("pass" if ready else "fail"),
-        "reference_tests": {"status": "not_run" if failed else ("pass" if ready else "fail")},
+        "reference_tests": (
+            {"status": "not_run"}
+            if failed
+            else {"status": "pass", "total": 2, "passed": 2, "failed": 0, "errored": 0}
+            if ready
+            else {"status": "fail", "total": 2, "passed": 1, "failed": 1, "errored": 0}
+        ),
         "model_review": "not_run",
         "recheck": {"syntax": "no_output", "rubric": "no_output"},
         "proposal_ready": ready and not failed,
@@ -153,3 +161,71 @@ def test_fake_provider_reports_are_labelled(tmp_path):
     report.build_report(data, tmp_path)
     assert "FAKE PROVIDER" in (tmp_path / "summary.md").read_text(encoding="utf-8")
     assert "Fake provider" in (tmp_path / "figures/outcome_rates.svg").read_text(encoding="utf-8")
+
+
+def test_checks_of_a_failed_run_never_count_as_successes():
+    # A record written before the harness fix: the review timed out after the workflow
+    # had checked its last proposal, and those checks were copied into the outcome.
+    stale = make(
+        "c00",
+        "B",
+        ready=False,
+        failure="provider_timeout",
+        syntax="pass",
+        rubric="pass",
+        reference_tests={"status": "pass", "total": 2, "passed": 2, "failed": 0, "errored": 0},
+    )
+    rates = report.arm_metrics([stale])["B"]["rates"]
+    for name in ("syntax_valid", "rubric_pass", "tests_pass", "tests_executed"):
+        assert rates[name]["numerator"] == 0, name
+    assert rates["failed"]["numerator"] == 1 and rates["timeouts"]["numerator"] == 1
+
+
+def test_runner_errors_without_test_results_are_not_executed():
+    data = [make(f"c{i:02d}", "C", ready=True) for i in range(8)]
+    no_start = {"status": "error", "total": 2, "reason": "could not be started"}
+    crashed = {"status": "error", "reason": "The reference runner failed unexpectedly"}
+    crashed_mid = {"status": "error", "total": 2, "passed": 1, "failed": 0, "errored": 1}
+    empty_pass = {"status": "pass", "total": 0, "passed": 0, "failed": 0, "errored": 0}
+    for i, tests in enumerate((no_start, crashed, crashed_mid, empty_pass), start=8):
+        data.append(make(f"c{i:02d}", "C", ready=False, reference_tests=tests))
+    entry = report.arm_metrics(data)["C"]
+    assert entry["rates"]["tests_executed"]["numerator"] == 9  # 8 passes and crashed_mid
+    assert entry["rates"]["tests_pass"]["numerator"] == 8  # a pass with no test is no pass
+    assert entry["tests_pass_of_executed"] == {"numerator": 8, "denominator": 9, "rate": 8 / 9}
+
+
+def write_lines(path: Path, items: list[dict], tail: bytes = b"") -> None:
+    text = "".join(json.dumps(item, ensure_ascii=False) + "\n" for item in items)
+    path.write_bytes(text.encode("utf-8") + tail)
+
+
+def test_records_with_raw_unicode_line_separators_load(tmp_path):
+    data = rows()[:2]
+    data[0]["explanation"] = "guard\u2028clauses\u2029done\u0085."
+    path = tmp_path / "records.jsonl"
+    write_lines(path, data)
+    assert "\u2028".encode() in path.read_bytes()
+    assert report.load_records([path]) == data
+
+
+def load_report_script():
+    path = Path(__file__).resolve().parents[1] / "scripts" / "report_evaluation.py"
+    spec = importlib.util.spec_from_file_location("report_evaluation_script", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_an_interrupted_last_line_is_named_not_a_traceback(tmp_path, capsys):
+    data = rows()[:2]
+    path = tmp_path / "records.jsonl"
+    complete = (json.dumps(data[0]) + "\n").encode("utf-8")
+    write_lines(path, data[:1], tail=json.dumps(data[1]).encode("utf-8")[:300])
+    with pytest.raises(report.ReportError, match=rf"line 2 \(byte offset {len(complete)}\)"):
+        report.load_records([path])
+    script = load_report_script()
+    assert script.main([str(path), "--out", str(tmp_path / "out")]) == 2
+    error = capsys.readouterr().err
+    assert "Cannot build the report" in error and "no line ending" in error
+    assert not (tmp_path / "out").exists()

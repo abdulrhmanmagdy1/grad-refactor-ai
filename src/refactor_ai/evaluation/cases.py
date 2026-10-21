@@ -3,17 +3,16 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 
 from refactor_ai.contracts import ReferenceCase, ReferenceTest
+from refactor_ai.evaluation.records import read_jsonl
 
 DEFAULT_DATASET = Path("datasets/guard_clauses/v1/records.jsonl")
 
 
 def load_records(path: Path) -> list[dict]:
-    text = path.read_text(encoding="utf-8")
-    return [json.loads(line) for line in text.splitlines() if line.strip()]
+    return read_jsonl(path)
 
 
 def dataset_sha256(path: Path) -> str:
