@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "name": "warehouse",
+  "description": "Stock levels per bin, purchase orders, picking and shipments for a small warehouse.",
+  "author": "test-split author (Claude Opus 5.5 subagent), written without reading the reviewer",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "warehouse/purchasing.py",
+      "lines": [36, 36],
+      "anchor": "if quantity > line.ordered:",
+      "symbol": "receive_line",
+      "description": "The docstring says a delivery may not exceed what is still outstanding, and the error message even reports the outstanding amount, but the check compares against the full ordered quantity. A second delivery can take a line past what was ordered.",
+      "fix_hint": "Compare the delivered quantity with outstanding (ordered minus already received).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_delivery_cannot_take_a_line_past_what_was_ordered"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "warehouse/shipping.py",
+      "lines": [29, 29],
+      "anchor": "return max(1, round(weight_kg))",
+      "symbol": "billable_weight",
+      "description": "Every started kilogram must be charged as a full one, but round() rounds 2.2 kg down to 2 kg, so parcels are under-billed and priced in the wrong band.",
+      "fix_hint": "Use math.ceil instead of round.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_a_started_kilogram_is_billed_in_full"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "warehouse/picking.py",
+      "lines": [82, 86],
+      "anchor": "def release(self) -> list[CustomerLine]:",
+      "symbol": "WaveBuilder.release",
+      "description": "release() promises a new, empty wave but only clears the lines, not the set of orders. The next wave still counts the old orders and refuses new ones once the previous wave was full.",
+      "fix_hint": "Reset self._orders to an empty set in release().",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_a_released_wave_starts_empty"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "warehouse/storage.py",
+      "lines": [46, 50],
+      "anchor": "f\"WHERE sku = '{sku}' ORDER BY id\"",
+      "symbol": "MovementLog.history",
+      "description": "The SKU is pasted into the SQL text with an f-string, so a crafted SKU changes the query (for example returns every movement).",
+      "fix_hint": "Use a ? placeholder and pass the SKU as a parameter.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_history_does_not_run_the_sku_as_sql"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "warehouse/reports.py",
+      "lines": [22, 23],
+      "anchor": "free = ledger.on_hand(product.sku) - ledger.reserved(product.sku)",
+      "symbol": "low_stock",
+      "modules": ["warehouse.reports", "warehouse.purchasing"],
+      "other_locations": [{"file": "warehouse/purchasing.py", "lines": [63, 63]}],
+      "description": "The reorder rule (available stock at or below the reorder point) is implemented in purchasing.needs_reorder and again, with its own arithmetic, in reports.low_stock. The two copies will drift apart.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "warehouse/shipping.py",
+      "lines": [41, 67],
+      "anchor": "if sku in parcel.items:",
+      "symbol": "pack_order",
+      "description": "pack_order nests for/for/for/if/if five levels deep with a for-else; finding a parcel with room and adding a unit to it should be helpers.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "warehouse/storage.py",
+      "lines": [65, 71],
+      "anchor": "f\"ORDER BY {order_by} DESC, id DESC LIMIT ?\"",
+      "why_it_is_fine": "The f-string only inserts order_by after it has been checked against the fixed SORTABLE_COLUMNS set; the limit is passed as a bound parameter."
+    },
+    {
+      "id": "D2",
+      "file": "warehouse/stock.py",
+      "lines": [75, 79],
+      "anchor": "for bin_code, contents in list(self._bins.items()):",
+      "why_it_is_fine": "It iterates over a list copy of the bins (and a list of the zero SKUs), so deleting from the dicts inside the loop is safe."
+    }
+  ]
+}

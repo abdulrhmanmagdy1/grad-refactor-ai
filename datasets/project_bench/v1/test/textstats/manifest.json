@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "textstats",
+  "description": "Reads a folder of text documents and an INI/JSON settings file, tokenizes the text, counts words and n-grams, computes readability scores and writes a CSV report.",
+  "author": "test-split author (Claude Opus 5.5 agent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "list-modified-while-iterating",
+      "file": "textstats/tokenizer.py",
+      "lines": [54, 56],
+      "anchor": "kept.remove(token)",
+      "symbol": "remove_stopwords",
+      "description": "The loop removes items from the list it is iterating over, so the item right after each removed stopword is skipped; two stopwords in a row leave the second one in the result.",
+      "fix_hint": "Build a new list with a comprehension that keeps the tokens whose lowercase form is not a stopword.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_remove_stopwords_drops_adjacent_stopwords"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "textstats/counts.py",
+      "lines": [24, 24],
+      "anchor": "range(len(tokens) - n)",
+      "symbol": "ngrams",
+      "description": "There are len(tokens) - n + 1 windows of n tokens; the range stops one early, so the last n-gram is always missing (and two tokens give no bigram at all).",
+      "fix_hint": "Iterate over range(len(tokens) - n + 1).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_ngrams_include_the_last_window"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-sort-order",
+      "file": "textstats/counts.py",
+      "lines": [38, 38],
+      "anchor": "reverse=True",
+      "symbol": "top_n",
+      "description": "reverse=True reverses the whole key, so entries with the same count come out in reverse alphabetical order instead of alphabetical order as documented.",
+      "fix_hint": "Sort by (-count, item) without reverse.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_top_n_lists_equal_counts_alphabetically"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "textstats/corpus.py",
+      "lines": [38, 39],
+      "anchor": "path = root / name",
+      "symbol": "load_document",
+      "description": "Document names come from the corpus index file and are joined to the corpus folder unchecked, so a name like ../secret.txt (or an absolute path) reads files outside the corpus.",
+      "fix_hint": "Resolve the joined path and refuse it unless it is inside the resolved corpus folder.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_load_document_stays_inside_the_corpus"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "textstats/config.py",
+      "lines": [11, 11],
+      "anchor": "from textstats.report import REPORT_COLUMNS",
+      "modules": ["textstats.config", "textstats.report"],
+      "other_locations": [{"file": "textstats/report.py", "lines": [10, 10]}],
+      "description": "config imports the report module for its column names while report imports config for Settings; the cycle only loads because the package __init__ happens to import config first.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "textstats/corpus.py",
+      "lines": [51, 71],
+      "anchor": "for filename in sorted(filenames):",
+      "symbol": "iter_documents",
+      "description": "The walk nests for / for / if / try-else / if five levels deep; the file filter and the decoding should be guard clauses or a helper.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "textstats/readability.py",
+      "lines": [16, 22],
+      "anchor": "syllables_per_word = syllables / len(words)",
+      "symbol": "flesch_reading_ease",
+      "other_locations": [{"file": "textstats/readability.py", "lines": [33, 39]}],
+      "description": "Both Flesch functions repeat the same seven lines that split the text and compute words per sentence and syllables per word; this belongs in one helper.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "textstats/corpus.py",
+      "lines": [76, 77],
+      "anchor": "hashlib.md5(normalized.encode(\"utf-8\")).hexdigest()",
+      "why_it_is_fine": "MD5 is only a checksum to spot repeated documents in a report; nothing security-related depends on it being collision resistant."
+    },
+    {
+      "id": "D2",
+      "file": "textstats/counts.py",
+      "lines": [47, 49],
+      "anchor": "for item in list(counts):",
+      "why_it_is_fine": "It iterates over a copy of the keys, so deleting from the dict inside the loop is safe."
+    }
+  ]
+}

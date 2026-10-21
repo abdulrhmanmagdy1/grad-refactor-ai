@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "scheduler",
+  "description": "Rooms, bookings, recurring events, conflict detection and reminders for an office calendar.",
+  "author": "test-split author (Claude, independent of the reviewer code)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-comparison",
+      "file": "scheduler/timeutil.py",
+      "lines": [31, 31],
+      "anchor": "return self.start <= other.end and other.start <= self.end",
+      "symbol": "Interval.overlaps",
+      "description": "Intervals are half-open and the docstring says touching intervals do not overlap, but <= makes a 9-10 meeting clash with a 10-11 one, so back-to-back bookings are refused.",
+      "fix_hint": "Use strict comparisons: self.start < other.end and other.start < self.end.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_back_to_back_meetings_do_not_conflict"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "scheduler/bookings.py",
+      "lines": [56, 57],
+      "anchor": "holidays: set[date] = set()",
+      "symbol": "Calendar.__init__",
+      "description": "The default holiday set is created once and stored as is; add_holiday mutates it, so a holiday added to one calendar closes every calendar built with the default.",
+      "fix_hint": "Default to None (or an empty tuple) and store a fresh set(holidays).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_holidays_belong_to_one_calendar"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "swapped-arguments",
+      "file": "scheduler/bookings.py",
+      "lines": [127, 127],
+      "anchor": "self.book(room_id, title, organizer, slot)",
+      "symbol": "Calendar.book_series",
+      "description": "book takes (room_id, organizer, title, interval) but book_series passes title and organizer the other way round, so every meeting of a series is organized by its title and reminders go to the wrong name.",
+      "fix_hint": "Call self.book(room_id, organizer, title, slot).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_recurring_series_keeps_organizer_and_title"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "scheduler/export.py",
+      "lines": [47, 49],
+      "anchor": "path = export_dir / f\"{name}.ics\"",
+      "symbol": "export_room_calendar",
+      "description": "The user-typed export name is joined to the export folder unchecked, so a name like ../../x writes an .ics file anywhere the process can write.",
+      "fix_hint": "Reject names with path parts (or keep only the base name) and check the resolved path stays inside export_dir.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_export_stays_inside_the_export_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "scheduler/bookings.py",
+      "lines": [10, 10],
+      "anchor": "from scheduler import reminders",
+      "modules": ["scheduler.bookings", "scheduler.reminders"],
+      "other_locations": [{"file": "scheduler/reminders.py", "lines": [10, 10]}],
+      "description": "bookings imports reminders to create reminders when booking, and reminders imports bookings for Booking, Status and Calendar; the two modules depend on each other.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "scheduler/export.py",
+      "lines": [53, 112],
+      "anchor": "def render_agenda(calendar: Calendar, directory: RoomDirectory, day: date) -> str:",
+      "symbol": "render_agenda",
+      "description": "render_agenda is about 60 lines doing room sections, gap lines, hour formatting and three different summaries in one body.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "magic-numbers",
+      "file": "scheduler/bookings.py",
+      "lines": [47, 49],
+      "anchor": "if start.time() < time(8, 0) or end.time() > time(18, 0):",
+      "symbol": "_check_office_hours",
+      "other_locations": [{"file": "scheduler/finder.py", "lines": [21, 28]}],
+      "description": "Office hours (8:00, 18:00) and the 15-minute slot are literal numbers repeated in bookings._check_office_hours and finder.free_slots instead of shared constants.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "scheduler/bookings.py",
+      "lines": [184, 187],
+      "anchor": "for booking_id, booking in list(self._bookings.items()):",
+      "why_it_is_fine": "It iterates over a list copy of the items, so deleting from the dict inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "scheduler/reminders.py",
+      "lines": [57, 59],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs the failure with the booking id and re-raises it; nothing is swallowed, as the docstring documents."
+    }
+  ]
+}

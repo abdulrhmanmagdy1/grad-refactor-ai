@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "ledger",
+  "description": "Accounts, transfers, interest, fees and monthly statements for a small credit union.",
+  "author": "test-split author (Claude, independent of the reviewer code)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "ledger/transfers.py",
+      "lines": [39, 40],
+      "anchor": "if value > account.balance:",
+      "symbol": "withdraw",
+      "description": "withdraw compares the amount with the balance alone, so a checking account can never use its overdraft limit, contrary to the docstring (transfer correctly uses can_debit).",
+      "fix_hint": "Refuse only when not account.can_debit(value), i.e. compare with balance plus overdraft limit.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_withdrawal_may_use_the_overdraft_limit"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "ledger/interest.py",
+      "lines": [43, 43],
+      "anchor": ".quantize(CENT)",
+      "symbol": "monthly_interest",
+      "description": "quantize without a rounding mode uses the context default ROUND_HALF_EVEN, so 1.125 becomes 1.12; the docstring and README say amounts are rounded half up.",
+      "fix_hint": "Pass rounding=ROUND_HALF_UP (or use money.to_money).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_monthly_interest_rounds_half_up"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "missing-check",
+      "file": "ledger/transfers.py",
+      "lines": [58, 58],
+      "anchor": "target = store.get_account(target_id)",
+      "symbol": "transfer",
+      "description": "Only the source account is checked for being open; money can be transferred into a closed account although the docstring says both accounts must be open.",
+      "fix_hint": "Load the target with _open_account so a closed target raises AccountClosed.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_transfer_into_a_closed_account_is_refused"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "ledger/store.py",
+      "lines": [85, 88],
+      "anchor": "WHERE owner = '{owner}'",
+      "symbol": "LedgerStore.find_accounts_by_owner",
+      "description": "The owner name is put into the SQL text with an f-string, so a crafted name (\"x' OR '1'='1\") returns every account.",
+      "fix_hint": "Use a ? placeholder and pass owner as a parameter.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_owner_search_does_not_run_text_as_sql"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "layer-violation",
+      "file": "ledger/store.py",
+      "lines": [11, 12],
+      "anchor": "from ledger.fees import month_range, monthly_fees",
+      "modules": ["ledger.store", "ledger.fees", "ledger.interest"],
+      "other_locations": [{"file": "ledger/store.py", "lines": [137, 156]}],
+      "description": "The SQLite storage layer imports the fee and interest policies and runs the month-end process itself (post_month_end); persistence depends on business rules instead of a service module using the store.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "duplicated-logic",
+      "file": "ledger/fees.py",
+      "lines": [20, 23],
+      "anchor": "def month_range(year: int, month: int) -> tuple[date, date]:",
+      "symbol": "month_range",
+      "other_locations": [{"file": "ledger/statements.py", "lines": [16, 19]}],
+      "description": "The first/last day of a month helper is written twice, fees.month_range and statements._month_bounds.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "ledger/fees.py",
+      "lines": [51, 70],
+      "anchor": "if used > FREE_WITHDRAWALS:",
+      "symbol": "excess_withdrawal_fee",
+      "description": "if / for / if / if / if nested five levels deep; guard clauses and a filtered count would flatten it.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "ledger/store.py",
+      "lines": [128, 135],
+      "anchor": "placeholders = \", \".join(\"?\" for _ in account_ids)",
+      "why_it_is_fine": "The f-string only inserts a list of ? placeholders; every account id and date is passed as a query parameter."
+    },
+    {
+      "id": "D2",
+      "file": "ledger/statements.py",
+      "lines": [61, 68],
+      "anchor": "hashlib.md5(text.encode(\"utf-8\")).hexdigest()[:12]",
+      "why_it_is_fine": "md5 is used as a document fingerprint for look-up, not for security, and changing it would break matching statements already sent."
+    }
+  ]
+}

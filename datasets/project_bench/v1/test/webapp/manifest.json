@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "name": "webapp",
+  "description": "A framework-free web backend: routing, accounts with password hashing, bearer-token sessions, role permissions and a per-client rate limiter.",
+  "author": "test-split author (agent, written without reading the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "webapp/ratelimit.py",
+      "lines": [42, 42],
+      "anchor": "if len(hits) > self.limit:",
+      "symbol": "RateLimiter.allow",
+      "description": "The limiter promises at most `limit` requests per window, but it only rejects once more than `limit` hits are recorded, so `limit + 1` requests get through.",
+      "fix_hint": "Reject when len(hits) >= self.limit.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_limiter_rejects_the_request_after_the_limit"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "webapp/sessions.py",
+      "lines": [70, 70],
+      "anchor": "session.expires_at = session.created_at + self._idle_timeout",
+      "symbol": "SessionStore.validate",
+      "description": "Using a session is documented to move its expiry to idle_timeout seconds after the call, but the new expiry is computed from created_at, so it never moves and active users are logged out idle_timeout seconds after login.",
+      "fix_hint": "Set expires_at to now + idle_timeout (max_age is already enforced by _is_expired).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_using_a_session_extends_its_idle_expiry"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "webapp/accounts.py",
+      "lines": [101, 107],
+      "anchor": "return user",
+      "symbol": "AccountService.login",
+      "description": "The class says a successful login starts the failure count again from zero, but the success path never resets failed_logins, so failures spread over many sessions add up and lock the account.",
+      "fix_hint": "Set user.failed_logins = 0 when the password verifies.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_successful_login_resets_the_failure_count"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "predictable-token",
+      "file": "webapp/sessions.py",
+      "lines": [47, 48],
+      "anchor": "random.choices(TOKEN_ALPHABET, k=TOKEN_LENGTH)",
+      "symbol": "SessionStore._new_token",
+      "description": "Session tokens are bearer credentials but are drawn from the random module's Mersenne Twister, whose output can be predicted from earlier outputs or a known seed.",
+      "fix_hint": "Use the secrets module (secrets.token_urlsafe, secrets.choice) or random.SystemRandom.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_session_tokens_do_not_follow_the_random_module_state"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "webapp/app.py",
+      "lines": [152, 152],
+      "anchor": "actor.role is not Role.ADMIN",
+      "symbol": "WebApp.delete_user",
+      "modules": ["webapp.app", "webapp.permissions"],
+      "other_locations": [{"file": "webapp/permissions.py", "lines": [45, 47]}],
+      "description": "The rule 'a user may manage their own account, others need user:manage' lives in permissions.can_manage_user, but delete_user re-implements it inline in the HTTP layer and checks the ADMIN role instead of the permission, so the two copies will drift when roles change.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "webapp/app.py",
+      "lines": [76, 88],
+      "anchor": "if self.accounts.get(session.username) is not None:",
+      "symbol": "WebApp.current_session",
+      "description": "Five nested ifs where early returns would keep the function flat and readable.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "magic-numbers",
+      "file": "webapp/accounts.py",
+      "lines": [80, 80],
+      "anchor": "if len(password) < 10:",
+      "symbol": "AccountService.register",
+      "other_locations": [{"file": "webapp/accounts.py", "lines": [114, 114]}],
+      "description": "The minimum password length 10 is a bare literal repeated in register and change_password (and in their messages) instead of one named constant.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "webapp/sessions.py",
+      "lines": [88, 91],
+      "anchor": "for token, session in list(self._sessions.items()):",
+      "why_it_is_fine": "It deletes from the dict while looping over a list copy of its items, which is safe."
+    },
+    {
+      "id": "D2",
+      "file": "webapp/app.py",
+      "lines": [72, 74],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except logs the failure with the request line and re-raises it; nothing is swallowed."
+    }
+  ]
+}

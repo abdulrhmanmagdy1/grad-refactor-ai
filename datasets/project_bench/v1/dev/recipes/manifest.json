@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "name": "recipes",
+  "description": "A recipe box: recipes read from a folder of text files, scaling to a number of servings, unit conversion and a merged shopping list.",
+  "author": "harness developer (dev split)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "swapped-arguments",
+      "file": "recipes/scaling.py",
+      "lines": [31, 31],
+      "anchor": "scaled_amount(item.amount, wanted, recipe.servings)",
+      "symbol": "scale",
+      "description": "scaled_amount takes (amount, servings, wanted) but scale passes wanted and the recipe's servings the other way round, so doubling a recipe halves every amount.",
+      "fix_hint": "Call scaled_amount(item.amount, recipe.servings, wanted).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_scaling_follows_the_number_of_servings"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "case-sensitive-key",
+      "file": "recipes/shopping.py",
+      "lines": [41, 41],
+      "anchor": "key = (item.name.strip(), dimension)",
+      "symbol": "shopping_list",
+      "description": "The docstring says ingredient names match ignoring case, but the merge key only strips spaces, so \"Flour\" and \"flour\" end up on two lines.",
+      "fix_hint": "Lower-case the name in the merge key as well as stripping it.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_the_same_ingredient_is_merged_ignoring_case"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "missing-check",
+      "file": "recipes/units.py",
+      "lines": [61, 63],
+      "anchor": "_, target_size = UNITS[normalize_unit(target)]",
+      "symbol": "convert",
+      "description": "The docstring says converting between mass, volume and pieces raises ValueError, but the dimensions are thrown away and never compared, so 100 g silently becomes 100 ml.",
+      "fix_hint": "Keep both dimensions and raise ValueError when they differ.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_mass_volume_and_pieces_do_not_convert"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "code-injection",
+      "file": "recipes/loader.py",
+      "lines": [24, 24],
+      "anchor": "eval(part)",
+      "symbol": "parse_quantity",
+      "description": "Quantities from recipe files are run with eval, so a shared .recipe file can execute any Python code when the folder is loaded.",
+      "fix_hint": "Parse numbers and a/b fractions explicitly (float, Fraction) and raise ValueError for anything else.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_quantities_are_not_run_as_python"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "global-state-coupling",
+      "file": "recipes/shopping.py",
+      "lines": [7, 7],
+      "anchor": "from recipes.loader import LOADED",
+      "modules": ["recipes.shopping", "recipes.loader"],
+      "other_locations": [
+        {"file": "recipes/loader.py", "lines": [16, 16]},
+        {"file": "recipes/loader.py", "lines": [87, 88]}
+      ],
+      "description": "The shopping list reads recipes from a module-level dict that the file loader fills, so the domain logic depends on the I/O module and on hidden global state: it only works after load_folder ran, and callers cannot pass their own recipes.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "recipes/units.py",
+      "lines": [76, 84],
+      "anchor": "def _fraction_text(amount: float) -> str:",
+      "symbol": "_fraction_text",
+      "description": "The private helper _fraction_text is never called anywhere; it (and the Fraction import it needs) is dead code.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "long-if-chain",
+      "file": "recipes/units.py",
+      "lines": [22, 45],
+      "anchor": "elif word in (\"kg\", \"kilo\", \"kilos\", \"kilogram\", \"kilograms\"):",
+      "symbol": "normalize_unit",
+      "description": "A nine-branch if/elif ladder maps spellings to units; the aliases are data and belong in a lookup table next to UNITS.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "recipes/loader.py",
+      "lines": [81, 85],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs which file failed and re-raises the original error, so nothing is swallowed."
+    },
+    {
+      "id": "D2",
+      "file": "recipes/scaling.py",
+      "lines": [16, 18],
+      "anchor": "return math.ceil(amount - 1e-9)",
+      "why_it_is_fine": "The tiny tolerance stops float noise from scaling (3.0000000000000004 eggs) from rounding up to an extra piece; real fractions such as 2.1 still round up."
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "pipeline",
+  "description": "A CSV data pipeline: import, row validation and cleaning, per-group aggregation, an on-disk JSON cache and export to SQLite or CSV.",
+  "author": "test-split author (agent, written without reading the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "pipeline/validation.py",
+      "lines": [58, 58],
+      "anchor": "errors: list[RowError] = [],",
+      "symbol": "validate_rows",
+      "description": "The docstring says problems go to a new list when none is passed, but the default list is created once and shared, so every call without a list (every pipeline run) keeps the errors of all earlier calls.",
+      "fix_hint": "Default to None and create a new list inside the function.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_validate_rows_starts_a_new_error_list_on_each_call"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "pipeline/cleaning.py",
+      "lines": [29, 29],
+      "anchor": "value = round(number, 2)",
+      "symbol": "parse_amount",
+      "description": "Amounts are documented to round half cents away from zero (\"0.125\" gives 0.13), but round() rounds halves to even, so 0.125 becomes 0.12 and 0.625 becomes 0.62.",
+      "fix_hint": "Quantize a Decimal of the amount to 0.01 with ROUND_HALF_UP.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_amounts_round_half_cents_away_from_zero"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "case-sensitive-compare",
+      "file": "pipeline/validation.py",
+      "lines": [28, 28],
+      "anchor": "value.strip() in MISSING_MARKERS",
+      "symbol": "is_missing",
+      "description": "Placeholders such as NA, N/A and NULL are supposed to count as missing whatever their case, but the value is compared with the lower-case marker set without lower-casing it, so \"NA\" or \"NULL\" pass as real values.",
+      "fix_hint": "Compare value.strip().lower() with the markers.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_placeholders_are_missing_whatever_their_case"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "pipeline/cache.py",
+      "lines": [40, 41],
+      "anchor": "return self.root / f\"{key}.json\"",
+      "symbol": "DiskCache._path",
+      "description": "Cache keys start with the job's dataset name, which comes from whoever submitted the job, and are joined into a file path unchecked; a name such as ../../x makes put write (and get read) files outside the cache folder.",
+      "fix_hint": "Resolve the path and refuse keys whose file would not sit directly in the cache folder (or map keys to safe file names).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_dataset_name_cannot_write_outside_the_cache_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "pipeline/cache.py",
+      "lines": [11, 11],
+      "anchor": "from pipeline import runner",
+      "modules": ["pipeline.cache", "pipeline.runner"],
+      "other_locations": [{"file": "pipeline/runner.py", "lines": [11, 11]}],
+      "description": "The low-level cache imports the orchestrating runner just to read PIPELINE_VERSION while runner imports cache; the cycle only works because pipeline/__init__ happens to import runner first.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "pipeline/importer.py",
+      "lines": [40, 54],
+      "anchor": "for record in reader:",
+      "symbol": "read_csv_text",
+      "other_locations": [{"file": "pipeline/importer.py", "lines": [17, 37]}],
+      "description": "read_csv_text repeats the whole parsing loop of read_csv instead of both sharing one helper that takes a reader.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "pipeline/cleaning.py",
+      "lines": [33, 37],
+      "anchor": "def _strip_currency(text: str) -> str:",
+      "symbol": "_strip_currency",
+      "description": "_strip_currency is never called; parse_amount strips symbols with its own translate table.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "pipeline/export.py",
+      "lines": [14, 17],
+      "anchor": "INSERT INTO group_summary",
+      "why_it_is_fine": "Only the constant column names and the right number of ? placeholders are formatted into the statement; every value, the dataset name included, is bound as a parameter."
+    },
+    {
+      "id": "D2",
+      "file": "pipeline/cache.py",
+      "lines": [16, 16],
+      "anchor": "hashlib.md5(usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is used only as a change-detection checksum of a local file, not for anything security related, and is marked usedforsecurity=False."
+    }
+  ]
+}

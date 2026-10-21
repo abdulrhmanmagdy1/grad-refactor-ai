@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "parking",
+  "description": "A multi-level car park: spaces, tickets, hourly rates with a daily cap, monthly permits, an SQLite ticket log and revenue reports.",
+  "author": "harness developer (dev split)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "parking/rates.py",
+      "lines": [13, 13],
+      "anchor": "return round(minutes / 60)",
+      "symbol": "billable_hours",
+      "description": "Every started hour should be billed in full, but the minutes are rounded to the nearest hour, so 61 minutes bill as one hour and 2 h 10 min as two.",
+      "fix_hint": "Round up: any minutes past a whole hour start another billable hour.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_a_started_hour_is_billed_in_full"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "parking/rates.py",
+      "lines": [38, 38],
+      "anchor": "return to_money(min(hours * self.hourly, self.daily_cap))",
+      "symbol": "RateCard.charge",
+      "description": "The daily cap should apply to each 24 hours of a stay, but it caps the whole stay, so a three-day stay costs the same as one day.",
+      "fix_hint": "Charge daily_cap for each full 24 hours and the capped hourly price for the remaining hours.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_every_day_of_a_long_stay_has_its_own_cap"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-sort-order",
+      "file": "parking/report.py",
+      "lines": [39, 39],
+      "anchor": "return sorted(totals.items(), key=lambda item: item[1])[:count]",
+      "symbol": "busiest_days",
+      "description": "The docstring promises the days with the most revenue, highest first, but the sort is ascending, so it returns the quietest days.",
+      "fix_hint": "Sort by revenue in descending order (reverse=True) before taking the first count.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_busiest_days_come_highest_first"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "parking/storage.py",
+      "lines": [40, 41],
+      "anchor": "WHERE plate = '{plate}'",
+      "symbol": "TicketLog.for_plate",
+      "description": "The plate is pasted into the SQL text, so a plate such as x' OR '1'='1 returns every ticket in the log (and a quote in a plate breaks the query).",
+      "fix_hint": "Use a ? placeholder and pass the plate as a query parameter.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_plate_lookup_cannot_be_turned_into_other_sql"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "layer-violation",
+      "file": "parking/rates.py",
+      "lines": [8, 8],
+      "anchor": "from parking.report import to_money",
+      "modules": ["parking.rates", "parking.report"],
+      "other_locations": [{"file": "parking/report.py", "lines": [15, 17]}],
+      "description": "The pricing module, which the desk and the reports build on, imports the revenue report module (and through it the SQLite storage and the permit registry) just to round money; the rounding helper belongs in a low-level module.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "magic-numbers",
+      "file": "parking/report.py",
+      "lines": [22, 22],
+      "anchor": "net = gross / 1.2",
+      "symbol": "vat_split",
+      "other_locations": [{"file": "parking/desk.py", "lines": [67, 67]}],
+      "description": "The 20% VAT rate is written as a bare 1.2 in two functions in two modules instead of one named constant.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "parking/report.py",
+      "lines": [42, 92],
+      "anchor": "def revenue_report(tickets: list[Ticket], permits: list[Permit], year: int, month: int) -> str:",
+      "symbol": "revenue_report",
+      "description": "One 50-line function filters the month, totals per day and per level, computes stay statistics, sums permits and formats every section; each section could be its own function.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "parking/storage.py",
+      "lines": [45, 47],
+      "anchor": "if order_by not in SORTABLE:",
+      "why_it_is_fine": "The column name is formatted into the SQL, but only after it is checked against a fixed list of column names; values that are not on the list are refused."
+    },
+    {
+      "id": "D2",
+      "file": "parking/permits.py",
+      "lines": [13, 19],
+      "anchor": "index = start.month - 1 + months",
+      "why_it_is_fine": "The -1 and +1 convert between 1-based months and a 0-based month index, so year rollover is right, and the day is clamped to the length of the target month."
+    }
+  ]
+}

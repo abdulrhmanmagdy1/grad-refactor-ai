@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "name": "gradebook",
+  "description": "Students, courses, weighted grades, GPA and transcripts for a school.",
+  "author": "test-split author (Claude Opus 5.5 subagent), written without reading the reviewer",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "gradebook/models.py",
+      "lines": [34, 34],
+      "anchor": "assessments: list[Assessment] = [],",
+      "symbol": "Course.__init__",
+      "description": "The assessments parameter defaults to one shared list. Every course built without assessments gets that same list, so add_assessment on one course adds the assessment to all of them.",
+      "fix_hint": "Default to None and create a new list per course (or copy the argument).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_courses_do_not_share_their_assessments"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "gradebook/grading.py",
+      "lines": [37, 37],
+      "anchor": "if percentage > lowest:",
+      "symbol": "letter_grade",
+      "description": "The docstring says 90 and above is an A (and each band starts at its lower bound), but the strict > gives exactly 90 a B, 80 a C, 70 a D and 60 an F.",
+      "fix_hint": "Compare with >= so each band includes its lower bound.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_band_boundaries_get_the_higher_letter"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "gradebook/gpa.py",
+      "lines": [22, 23],
+      "anchor": "GRADE_POINTS.get(result.letter, 0.0)",
+      "symbol": "grade_point_average",
+      "description": "Withdrawals (W) and pass/fail passes (P) should be left out of the GPA, but .get(letter, 0.0) scores them as zero points and their credits still count in the denominator, so a W drags the GPA down.",
+      "fix_hint": "Skip results whose letter has no grade points before adding points and credits.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_withdrawals_and_passes_are_left_out_of_the_gpa"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "missing-permission-check",
+      "file": "gradebook/service.py",
+      "lines": [38, 46],
+      "anchor": "course = self._course(course_code)",
+      "symbol": "GradeBook.record_score",
+      "description": "Only a course's instructor may record grades (class docstring; publish and record_quizzes check it), but record_score looks the course up with _course instead of _authorised_course, so any user can change any student's scores.",
+      "fix_hint": "Use self._authorised_course(user, course_code), which raises PermissionError for anyone but the instructor.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_only_the_instructor_can_record_scores"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "gradebook/gpa.py",
+      "lines": [7, 7],
+      "anchor": "from gradebook import transcript",
+      "modules": ["gradebook.gpa", "gradebook.transcript"],
+      "other_locations": [{"file": "gradebook/transcript.py", "lines": [7, 7]}],
+      "description": "gpa imports transcript to reuse by_term, and transcript imports gpa to print GPAs. The GPA calculation depends on the presentation module; by_term belongs in a lower module.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "gradebook/transcript.py",
+      "lines": [26, 77],
+      "anchor": "def render_transcript(",
+      "symbol": "render_transcript",
+      "description": "render_transcript is about 50 lines that build the header, every term block with its own credit counting (repeating credits_earned) and the summary in one function.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "magic-numbers",
+      "file": "gradebook/gpa.py",
+      "lines": [39, 41],
+      "anchor": "if cumulative >= 3.5:",
+      "symbol": "academic_standing",
+      "other_locations": [
+        {"file": "gradebook/gpa.py", "lines": [48, 48]},
+        {"file": "gradebook/gpa.py", "lines": [53, 53]}
+      ],
+      "description": "The dean's list (3.5) and probation (2.0) thresholds are bare literals repeated in academic_standing, deans_list and probation_list instead of named constants.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "gradebook/importer.py",
+      "lines": [32, 35],
+      "anchor": "hashlib.md5(text.encode(\"utf-8\"), usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is only a fingerprint to spot a sheet uploaded twice, marked usedforsecurity=False; nothing secret or adversarial depends on it."
+    },
+    {
+      "id": "D2",
+      "file": "gradebook/grading.py",
+      "lines": [47, 50],
+      "anchor": "kept = sorted(scores)[1:]",
+      "why_it_is_fine": "Sorting ascending and slicing off index 0 drops exactly the single lowest quiz, as documented; the one-quiz and empty cases are handled before."
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "name": "clinic",
+  "description": "Patients in SQLite, doctors' working hours, appointment booking and cancellation, insurance coverage and invoices for a small clinic.",
+  "author": "test-split author (Claude Opus 5.5 agent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "clinic/scheduling.py",
+      "lines": [87, 88],
+      "anchor": "if appointment.status is AppointmentStatus.COMPLETED:",
+      "symbol": "Schedule.cancel",
+      "description": "The docstring says only a booked appointment can be cancelled, but only COMPLETED is refused: an already cancelled or no-show appointment can be cancelled again, and a second late cancellation charges the fee twice.",
+      "fix_hint": "Raise ValueError whenever the status is not AppointmentStatus.BOOKED.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_a_cancelled_appointment_cannot_be_cancelled_again",
+        "test_B1_a_missed_appointment_cannot_be_cancelled"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "timedelta-seconds",
+      "file": "clinic/scheduling.py",
+      "lines": [18, 19],
+      "anchor": "(start - now).seconds",
+      "symbol": "is_late_cancellation",
+      "description": "timedelta.seconds is only the seconds part and ignores whole days, so a cancellation three days and two hours ahead counts as two hours of notice and is charged as late.",
+      "fix_hint": "Compare the whole timedelta: start - now < timedelta(hours=LATE_CANCELLATION_NOTICE_HOURS), or use total_seconds().",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_cancelling_more_than_a_day_ahead_is_not_late"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "swapped-values",
+      "file": "clinic/billing.py",
+      "lines": [43, 43],
+      "anchor": "insurer_share, patient_share = coverage_split(",
+      "symbol": "build_invoice",
+      "description": "coverage_split returns (patient_share, insurer_share) but the result is unpacked the other way round, so with 80% coverage the patient is billed 80% and the insurer 20%.",
+      "fix_hint": "Unpack as patient_share, insurer_share = coverage_split(...).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_the_insurer_pays_the_covered_part"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "clinic/storage.py",
+      "lines": [96, 100],
+      "anchor": "LIKE '%{name_part}%'",
+      "symbol": "PatientStore.search_patients",
+      "description": "The search text typed at the reception is formatted into the SQL string, so a quote in it changes the query (for example ' OR '1'='1 returns every patient).",
+      "fix_hint": "Use a bound parameter: WHERE name LIKE ? with the value f\"%{name_part}%\".",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_search_does_not_run_sql_from_the_search_text"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "clinic/scheduling.py",
+      "lines": [58, 64],
+      "anchor": "if start < opens or end > closes:",
+      "symbol": "Schedule.book",
+      "modules": ["clinic.scheduling", "clinic.availability"],
+      "other_locations": [{"file": "clinic/availability.py", "lines": [13, 21]}],
+      "description": "The working-hours rule lives in availability.within_working_hours, but Schedule.book re-implements it inline instead of calling it, so the two copies can drift apart.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "clinic/billing.py",
+      "lines": [72, 132],
+      "anchor": "def render_invoice(",
+      "symbol": "render_invoice",
+      "description": "render_invoice is a 60-line function that builds every section of the printout (header, patient, visit, amounts, payment note) and repeats the label/amount alignment three times.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "clinic/billing.py",
+      "lines": [67, 69],
+      "anchor": "def _money(amount: Decimal) -> str:",
+      "symbol": "_money",
+      "description": "The private helper _money is never called; render_invoice formats amounts inline instead.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "clinic/storage.py",
+      "lines": [86, 91],
+      "anchor": "f\"WHERE id IN ({placeholders}) ORDER BY id\"",
+      "why_it_is_fine": "The f-string only inserts one '?' per id; the ids themselves are passed as bound parameters."
+    },
+    {
+      "id": "D2",
+      "file": "clinic/storage.py",
+      "lines": [47, 50],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except logs, rolls the transaction back and re-raises, so nothing is swallowed."
+    }
+  ]
+}
