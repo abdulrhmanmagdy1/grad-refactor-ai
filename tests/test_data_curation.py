@@ -276,6 +276,17 @@ def test_near_duplicate_rule_and_external_extraction(tmp_path):
     assert all("__pycache__" not in item["path"] for item in inventory)
 
 
+def test_external_inventory_hash_ignores_line_endings(tmp_path):
+    text = "def helper():\n    return 1\n"
+    (tmp_path / "lf").mkdir()
+    (tmp_path / "crlf").mkdir()
+    (tmp_path / "lf" / "fixture.py").write_bytes(text.encode("utf-8"))
+    (tmp_path / "crlf" / "fixture.py").write_bytes(text.replace("\n", "\r\n").encode("utf-8"))
+    _, lf = leakage.external_code([tmp_path / "lf"], tmp_path / "lf")
+    _, crlf = leakage.external_code([tmp_path / "crlf"], tmp_path / "crlf")
+    assert lf == crlf
+
+
 @pytest.fixture(scope="module")
 def small_run(tmp_path_factory):
     external = tmp_path_factory.mktemp("external")

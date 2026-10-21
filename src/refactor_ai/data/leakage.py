@@ -304,7 +304,9 @@ def external_code(paths: list[Path], root: Path) -> tuple[list[tuple[str, str]],
     for path in sorted(set(files)):
         relative = path.relative_to(root).as_posix() if path.is_relative_to(root) else path.name
         data = path.read_bytes()
-        inventory.append({"path": relative, "sha256": hashlib.sha256(data).hexdigest()})
+        # Hash with LF line endings so a Windows checkout (CRLF) gives the same value.
+        normalized = data.replace(b"\r\n", b"\n")
+        inventory.append({"path": relative, "sha256": hashlib.sha256(normalized).hexdigest()})
         text = data.decode("utf-8", errors="replace").replace("\r\n", "\n")
         if path.suffix == ".py":
             _codes_from_python(text, relative, found)

@@ -1,10 +1,9 @@
 {
   "command": "python -m uv run python scripts/curate_dataset.py",
   "seed": 20261020,
-  "git_head": "ee87a11ad2ede913c65c48664c8f131a5fe8aeb3",
+  "git_head": "90462d36fa677ef39f3ed75e0b0b3bd621272a4d",
   "uncommitted_curation_sources": [
-    "src/refactor_ai/task_format.py",
-    "src/refactor_ai/tasks/guard_clauses.py"
+    "src/refactor_ai/data/leakage.py"
   ],
   "python": "3.11.9",
   "implementation": "cpython",
@@ -12,10 +11,10 @@
   "test_split_frozen": true,
   "rendering_refrozen_in_this_run": false,
   "outputs_sha256": {
-    "datasets/guard_clauses/v1/manifest.json": "885bab9a39008440d7a823c110696d0fbb9530841d3ec739932a7f96212bb7c3",
+    "datasets/guard_clauses/v1/manifest.json": "0197d59933af8253dd9b7c428f5069c1b9ad529587591c848bb23fdc42547818",
     "datasets/guard_clauses/v1/metadata.jsonl": "87c57b634f3cd25b566cec1c43346065f71d6b4901d0ff3511ea9bb6fb0f38a9",
     "datasets/guard_clauses/v1/records.jsonl": "299b4f7fca170d2a9260319f6c1f81e832d54114c8bdd51959d6aeb8b23ff2e3",
-    "experiments/data/curation-log.json": "ffbd87385f8356f3f6dce7da8369082447da039ea509645349f46a554cd64eec",
+    "experiments/data/curation-log.json": "caa466acb4338f9ec8b26e8a42aabef86f9b0be799c02556d298a7f595d86f90",
     "experiments/data/test-split-freeze.json": "7195d4016c2ed56fa6233b64a76376a37c859bdc29ae99b5ee4a46c46a682e6b"
   },
   "note": "Run record. Every output listed above is reproduced byte for byte by rerunning the command with the same inputs; this run record is not."
