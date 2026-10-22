@@ -297,6 +297,48 @@ def test_untested_function_and_review_doubt_make_a_fix_uncertain(tmp_path):
     assert "tests_not_available" in reasons and "review_uncertain" in reasons
 
 
+def test_a_fix_only_the_agents_ask_for_needs_a_test_to_be_ready(tmp_path):
+    stats = (
+        'def ratio(part, whole):\n    """part as a share of whole."""\n    return part / whole\n'
+    )
+    tests = "from app.stats import ratio\n\n\ndef test_ratio():\n    assert ratio(1, 2) == 0.5\n"
+    claim = {
+        "line": 3,
+        "code": "return part / whole",
+        "problem": "Division by zero when whole is 0.",
+    }
+    guarded = (
+        "```python\ndef ratio(part, whole):\n    if whole == 0:\n        return 0.0\n"
+        "    return part / whole\n```\nExplanation: guard the empty whole."
+    )
+
+    def review(extra_test: str):
+        files = {
+            "app/__init__.py": "",
+            "app/stats.py": stats,
+            "tests/test_stats.py": tests + extra_test,
+        }
+        workspace = extract_project(project_zip(files), tmp_path / f"ws{len(extra_test)}")
+        provider = ScriptedProvider({"Division by zero": guarded})
+        provider.answers = {  # matched before the generic "Find real bugs" answer
+            "Find real bugs in the Python function `ratio`": json.dumps({"findings": [claim]}),
+            **provider.answers,
+        }
+        settings = ReviewSettings(run_tests=True)
+        runner = ProjectTestRunner()
+        outcome = ProjectReviewer(workspace, provider, settings, test_runner=runner).run()
+        return next(fix for fix in outcome.fixes if fix.symbol == "ratio")
+
+    fix = review("")
+    assert (fix.syntax.status, fix.static_recheck.status) == ("pass", "pass")
+    assert (fix.tests.status, fix.review.status) == ("pass", "accept")
+    # Every check passed, but only the model says the change is needed.
+    assert fix.disposition is Disposition.UNCERTAIN
+    assert [reason.split(":")[0] for reason in fix.disposition_reasons] == ["model_only"]
+    exposing = "\n\ndef test_ratio_of_nothing():\n    assert ratio(1, 0) == 0.0\n"
+    assert review(exposing).disposition is Disposition.PROPOSAL_READY
+
+
 def test_a_fix_that_closes_an_import_cycle_is_rejected(tmp_path):
     files = {
         "README.md": "Averages are taken over the values given.",

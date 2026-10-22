@@ -768,14 +768,19 @@ class ProjectReviewer:
             fix.static_recheck.detail = (fix.static_recheck.detail or "") + (
                 " Not fixed: " + "; ".join(notes)
             )[:400]
-        fix.tests = self._tests(function.file, state.source, baseline, function.name, self.index)
+        fix.tests, newly_passing = self._tests(
+            function.file, state.source, baseline, function.name, self.index
+        )
         if produced_by == "agent:fixer":
             fix.review, fix.review_reasons = self._review(fixed, fix.diff)
         else:
             fix.review = FixCheck(
                 status="not_run", detail="Deterministic rewrite; no model review."
             )
-        return self._dispose(fix)
+        # A fix is ready only with machine evidence that it was needed: every problem it fixes
+        # is a static finding that is now gone, or a test fails before it and passes after.
+        evidence = newly_passing > 0 or all(not f.source.startswith("agent:") for f in fixed)
+        return self._dispose(fix, evidence)
 
     def _fixer_steps(self, function: FunctionInfo, actionable: list[Finding], state: _Current):
         """Yield ([finding], proposed function or None, explanation) for each problem; the
@@ -814,23 +819,26 @@ class ProjectReviewer:
 
     def _tests(
         self, file: str, patched: str, baseline: TestReport | None, name: str, index: ProjectIndex
-    ) -> FixCheck:
-        """The project's tests before and after the fix. Passing tests count as evidence only
-        when some test file refers to the function by name; otherwise they only show that
-        nothing else broke."""
+    ) -> tuple[FixCheck, int]:
+        """The project's tests before and after the fix, and how many tests fail before it and
+        pass after it. Passing tests count as evidence only when some test file refers to the
+        function by name; otherwise they only show that nothing else broke."""
         if not self.settings.run_tests:
-            return FixCheck(status="not_run", detail="Running the project's tests is turned off.")
+            return FixCheck(
+                status="not_run", detail="Running the project's tests is turned off."
+            ), 0
         if baseline is None:
             detail = (self.outcome.baseline_tests or {}).get("detail") or "No usable test run."
-            return FixCheck(status="not_available", detail=detail)
+            return FixCheck(status="not_available", detail=detail), 0
         after = self.test_runner.run(self.workspace.root, {file: patched})
         status, detail = compare(baseline, after)
+        newly = len(after.passed - baseline.passed) if after.status == "ran" else 0
         if status == "pass" and not self._tested(name, index):
             return FixCheck(
                 status="not_available",
                 detail=f"{detail} No test refers to {name}(), so the tests do not check this fix.",
-            )
-        return FixCheck(status=status, detail=detail)
+            ), newly
+        return FixCheck(status=status, detail=detail), newly
 
     def _tested(self, name: str, index: ProjectIndex) -> bool:
         pattern = re.compile(r"\b" + re.escape(name) + r"\b")
@@ -858,7 +866,9 @@ class ProjectReviewer:
             return FixCheck(status="error", detail="The review could not be read."), []
         return FixCheck(status=parsed.extra["verdict"]), parsed.extra["reasons"]
 
-    def _dispose(self, fix: Fix) -> Fix:
+    def _dispose(self, fix: Fix, evidence: bool = True) -> Fix:
+        """The fix's disposition from its checks. `evidence` is False when the fixed problems
+        were found by the agents only and no test fails before the fix and passes after it."""
         reasons = []
         deterministic = fix.produced_by.startswith("deterministic")
         if fix.syntax.status == "fail":
@@ -878,6 +888,12 @@ class ProjectReviewer:
             reasons.append(f"static_{fix.static_recheck.status}: {fix.static_recheck.detail}")
         if not deterministic and fix.review.status != "accept":
             reasons.append(f"review_{fix.review.status}: The fix reviewer did not accept it.")
+        if not evidence:
+            reasons.append(
+                "model_only: Only the AI agents say this problem exists, and no test fails "
+                "before the fix and passes after it, so nothing checks that the change is "
+                "needed. Read the diff before accepting it."
+            )
         if reasons:
             fix.disposition, fix.disposition_reasons = Disposition.UNCERTAIN, reasons
             return fix
