@@ -1,0 +1,66 @@
+{
+  "protocol": "project-bench-v1",
+  "split": "test",
+  "projects": {
+    "clinic": "3aab704551e98ff3c68ea3d94c8b7ea9536b0c197d8c4895e62e56514d6d6c2d",
+    "gradebook": "936a479b67aea3b2a656d540096fc5a0442659494f7fcb2359183fedbcfece80",
+    "ledger": "f27b86633c0b115d9dd5e32e62917bf394b9d37b33e3bdf764829c6aa9108b1e",
+    "pipeline": "0a1ea8e7944f426ba2ef1d7a40abf02402f5b2ff7cb76cd4e93bb34166a700aa",
+    "scheduler": "5858e6fdf5f40e2ae188efad7aece90ea0ba765eb2177f97dc0e7365aceb7b26",
+    "textstats": "1ac406eca81436a968497786e7d1a5d6493e964f203a717acbd83b0a41cbb246",
+    "warehouse": "4abc66e35124683413d375763e4708d10cbaf41a7b502f00d3de590c9ca16bbb",
+    "webapp": "af06328b50472ae9e4a352be28771743e99db67f0f053dc2fc626fb71a894772"
+  },
+  "code": {
+    "scripts/project_benchmark.py": "19c0cd7f8c750eeb7e1b2758cf2055ddec5b223225ddcdc350e7169eceb73bcc",
+    "src/refactor_ai/project/__init__.py": "9d5be7daa150138ed5905bc3356684a1e7f258fc6eaa9a56af700cebd36e8444",
+    "src/refactor_ai/project/agents.py": "8db490b5b3a41cd1b9ba9240e6f3f7abdaf1431d39a240dec5faea7c9372797e",
+    "src/refactor_ai/project/benchmark.py": "bae9c0fd48745bba1019d0773e0ec7238acbf505bc23895a6fe1a4b84f80f6cc",
+    "src/refactor_ai/project/fixes.py": "cfd8c0a80db0c95c1e4fdd8490573a70b4767fa9e53a7086ebe855bded839ada",
+    "src/refactor_ai/project/index.py": "9a485b88e490e92bf8afd058046aa78cd7494819b0b01333f644e608236a631c",
+    "src/refactor_ai/project/models.py": "55e4aef1fc4c5494ecf8cf072830b021ddb84374ca2afb48ef836bcc80957938",
+    "src/refactor_ai/project/review.py": "325c9572b43f8152aab05a7ac05f84a2d67b375a4401b4fab72525f013a98c00",
+    "src/refactor_ai/project/rules.py": "425e046fe09e1d454282d7c29640c9c65c6ed0dc3c6218ca18542c28a07ab922",
+    "src/refactor_ai/project/runtime.py": "14cc50c94ae73d0432ad9c200aa1a458787d24bc88cf37c1d9286260ab4191ee",
+    "src/refactor_ai/project/service.py": "7a93a8f075c7e9f2fa8724087e3da77847ab9ccec2926b4b98366ec025794f66",
+    "src/refactor_ai/project/static.py": "7c8216f96a8d04304d0282c02d78c239a5550650cebd1336858fa748934a583b",
+    "src/refactor_ai/project/testrun.py": "e9972ed7fbd014ac5a4d472c4c16b364e76ee60cc128151502090e85b6cbdd37",
+    "src/refactor_ai/project/workspace.py": "08ef139a256fdf6ceaf6800bc45f88514df752c69cbeb65447defe5bff7615e8",
+    "src/refactor_ai/providers/gguf.py": "212812359e36fd5491f3e3d433ecc5e75f5f25389403d6a323557e6a6145a8d2",
+    "src/refactor_ai/providers/gguf_worker.py": "1c07e17b3f20f7cbf797674280152112f68ff9d73ea6e6649724b4a9d37e3258"
+  },
+  "settings": {
+    "max_calls": 80,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
+    "model_revision": "f74adce6aa16316c625447af059dbebe4983757c",
+    "gguf_file": "qwen2.5-coder-3b-instruct-q4_k_m.gguf",
+    "gguf_sha256": "724fb256bec1ff062b2f65e4569e871ad2e95ab2a3989723d1769c54294730b7",
+    "context_tokens": 8192
+  },
+  "matching": {
+    "line_tolerance": 2
+  },
+  "frozen_at": "2026-10-24T18:11:45+00:00",
+  "git": {
+    "commit": "6f0edfe2bd332f8a0e51318e14723ec711fda777",
+    "dirty": false
+  }
+}
