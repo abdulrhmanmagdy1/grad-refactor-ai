@@ -162,6 +162,26 @@ outside the seeded places. A project enters the benchmark only when it reports `
 - `test`: written by separate authors under the rules above, frozen before any review of
   it runs. Results on it are the reported results.
 
+What the developer saw before the freeze: the test authors' hand-back reports listed each
+project's issue ids and kinds (for example "B2 off-by-one in letter_grade"), and the
+validator's notes said which issues the static checks find. No review ran on the test
+split and no test-split code was read. The changes made after those reports arrived were
+each prompted by a dev run and are general: prompt version project-v3 (judges reason
+first, finders told that names not shown exist elsewhere), the fix parser that keeps only
+the function, and the rule that a fix is ready only with machine evidence. The dev runs
+behind them, with the judge's labels:
+
+| Dev run (3 projects, 22 issues) | Located | Judge confirmed | Findings off every seeded place | Ready fixes that break a test |
+|---|---|---|---|---|
+| static | 7 | 7 | 0 | 0 |
+| full, project-v2 | 9 | 6 | 0 | 0 (no ready fixes) |
+| full, project-v3 with the evidence rule | 13 | 7 | 22 | 0 (no ready fixes) |
+
+Every issue the judge confirmed on the dev split was found by a static check; the agents'
+extra locations were findings about something else on the same lines. The full v3 run
+also lost 12 of 198 model calls to the laptop running out of memory while reloading the
+model.
+
 ## Freeze
 
 `scripts/project_benchmark.py freeze` writes `experiments/evaluation/project-bench/
