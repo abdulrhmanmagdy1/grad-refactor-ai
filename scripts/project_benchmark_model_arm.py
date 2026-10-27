@@ -13,6 +13,7 @@ docs/evaluation/project-benchmark.md.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -26,6 +27,30 @@ import project_benchmark as frozen  # noqa: E402
 from refactor_ai.project import benchmark  # noqa: E402
 
 MODEL_PROBLEM = "model differs from the freeze record"
+
+
+def _freeze_machine_sha256(self) -> str:
+    """BenchProject.sha256 with the file order of the machine the freeze was written on.
+
+    The frozen sha256 sorts Path objects, and Windows paths compare case-insensitively
+    while POSIX paths do not ("README.md" sorts after "hidden/" on Windows and before it
+    on Linux), so the same files hash differently on Kaggle. This reproduces the Windows
+    order on any platform; the files and the per-file hashes are the same.
+    """
+    digest = hashlib.sha256()
+    paths = [p for p in self.root.rglob("*") if p.is_file()]
+    for path in sorted(
+        paths, key=lambda p: [part.lower() for part in p.relative_to(self.root).parts]
+    ):
+        relative = path.relative_to(self.root)
+        if benchmark.SKIPPED_PARTS & set(relative.parts):
+            continue
+        digest.update(relative.as_posix().encode() + b"\0")
+        digest.update(hashlib.sha256(benchmark._normalized(path.read_bytes())).digest())
+    return digest.hexdigest()
+
+
+benchmark.BenchProject.sha256 = _freeze_machine_sha256
 
 
 def main(argv: list[str] | None = None) -> int:
