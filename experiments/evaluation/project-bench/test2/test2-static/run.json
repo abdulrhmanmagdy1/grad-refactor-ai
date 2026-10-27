@@ -1,0 +1,50 @@
+{
+  "protocol": "project-bench-v2",
+  "split": "test2",
+  "arm": "static",
+  "started_at": "2026-10-27T11:42:06+00:00",
+  "projects": {
+    "budget": "00abd543bb15c562d725183e71d73c4e9312b9f465fe3bb9355bc7e4e1b93980",
+    "enrollment": "8f0aa9f3e77dd8a13caa6e8c2d5c4b172c45f8f1997fcbb8711962d6146713b7",
+    "fleet": "792d1f65344b3540d39581007ba47ee72c728487a3f662c0aeb9c164acf76302",
+    "forum": "fb4422d5d1fd2a3a0ab04cf9e72598e8583f0bbfae90fd1ce5389c7fcff8e48f",
+    "hotel": "1eabb19b42d78ad1678c5f99b50cb39cd84293592c244f338443856dbdc5468c",
+    "payroll": "0aadcceaa61c4d0afa822c6ddf2a5936727bd7948ea9f6f89d477a57bcbc30f0",
+    "ticketing": "f2e479fa58db3dca56a52f559b6275ca823038f90476941ad28f414459a93d92",
+    "weatherlog": "65d515762b1352af37ec1a6a1bec69651cd536616c5388a6281b985fcfca01e9"
+  },
+  "settings": {
+    "max_calls": 110,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "spec_functions": 8,
+    "spec_tokens": 700,
+    "spec_checks": 2,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": null,
+  "frozen": false,
+  "freeze_problems": [
+    "projects differs from the freeze record"
+  ],
+  "git": {
+    "commit": "",
+    "dirty": false
+  },
+  "python": "3.11.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "finished_at": "2026-10-27T11:42:28+00:00"
+}
