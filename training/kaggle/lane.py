@@ -55,7 +55,7 @@ BUNDLE_FILES = (
     "training/kaggle/kernel_template.py",
     "training/kaggle/bench_kernel.py",
     "datasets/project_bench/v1/**/*",
-    "experiments/evaluation/project-bench/freeze.json",
+    "experiments/evaluation/project-bench/freeze*.json",
     "experiments/evaluation/protocol-freeze.json",
     "experiments/data/test-split-freeze.json",
 )
@@ -272,7 +272,7 @@ def push(args) -> str:
 
 def push_bench(args, state: dict) -> str:
     """The project benchmark with a larger model (training/kaggle/bench_kernel.py)."""
-    if args.bench_split == "test" and state.get("git_dirty", True):
+    if args.bench_split in ("test", "test2") and state.get("git_dirty", True):
         raise SystemExit("rebuild the bundle from a clean, committed tree for the test split")
     job = {
         "kind": "bench",
@@ -386,7 +386,9 @@ def main() -> int:
     p = sub.add_parser("push")
     p.add_argument("--job", choices=("smoke", "train", "eval", "bench"), required=True)
     p.add_argument("--model", choices=("14b", "32b"), default="14b", help="bench only")
-    p.add_argument("--bench-split", choices=("dev", "test"), default="dev", help="bench only")
+    p.add_argument(
+        "--bench-split", choices=("dev", "test", "test2"), default="dev", help="bench only"
+    )
     p.add_argument("--projects", nargs="*", help="bench only: a subset of the split")
     p.add_argument("--arms", default="A,B,C,D")
     p.add_argument("--case-ids", nargs="*")
