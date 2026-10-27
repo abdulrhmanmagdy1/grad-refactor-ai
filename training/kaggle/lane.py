@@ -53,6 +53,9 @@ BUNDLE_FILES = (
     "training/common.py",
     "training/requirements-cuda.txt",
     "training/kaggle/kernel_template.py",
+    "training/kaggle/bench_kernel.py",
+    "datasets/project_bench/v1/**/*",
+    "experiments/evaluation/project-bench/freeze.json",
     "experiments/evaluation/protocol-freeze.json",
     "experiments/data/test-split-freeze.json",
 )
@@ -200,6 +203,8 @@ def upload() -> None:
 
 def push(args) -> str:
     state = json.loads(STATE.read_text(encoding="utf-8"))
+    if args.job == "bench":
+        return push_bench(args, state)
     if args.split == "test":
         # The single final evaluation: only on demand, against a frozen protocol, and
         # from a bundle built from a committed, clean tree so the code is identifiable.
@@ -265,6 +270,62 @@ def push(args) -> str:
     return slug
 
 
+def push_bench(args, state: dict) -> str:
+    """The project benchmark with a larger model (training/kaggle/bench_kernel.py)."""
+    if args.bench_split == "test" and state.get("git_dirty", True):
+        raise SystemExit("rebuild the bundle from a clean, committed tree for the test split")
+    job = {
+        "kind": "bench",
+        "split": args.bench_split,
+        "model": args.model,
+        "projects": args.projects or [],
+        "bundle_sha256": state["bundle_sha256"],
+    }
+    key = sha256_bytes(json.dumps(job, sort_keys=True).encode())[:8]
+    slug = f"grad-refactor-ai-bench-{args.model}-{key}"
+    return push_kernel(slug, job, "bench_kernel.py", args.timeout_min)
+
+
+def push_kernel(slug: str, job: dict, template_name: str, timeout_min: int) -> str:
+    folder = KERNELS / slug
+    folder.mkdir(parents=True, exist_ok=True)
+    template = (HERE / template_name).read_text(encoding="utf-8")
+    marker = "JOB = {}  # replaced by lane.py"
+    if template.count(marker) != 1:
+        raise SystemExit("the kernel template has no JOB marker")
+    source = template.replace(marker, f"JOB = json.loads({json.dumps(json.dumps(job))})")
+    (folder / "run.py").write_text(source, encoding="utf-8", newline="\n")
+    metadata = {
+        "id": f"{OWNER}/{slug}",
+        "title": slug,
+        "code_file": "run.py",
+        "language": "python",
+        "kernel_type": "script",
+        "is_private": True,
+        "enable_gpu": True,
+        "enable_tpu": False,
+        "enable_internet": True,
+        "machine_shape": ACCELERATOR,
+        "dataset_sources": [DATASET],
+        "competition_sources": [],
+        "kernel_sources": [],
+        "model_sources": [],
+    }
+    (folder / "kernel-metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    result = kaggle(
+        "kernels",
+        "push",
+        "-p",
+        str(folder),
+        "-t",
+        str(timeout_min * 60),
+        "--accelerator",
+        ACCELERATOR,
+    )
+    note("push", slug=slug, job=job, cli=result.stdout.strip()[-300:])
+    return slug
+
+
 def wait(slug: str, poll_s: int = 60, limit_min: int = 600) -> str:
     started = time.time()
     last = None
@@ -288,6 +349,8 @@ def wait(slug: str, poll_s: int = 60, limit_min: int = 600) -> str:
 
 def fetch(slug: str) -> Path:
     kind = "training" if "-train-" in slug else "evaluation"
+    if "-bench-" in slug:
+        kind = "bench"
     destination = ROOT / "runs" / kind / f"kaggle-{slug}"
     destination.mkdir(parents=True, exist_ok=True)
     kaggle("kernels", "output", f"{OWNER}/{slug}", "-p", str(destination), "-o")
@@ -321,7 +384,10 @@ def main() -> int:
     b.add_argument("--adapter", type=Path)
     sub.add_parser("upload")
     p = sub.add_parser("push")
-    p.add_argument("--job", choices=("smoke", "train", "eval"), required=True)
+    p.add_argument("--job", choices=("smoke", "train", "eval", "bench"), required=True)
+    p.add_argument("--model", choices=("14b", "32b"), default="14b", help="bench only")
+    p.add_argument("--bench-split", choices=("dev", "test"), default="dev", help="bench only")
+    p.add_argument("--projects", nargs="*", help="bench only: a subset of the split")
     p.add_argument("--arms", default="A,B,C,D")
     p.add_argument("--case-ids", nargs="*")
     p.add_argument("--run-id", default="full-2026-10-20")
