@@ -1,0 +1,360 @@
+{
+  "summaries": {
+    "static": {
+      "projects": 8,
+      "issues": {
+        "count": 18,
+        "total": 55,
+        "rate": 0.3273,
+        "ci95": [
+          0.2181,
+          0.459
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 4,
+          "total": 8,
+          "rate": 0.5,
+          "ci95": [
+            0.2152,
+            0.7848
+          ],
+          "right_category": 4
+        },
+        "bug": {
+          "count": 4,
+          "total": 24,
+          "rate": 0.1667,
+          "ci95": [
+            0.0668,
+            0.3585
+          ],
+          "right_category": 4
+        },
+        "quality": {
+          "count": 6,
+          "total": 15,
+          "rate": 0.4,
+          "ci95": [
+            0.1982,
+            0.6425
+          ],
+          "right_category": 6
+        },
+        "security": {
+          "count": 4,
+          "total": 8,
+          "rate": 0.5,
+          "ci95": [
+            0.2152,
+            0.7848
+          ],
+          "right_category": 4
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 18,
+          "total": 55,
+          "rate": 0.3273,
+          "ci95": [
+            0.2181,
+            0.459
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 4,
+            "total": 24,
+            "rate": 0.1667,
+            "ci95": [
+              0.0668,
+              0.3585
+            ]
+          },
+          "quality": {
+            "count": 6,
+            "total": 15,
+            "rate": 0.4,
+            "ci95": [
+              0.1982,
+              0.6425
+            ]
+          },
+          "security": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 27,
+        "on_decoy": 6,
+        "on_issue": 21,
+        "on_issue_share": {
+          "count": 21,
+          "total": 27,
+          "rate": 0.7778,
+          "ci95": [
+            0.5924,
+            0.8939
+          ]
+        },
+        "by_origin": {
+          "static:on_decoy": 6,
+          "static:on_issue": 21
+        }
+      },
+      "decoys_hit": {
+        "count": 6,
+        "total": 16,
+        "rate": 0.375,
+        "ci95": [
+          0.1848,
+          0.6136
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        }
+      },
+      "fixes": {},
+      "ready_fixes": 0,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 0,
+        "dropped_on_seeded_issue": 0
+      },
+      "review_s": {
+        "median": 1.55,
+        "max": 2.94
+      },
+      "model_calls": 0
+    },
+    "full-14b": {
+      "projects": 8,
+      "issues": {
+        "count": 36,
+        "total": 55,
+        "rate": 0.6545,
+        "ci95": [
+          0.5225,
+          0.7664
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 7,
+          "total": 8,
+          "rate": 0.875,
+          "ci95": [
+            0.5291,
+            0.9776
+          ],
+          "right_category": 7
+        },
+        "bug": {
+          "count": 12,
+          "total": 24,
+          "rate": 0.5,
+          "ci95": [
+            0.3143,
+            0.6857
+          ],
+          "right_category": 11
+        },
+        "quality": {
+          "count": 10,
+          "total": 15,
+          "rate": 0.6667,
+          "ci95": [
+            0.4171,
+            0.8482
+          ],
+          "right_category": 7
+        },
+        "security": {
+          "count": 7,
+          "total": 8,
+          "rate": 0.875,
+          "ci95": [
+            0.5291,
+            0.9776
+          ],
+          "right_category": 5
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 27,
+          "total": 55,
+          "rate": 0.4909,
+          "ci95": [
+            0.3638,
+            0.6192
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 10,
+            "total": 24,
+            "rate": 0.4167,
+            "ci95": [
+              0.2447,
+              0.6117
+            ]
+          },
+          "quality": {
+            "count": 7,
+            "total": 15,
+            "rate": 0.4667,
+            "ci95": [
+              0.2481,
+              0.6988
+            ]
+          },
+          "security": {
+            "count": 6,
+            "total": 8,
+            "rate": 0.75,
+            "ci95": [
+              0.4093,
+              0.9285
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 164,
+        "unlabelled": 84,
+        "on_issue": 69,
+        "on_decoy": 11,
+        "on_issue_share": {
+          "count": 69,
+          "total": 164,
+          "rate": 0.4207,
+          "ci95": [
+            0.3478,
+            0.4973
+          ]
+        },
+        "by_origin": {
+          "agent:on_decoy": 5,
+          "agent:on_issue": 48,
+          "agent:unlabelled": 84,
+          "static:on_decoy": 6,
+          "static:on_issue": 21
+        }
+      },
+      "decoys_hit": {
+        "count": 9,
+        "total": 16,
+        "rate": 0.5625,
+        "ci95": [
+          0.3318,
+          0.769
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 1,
+          "total": 32,
+          "rate": 0.0312,
+          "ci95": [
+            0.0055,
+            0.1574
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 14,
+          "total": 32,
+          "rate": 0.4375,
+          "ci95": [
+            0.2817,
+            0.6067
+          ]
+        }
+      },
+      "fixes": {
+        "failed/no_proposal": 2,
+        "proposal_ready/resolves": 1,
+        "rejected/harmful": 26,
+        "rejected/no_effect": 13,
+        "rejected/no_proposal": 5,
+        "rejected/resolves": 1,
+        "uncertain/harmful": 1,
+        "uncertain/no_effect": 26,
+        "uncertain/resolves": 11
+      },
+      "ready_fixes": 1,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 250,
+        "dropped_on_seeded_issue": 63
+      },
+      "review_s": {
+        "median": 611.83,
+        "max": 700.35
+      },
+      "model_calls": 624
+    }
+  },
+  "paired": {
+    "both": 18,
+    "only_first": 0,
+    "only_second": 18,
+    "neither": 19,
+    "mcnemar_p": 8e-06
+  },
+  "paired_judged": {
+    "both": 18,
+    "only_first": 0,
+    "only_second": 9,
+    "neither": 28,
+    "mcnemar_p": 0.003906
+  }
+}

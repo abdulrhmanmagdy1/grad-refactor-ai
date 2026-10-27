@@ -1,0 +1,48 @@
+{
+  "protocol": "project-bench-v1",
+  "split": "test",
+  "arm": "static",
+  "started_at": "2026-10-27T08:24:37+00:00",
+  "projects": {
+    "clinic": "cd7fbc125499a892aae8dd5a8eb4272db0f8977aeeea91c9f4b15cd8ea719f99",
+    "gradebook": "6b4b0c89d9f3e2daa525ccaeeee5d1aa94bf8e8bbe6077b240089dfdae9c24d7",
+    "ledger": "4ae3c94bb7e857d66aef7b4cba07877bdd5d0bece37e4b71795f3dd5f50031f9",
+    "pipeline": "85b42901b13312d82c9e058b5631cda7356e1f230199ac726011631d8ed306cd",
+    "scheduler": "5858e6fdf5f40e2ae188efad7aece90ea0ba765eb2177f97dc0e7365aceb7b26",
+    "textstats": "1ac406eca81436a968497786e7d1a5d6493e964f203a717acbd83b0a41cbb246",
+    "warehouse": "4abc66e35124683413d375763e4708d10cbaf41a7b502f00d3de590c9ca16bbb",
+    "webapp": "af06328b50472ae9e4a352be28771743e99db67f0f053dc2fc626fb71a894772"
+  },
+  "settings": {
+    "max_calls": 80,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": null,
+  "frozen": false,
+  "freeze_problems": [
+    "projects differs from the freeze record",
+    "model differs from the freeze record"
+  ],
+  "git": {
+    "commit": "",
+    "dirty": false
+  },
+  "python": "3.11.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "finished_at": "2026-10-27T08:24:59+00:00"
+}

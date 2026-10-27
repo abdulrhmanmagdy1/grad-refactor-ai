@@ -1,0 +1,373 @@
+{
+  "summaries": {
+    "full": {
+      "projects": 8,
+      "issues": {
+        "count": 33,
+        "total": 55,
+        "rate": 0.6,
+        "ci95": [
+          0.4681,
+          0.7188
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 8,
+          "total": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ],
+          "right_category": 6
+        },
+        "bug": {
+          "count": 10,
+          "total": 24,
+          "rate": 0.4167,
+          "ci95": [
+            0.2447,
+            0.6117
+          ],
+          "right_category": 9
+        },
+        "quality": {
+          "count": 11,
+          "total": 15,
+          "rate": 0.7333,
+          "ci95": [
+            0.4805,
+            0.891
+          ],
+          "right_category": 8
+        },
+        "security": {
+          "count": 4,
+          "total": 8,
+          "rate": 0.5,
+          "ci95": [
+            0.2152,
+            0.7848
+          ],
+          "right_category": 4
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 19,
+          "total": 55,
+          "rate": 0.3455,
+          "ci95": [
+            0.2336,
+            0.4775
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 4,
+            "total": 24,
+            "rate": 0.1667,
+            "ci95": [
+              0.0668,
+              0.3585
+            ]
+          },
+          "quality": {
+            "count": 7,
+            "total": 15,
+            "rate": 0.4667,
+            "ci95": [
+              0.2481,
+              0.6988
+            ]
+          },
+          "security": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 155,
+        "unlabelled": 85,
+        "on_issue": 59,
+        "on_decoy": 11,
+        "on_issue_share": {
+          "count": 59,
+          "total": 155,
+          "rate": 0.3806,
+          "ci95": [
+            0.308,
+            0.4591
+          ]
+        },
+        "by_origin": {
+          "agent:on_decoy": 5,
+          "agent:on_issue": 38,
+          "agent:unlabelled": 85,
+          "static:on_decoy": 6,
+          "static:on_issue": 21
+        }
+      },
+      "decoys_hit": {
+        "count": 8,
+        "total": 16,
+        "rate": 0.5,
+        "ci95": [
+          0.28,
+          0.72
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 1,
+          "total": 32,
+          "rate": 0.0312,
+          "ci95": [
+            0.0055,
+            0.1574
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 4,
+          "total": 32,
+          "rate": 0.125,
+          "ci95": [
+            0.0497,
+            0.2807
+          ]
+        }
+      },
+      "fixes": {
+        "failed/no_proposal": 3,
+        "proposal_ready/resolves": 1,
+        "rejected/harmful": 12,
+        "rejected/no_effect": 20,
+        "rejected/no_proposal": 15,
+        "uncertain/harmful": 3,
+        "uncertain/no_effect": 18,
+        "uncertain/resolves": 3
+      },
+      "ready_fixes": 1,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 113,
+        "dropped_on_seeded_issue": 31
+      },
+      "review_s": {
+        "median": 347.22,
+        "max": 386.19
+      },
+      "model_calls": 572
+    },
+    "full-14b": {
+      "projects": 8,
+      "issues": {
+        "count": 36,
+        "total": 55,
+        "rate": 0.6545,
+        "ci95": [
+          0.5225,
+          0.7664
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 7,
+          "total": 8,
+          "rate": 0.875,
+          "ci95": [
+            0.5291,
+            0.9776
+          ],
+          "right_category": 7
+        },
+        "bug": {
+          "count": 12,
+          "total": 24,
+          "rate": 0.5,
+          "ci95": [
+            0.3143,
+            0.6857
+          ],
+          "right_category": 11
+        },
+        "quality": {
+          "count": 10,
+          "total": 15,
+          "rate": 0.6667,
+          "ci95": [
+            0.4171,
+            0.8482
+          ],
+          "right_category": 7
+        },
+        "security": {
+          "count": 7,
+          "total": 8,
+          "rate": 0.875,
+          "ci95": [
+            0.5291,
+            0.9776
+          ],
+          "right_category": 5
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 27,
+          "total": 55,
+          "rate": 0.4909,
+          "ci95": [
+            0.3638,
+            0.6192
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 10,
+            "total": 24,
+            "rate": 0.4167,
+            "ci95": [
+              0.2447,
+              0.6117
+            ]
+          },
+          "quality": {
+            "count": 7,
+            "total": 15,
+            "rate": 0.4667,
+            "ci95": [
+              0.2481,
+              0.6988
+            ]
+          },
+          "security": {
+            "count": 6,
+            "total": 8,
+            "rate": 0.75,
+            "ci95": [
+              0.4093,
+              0.9285
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 164,
+        "unlabelled": 84,
+        "on_issue": 69,
+        "on_decoy": 11,
+        "on_issue_share": {
+          "count": 69,
+          "total": 164,
+          "rate": 0.4207,
+          "ci95": [
+            0.3478,
+            0.4973
+          ]
+        },
+        "by_origin": {
+          "agent:on_decoy": 5,
+          "agent:on_issue": 48,
+          "agent:unlabelled": 84,
+          "static:on_decoy": 6,
+          "static:on_issue": 21
+        }
+      },
+      "decoys_hit": {
+        "count": 9,
+        "total": 16,
+        "rate": 0.5625,
+        "ci95": [
+          0.3318,
+          0.769
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 1,
+          "total": 32,
+          "rate": 0.0312,
+          "ci95": [
+            0.0055,
+            0.1574
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 14,
+          "total": 32,
+          "rate": 0.4375,
+          "ci95": [
+            0.2817,
+            0.6067
+          ]
+        }
+      },
+      "fixes": {
+        "failed/no_proposal": 2,
+        "proposal_ready/resolves": 1,
+        "rejected/harmful": 26,
+        "rejected/no_effect": 13,
+        "rejected/no_proposal": 5,
+        "rejected/resolves": 1,
+        "uncertain/harmful": 1,
+        "uncertain/no_effect": 26,
+        "uncertain/resolves": 11
+      },
+      "ready_fixes": 1,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 250,
+        "dropped_on_seeded_issue": 63
+      },
+      "review_s": {
+        "median": 611.83,
+        "max": 700.35
+      },
+      "model_calls": 624
+    }
+  },
+  "paired": {
+    "both": 30,
+    "only_first": 3,
+    "only_second": 6,
+    "neither": 16,
+    "mcnemar_p": 0.507812
+  },
+  "paired_judged": {
+    "both": 19,
+    "only_first": 0,
+    "only_second": 8,
+    "neither": 28,
+    "mcnemar_p": 0.007812
+  }
+}

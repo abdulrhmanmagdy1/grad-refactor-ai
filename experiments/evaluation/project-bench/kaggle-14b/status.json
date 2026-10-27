@@ -1,0 +1,62 @@
+{
+  "job": {
+    "kind": "bench",
+    "split": "test",
+    "model": "14b",
+    "projects": [],
+    "bundle_sha256": "384d5e22814fec354b24873f630304036bee375725319e7742e913932670e73c"
+  },
+  "started_at": "2026-10-27T08:21:31+00:00",
+  "steps": [
+    {
+      "step": "hardware",
+      "seconds": 0.0,
+      "ok": true
+    },
+    {
+      "step": "bundle",
+      "seconds": 52.9,
+      "ok": true
+    },
+    {
+      "step": "install",
+      "seconds": 24.2,
+      "ok": true
+    },
+    {
+      "step": "model",
+      "seconds": 107.6,
+      "ok": true
+    },
+    {
+      "step": "benchmark",
+      "seconds": 5150.0,
+      "ok": true
+    }
+  ],
+  "hardware": {
+    "python": "3.13.15",
+    "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+    "cpu_count": 4,
+    "ram_total_kb": 32869296,
+    "nvidia_smi": "Tesla T4, 15360 MiB, 580.178.04, 7.5\nTesla T4, 15360 MiB, 580.178.04, 7.5"
+  },
+  "bundle": {
+    "bundle_sha256": "384d5e22814fec354b24873f630304036bee375725319e7742e913932670e73c",
+    "git_head": "1b747ae5871a5dadc7f67d46647f0766c074f609",
+    "git_dirty": false
+  },
+  "llama": {
+    "llama_cpp": "0.3.4",
+    "gpu_offload": true
+  },
+  "model": {
+    "repo": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "verified": true
+  },
+  "finished_at": "2026-10-27T09:50:26+00:00",
+  "ok": true
+}

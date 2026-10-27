@@ -56,3 +56,36 @@ but 14 of those 15 extra locations were findings about something else on the sam
   a linter rule covers them (4 of 24).
 
 These are small synthetic projects; see the protocol's limits section.
+
+## Model-size arm: Qwen2.5-Coder-14B-Instruct (added after the 3B results)
+
+The same frozen pipeline (code, prompts project-v3, settings, test split) with only the
+model changed, run on Kaggle (2 x T4) with
+[scripts/project_benchmark_model_arm.py](../../../scripts/project_benchmark_model_arm.py):
+`bartowski/Qwen2.5-Coder-14B-Instruct-GGUF`, Q4_K_M, revision 5b379ec4bf71, sha256
+2946d28c9e1b. The run passed the freeze check in everything but the model
+(`"frozen_except_model": true`); it is a post-hoc arm, not the pre-registered result.
+Results in [test-full-14b/](test-full-14b/); the static arm rerun on Linux
+([kaggle-14b/test-static-linux/](kaggle-14b/test-static-linux/)) gave the same findings
+as on Windows in all 8 projects. The 48 pairs first seen in this arm were judged by a new
+judge session with the same instructions ([judge/labels-14b-new.json](judge/labels-14b-new.json));
+[judge/labels-all.json](judge/labels-all.json) holds all 107 labels.
+
+| | Static | Full, 3B | Full, 14B |
+|---|---|---|---|
+| Issues found, judge confirmed | 18/55 (33%) | 19/55 (35%) | 27/55 (49%, CI 36% to 62%) |
+| ... bug | 4/24 | 4/24 | 10/24 |
+| ... security | 4/8 | 4/8 | 6/8 |
+| ... architecture | 4/8 | 4/8 | 4/8 |
+| ... quality | 6/15 | 7/15 | 7/15 |
+| Findings (off every seeded place) | 27 (0) | 155 (85) | 164 (84) |
+| Fixable issues fixed by some fix | 0/32 | 4/32 | 14/32 |
+| Fixable issues fixed by the ready fixes | 0/32 | 1/32 | 1/32 |
+| Ready fixes that break a test | 0 | 0 | 0 |
+| Median review time | 1.6 s | 347 s | 612 s (T4) |
+
+Paired, judge confirmed: 14B found 9 issues static missed and missed none it found
+(exact McNemar p = 0.0039); against 3B, 8 more and none fewer (p = 0.0078). Of the 14B
+arm's 79 fixes, 27 break a test when applied: 26 were rejected and 1 stayed uncertain,
+none ready. 11 fixes that do fix their bug stayed uncertain, most with the reason
+`model_only` (no test showed the bug): the spec tests of project-v4 target exactly that.

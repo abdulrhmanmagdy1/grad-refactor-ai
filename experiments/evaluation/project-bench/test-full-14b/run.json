@@ -1,0 +1,55 @@
+{
+  "protocol": "project-bench-v1",
+  "split": "test",
+  "arm": "full-14b",
+  "started_at": "2026-10-27T08:25:00+00:00",
+  "projects": {
+    "clinic": "3aab704551e98ff3c68ea3d94c8b7ea9536b0c197d8c4895e62e56514d6d6c2d",
+    "gradebook": "936a479b67aea3b2a656d540096fc5a0442659494f7fcb2359183fedbcfece80",
+    "ledger": "f27b86633c0b115d9dd5e32e62917bf394b9d37b33e3bdf764829c6aa9108b1e",
+    "pipeline": "0a1ea8e7944f426ba2ef1d7a40abf02402f5b2ff7cb76cd4e93bb34166a700aa",
+    "scheduler": "5858e6fdf5f40e2ae188efad7aece90ea0ba765eb2177f97dc0e7365aceb7b26",
+    "textstats": "1ac406eca81436a968497786e7d1a5d6493e964f203a717acbd83b0a41cbb246",
+    "warehouse": "4abc66e35124683413d375763e4708d10cbaf41a7b502f00d3de590c9ca16bbb",
+    "webapp": "af06328b50472ae9e4a352be28771743e99db67f0f053dc2fc626fb71a894772"
+  },
+  "settings": {
+    "max_calls": 80,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "context_tokens": 8192
+  },
+  "frozen": false,
+  "freeze_problems": [
+    "model differs from the freeze record"
+  ],
+  "git": {
+    "commit": "",
+    "dirty": false
+  },
+  "python": "3.11.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "finished_at": "2026-10-27T09:50:26+00:00",
+  "model_arm": "14b",
+  "frozen_except_model": true
+}
