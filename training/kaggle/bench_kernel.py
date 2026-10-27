@@ -250,7 +250,7 @@ def benchmark(config: Path) -> None:
     projects = [arg for name in JOB.get("projects", []) for arg in ("--project", name)]
     static = [python, "scripts/project_benchmark.py", "run", "--split", split]
     static += ["--arm", "static", "--out", str(OUT / f"{split}-static"), *projects]
-    if split in ("test", "test2"):
+    if split in ("test", "test2", "test3"):
         static += ["--model-config", str(config)]  # the static arm uses no model
         static += ["--allow-unfrozen"]  # only the model differs; recorded in run.json
     run([*as_user, *static], "bench-static", cwd=REPO, env=env)
@@ -280,7 +280,12 @@ def main() -> int:
     TMP.mkdir(parents=True, exist_ok=True)
     ok = True
     try:
-        if JOB.get("model") not in MODELS or JOB.get("split") not in ("dev", "test", "test2"):
+        if JOB.get("model") not in MODELS or JOB.get("split") not in (
+            "dev",
+            "test",
+            "test2",
+            "test3",
+        ):
             raise ValueError(f"bad job: {JOB}")
         with Step("hardware"):
             STATUS["hardware"] = hardware()

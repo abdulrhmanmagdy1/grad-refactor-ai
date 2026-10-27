@@ -97,6 +97,7 @@ def run_ruff(workspace: Workspace) -> tuple[list[dict], str | None]:
     """ruff's JSON diagnostics for the workspace, or ([], reason) when ruff cannot run."""
     command = [
         sys.executable,
+        "-I",  # isolated: the project folder is never on the import path
         "-m",
         "ruff",
         "check",

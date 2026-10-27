@@ -485,3 +485,24 @@ def test_api_stub_and_related_api(tmp_path):
     related = related_api(index, workspace, "lib.desk")
     assert related.startswith("# lib\n") or "# lib.models\n" in related
     assert "class Loan:" in related and related_api(index, workspace, "missing") == ""
+
+
+def test_project_files_cannot_run_code_through_the_static_tools(tmp_path):
+    marker = tmp_path / "pwned"
+    payload = f"open({str(marker)!r}, 'a').write('x')\n"
+    files = {
+        "mypy.py": payload,
+        "ruff.py": payload,
+        "evil_plugin.py": payload + "def plugin(version):\n    return None\n",
+        "mypy.ini": "[mypy]\nplugins = evil_plugin\n",
+        "pyproject.toml": "[tool.mypy]\nplugins = ['evil_plugin']\n",
+        "-config-file=mypy.ini.py": "x = 1\n",
+        "app/__init__.py": "",
+        "app/shop.py": "def total(items: list[int]) -> int:\n    return sum(items) + 'a'\n",
+    }
+    workspace = extract_project(make_zip(files), tmp_path / "ws")
+    index = build_index(workspace)
+    findings, warnings = static.scan(workspace, index)
+    assert not marker.exists()
+    assert not [w for w in warnings if "could not run" in w or "failed" in w]
+    assert any(f.source == "static:mypy:operator" for f in findings)

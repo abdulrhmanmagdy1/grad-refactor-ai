@@ -179,6 +179,7 @@ def ruff_source(source: str, file: str) -> tuple[list[dict], str | None]:
     """ruff's diagnostics for one file's text (read from standard input)."""
     command = [
         sys.executable,
+        "-I",  # isolated: the project folder is never on the import path
         "-m",
         "ruff",
         "check",

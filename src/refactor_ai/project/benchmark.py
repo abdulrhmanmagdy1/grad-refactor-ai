@@ -37,9 +37,9 @@ from refactor_ai.project.workspace import IntakeError, Workspace, extract_projec
 # (project-v4) and a second, new test split.
 PROTOCOL_ID = "project-bench-v2"
 DATASET_ROOT = Path("datasets") / "project_bench" / "v1"
-SPLITS = ("dev", "test", "test2")
+SPLITS = ("dev", "test", "test2", "test3")
 # Splits that run only under a freeze record.
-FROZEN_SPLITS = ("test", "test2")
+FROZEN_SPLITS = ("test", "test2", "test3")
 MANIFEST = "manifest.json"
 HIDDEN_SOURCE = Path("hidden") / "test_hidden.py"
 # The hidden tests are copied to the project root under this name and run on their own,

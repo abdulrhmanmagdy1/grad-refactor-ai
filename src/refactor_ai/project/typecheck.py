@@ -76,10 +76,17 @@ def run_mypy(
             shutil.copytree(root, target)
             for relative, text in replacements.items():
                 (target / relative).write_text(text, encoding="utf-8", newline="")
+        config = Path(temp) / "mypy.ini"
+        config.write_text("[mypy]\n", encoding="utf-8")
         command = [
             sys.executable,
+            "-I",  # isolated: a mypy.py in the project cannot replace mypy
             "-m",
             "mypy",
+            # Our own empty configuration: the project's mypy.ini, setup.cfg or pyproject.toml
+            # (whose plugins= setting would run its code) is never read.
+            "--config-file",
+            str(config),
             "--no-error-summary",
             "--show-error-codes",
             "--show-column-numbers",
@@ -96,6 +103,7 @@ def run_mypy(
             "3.11",
             "--cache-dir",
             str(Path(temp) / "cache"),
+            "--",  # every name after this is a file, never an option
             *files,
         ]
         try:
