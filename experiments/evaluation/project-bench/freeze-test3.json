@@ -1,0 +1,70 @@
+{
+  "protocol": "project-bench-v3",
+  "split": "test3",
+  "projects": {
+    "crm": "0c655887f21c41729ed10245e4c6fcce303b31a44cac0dc92512d4c9bc252f2a",
+    "delivery": "b4cffd20a4360aa1c17fd7834cee49253999d3de6c1de5a9c52264fcc12838bb",
+    "gym": "68eb02f069f90ede4b2a5267b0f8e93f5618dcc8de245c7a29a380228ae279c6",
+    "helpdesk": "567512a4157d21ffbf557d592259091e5e7a98ac8f74f4265a4674874b26db8a",
+    "orders": "32094afeb1f7c69ce9b6c1d00af9f0721bcd6df18b9f9138ce4f68ec203d3f0c",
+    "pharmacy": "c114a150630a277e92cf9e6595984d4adaf12498f2b097e131f3c72b1fe275e6",
+    "rental": "c4b936106b3fc9dddc52a5dc6968761c473879872a9edaf66218518b30641c2d",
+    "voting": "09e5ec1f3c4cca231f0ad0f64345f5407f486b0da7ce13500a49691c257fa01a"
+  },
+  "code": {
+    "scripts/project_benchmark.py": "5739cadd9381079afc7a299b400fea74a5517e947af4ab2b3f2dde6991f0742e",
+    "src/refactor_ai/project/__init__.py": "9d5be7daa150138ed5905bc3356684a1e7f258fc6eaa9a56af700cebd36e8444",
+    "src/refactor_ai/project/agents.py": "e39b29249bb5f429add7f352f3da2b4e164016e88ed7f89c2925c8d0d6edcb41",
+    "src/refactor_ai/project/benchmark.py": "1a2cdd3ad8eecfea0d77fbd0112a2ea63882e8a4c54ebc2401f431385a08ca14",
+    "src/refactor_ai/project/fixes.py": "f2f66b9b1d05b08e2cb897ce82602ba42b1d4a9d5ce0137b6537d72a3800f051",
+    "src/refactor_ai/project/index.py": "5270651e77b0997f63bb8b6d638f5a8c3a6e6cb5bcbe29aee2ff997661497b59",
+    "src/refactor_ai/project/models.py": "55e4aef1fc4c5494ecf8cf072830b021ddb84374ca2afb48ef836bcc80957938",
+    "src/refactor_ai/project/review.py": "f02d7053795fa8563d8129757c7b9ca356d589cb107e7ea6fce31c43708225bd",
+    "src/refactor_ai/project/rules.py": "425e046fe09e1d454282d7c29640c9c65c6ed0dc3c6218ca18542c28a07ab922",
+    "src/refactor_ai/project/runtime.py": "14cc50c94ae73d0432ad9c200aa1a458787d24bc88cf37c1d9286260ab4191ee",
+    "src/refactor_ai/project/service.py": "7a93a8f075c7e9f2fa8724087e3da77847ab9ccec2926b4b98366ec025794f66",
+    "src/refactor_ai/project/static.py": "d48c097170d1b66f3ddc29645611dbe176c430f64c9e398b3ef1bf8f4db675b1",
+    "src/refactor_ai/project/testrun.py": "1749f59bfe1e312396eb80155132b6fe8b1eeca24a4bdc2b1e0b79e47ffc2476",
+    "src/refactor_ai/project/typecheck.py": "ea2075872bde02fc0f1d20399128a7c9b7f5ea4fe7080db2c79b37cbce1cb7de",
+    "src/refactor_ai/project/workspace.py": "08ef139a256fdf6ceaf6800bc45f88514df752c69cbeb65447defe5bff7615e8",
+    "src/refactor_ai/providers/gguf.py": "212812359e36fd5491f3e3d433ecc5e75f5f25389403d6a323557e6a6145a8d2",
+    "src/refactor_ai/providers/gguf_worker.py": "1c07e17b3f20f7cbf797674280152112f68ff9d73ea6e6649724b4a9d37e3258"
+  },
+  "settings": {
+    "max_calls": 110,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "spec_functions": 8,
+    "spec_tokens": 700,
+    "spec_checks": 2,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "context_tokens": 8192
+  },
+  "matching": {
+    "line_tolerance": 2
+  },
+  "frozen_at": "2026-10-27T19:18:24+00:00",
+  "git": {
+    "commit": "b01f6d0f35af4e47d5de8118dd63195f1f8f4553",
+    "dirty": false
+  }
+}
