@@ -1,0 +1,69 @@
+{
+  "protocol": "project-bench-v2",
+  "split": "test2",
+  "projects": {
+    "budget": "dc3e5d4238e78fd4ff34e1ecbeb4ad35e7c6e03e316ded2e73e839ac04f063c5",
+    "enrollment": "c623c16b7379dba79a25cb6a931fc233aba02ac9bb646e59493555efea1bef4b",
+    "fleet": "5873ea6f45f13a3fc39b6cdce1bafd59d431fc117964005fed03693fe1f8cacd",
+    "forum": "b58f97944a3e28c07cdeb8a99b89b92f5414ac4eca44f287e0ae50a898981845",
+    "hotel": "f008fe3ca83f9e5cac3a79546ee858b9989b33664aae54478ec5f2fb775d632e",
+    "payroll": "1287f6c636032882f2b9a1856e2c465a1c08a69f06409924edb5d27df1f6b691",
+    "ticketing": "f2e479fa58db3dca56a52f559b6275ca823038f90476941ad28f414459a93d92",
+    "weatherlog": "65d515762b1352af37ec1a6a1bec69651cd536616c5388a6281b985fcfca01e9"
+  },
+  "code": {
+    "scripts/project_benchmark.py": "5739cadd9381079afc7a299b400fea74a5517e947af4ab2b3f2dde6991f0742e",
+    "src/refactor_ai/project/__init__.py": "9d5be7daa150138ed5905bc3356684a1e7f258fc6eaa9a56af700cebd36e8444",
+    "src/refactor_ai/project/agents.py": "facb7056d1ebad6835315fd151f7ca0fc57cf3591950918c100511f02c3faca9",
+    "src/refactor_ai/project/benchmark.py": "5a5e160b96e2cfbd2ca2088844c258d33f4345f95ace749f2b084060d886b5f0",
+    "src/refactor_ai/project/fixes.py": "cfd8c0a80db0c95c1e4fdd8490573a70b4767fa9e53a7086ebe855bded839ada",
+    "src/refactor_ai/project/index.py": "9a485b88e490e92bf8afd058046aa78cd7494819b0b01333f644e608236a631c",
+    "src/refactor_ai/project/models.py": "55e4aef1fc4c5494ecf8cf072830b021ddb84374ca2afb48ef836bcc80957938",
+    "src/refactor_ai/project/review.py": "54ff2befcdcf4721190843299a1f99c4bde32ccceb36bc3ef717287864aa9089",
+    "src/refactor_ai/project/rules.py": "425e046fe09e1d454282d7c29640c9c65c6ed0dc3c6218ca18542c28a07ab922",
+    "src/refactor_ai/project/runtime.py": "14cc50c94ae73d0432ad9c200aa1a458787d24bc88cf37c1d9286260ab4191ee",
+    "src/refactor_ai/project/service.py": "7a93a8f075c7e9f2fa8724087e3da77847ab9ccec2926b4b98366ec025794f66",
+    "src/refactor_ai/project/static.py": "7c8216f96a8d04304d0282c02d78c239a5550650cebd1336858fa748934a583b",
+    "src/refactor_ai/project/testrun.py": "1749f59bfe1e312396eb80155132b6fe8b1eeca24a4bdc2b1e0b79e47ffc2476",
+    "src/refactor_ai/project/workspace.py": "08ef139a256fdf6ceaf6800bc45f88514df752c69cbeb65447defe5bff7615e8",
+    "src/refactor_ai/providers/gguf.py": "212812359e36fd5491f3e3d433ecc5e75f5f25389403d6a323557e6a6145a8d2",
+    "src/refactor_ai/providers/gguf_worker.py": "1c07e17b3f20f7cbf797674280152112f68ff9d73ea6e6649724b4a9d37e3258"
+  },
+  "settings": {
+    "max_calls": 110,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "spec_functions": 8,
+    "spec_tokens": 700,
+    "spec_checks": 2,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "context_tokens": 8192
+  },
+  "matching": {
+    "line_tolerance": 2
+  },
+  "frozen_at": "2026-10-27T11:38:58+00:00",
+  "git": {
+    "commit": "e5e313ba02040ad67277dac2f06a3f5233f9d354",
+    "dirty": false
+  }
+}
