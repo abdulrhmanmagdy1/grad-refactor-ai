@@ -1,0 +1,545 @@
+{
+  "protocol": "project-bench-v2",
+  "judges": [
+    "claude-opus-5-5",
+    "claude-opus-5-5"
+  ],
+  "labels": {
+    "05919997d85067c6": {
+      "same": true,
+      "reason": "Reports the same 5-level deep nesting in hide_reported."
+    },
+    "0f428725c9f0ec7c": {
+      "same": true,
+      "reason": "Flags non-cryptographic random used for ticket codes."
+    },
+    "11bf9daec515f18f": {
+      "same": true,
+      "reason": "Reports the same 6-level nesting in ingest_batch."
+    },
+    "14022bf6b2b3d0f5": {
+      "same": false,
+      "reason": "About too many responsibilities, not the duplicated overtime rule."
+    },
+    "1ed5edca554d6d28": {
+      "same": true,
+      "reason": "Flags SQL built by string formatting in the search query."
+    },
+    "1f20b57653406520": {
+      "same": false,
+      "reason": "Claims an inverted condition, not the unreset run counter."
+    },
+    "24a48d1a5a0c3668": {
+      "same": true,
+      "reason": "Points at the nested if statements that form the deep nesting."
+    },
+    "28b5550c2e6ed995": {
+      "same": false,
+      "reason": "About overtime pay rate, not the duplicated overtime rule."
+    },
+    "2b224bf0bdad236c": {
+      "same": false,
+      "reason": "About the return value, not the off-by-one usage check."
+    },
+    "2c410da6db798b88": {
+      "same": false,
+      "reason": "About the distance condition, not the slice including the first fill-up."
+    },
+    "31bbd63304c5babd": {
+      "same": false,
+      "reason": "About a permission condition, not duplicated lock/pin code."
+    },
+    "33f14c3b5dca0b0b": {
+      "same": false,
+      "reason": "About folder writability, not path traversal via station id."
+    },
+    "37215d5358399d43": {
+      "same": false,
+      "reason": "Too many arguments is a different issue than the long multi-job function."
+    },
+    "3808de14ad821157": {
+      "same": true,
+      "reason": "Flags the mutable default list in FuelLog."
+    },
+    "388c2ffbe4ebe727": {
+      "same": false,
+      "reason": "About re-locking a locked thread, not duplication."
+    },
+    "397f6961d2c98e15": {
+      "same": true,
+      "reason": "Flags the shared mutable default prerequisites list."
+    },
+    "3db820762e7a75a9": {
+      "same": false,
+      "reason": "Generic coupling claim; does not name the storage-to-presentation import."
+    },
+    "4092f884d076428c": {
+      "same": true,
+      "reason": "Names the ValueError when day_of_month exceeds the month length."
+    },
+    "47062c835f704baf": {
+      "same": true,
+      "reason": "Reports the purchase-refunds import cycle."
+    },
+    "52c0768f43cdd31f": {
+      "same": true,
+      "reason": "Reports deep nesting in cancel_event."
+    },
+    "551e079c31a66690": {
+      "same": false,
+      "reason": "Blames partial fill-ups and relies on a wrong test, not the first fill-up liters."
+    },
+    "578d384da3023c30": {
+      "same": true,
+      "reason": "Points at nested ifs forming the deep nesting in hide_reported."
+    },
+    "57cf858ea7f34b80": {
+      "same": false,
+      "reason": "About append order, not pop() taking the newest waitlister."
+    },
+    "598bcd26522592af": {
+      "same": false,
+      "reason": "Performance concern, not the deep nesting."
+    },
+    "5cf79ecfa293ee56": {
+      "same": true,
+      "reason": "Reports the same 6-level nesting in occupancy_by_type."
+    },
+    "61c5ca72a99dd82c": {
+      "same": true,
+      "reason": "Flags the shared mutable default rejected list."
+    },
+    "61e93e979cad1166": {
+      "same": true,
+      "reason": "Identifies any() where all() is required."
+    },
+    "663169975abb3b35": {
+      "same": true,
+      "reason": "Reports the aggregate-alerts import cycle."
+    },
+    "6781da18d0390dc6": {
+      "same": true,
+      "reason": "Says the slice wrongly includes the first full-tank fill-up."
+    },
+    "734766847fac8855": {
+      "same": true,
+      "reason": "Flags SQL injection in the department query."
+    },
+    "74c988f8d916b312": {
+      "same": true,
+      "reason": "Flags the shared mutable default special_requests list."
+    },
+    "790297b9266f1b0b": {
+      "same": true,
+      "reason": "Flags build_transcript as too complex and suggests extracting helpers."
+    },
+    "7a25dcf37badb801": {
+      "same": false,
+      "reason": "About a rounding discrepancy, not the long function."
+    },
+    "7fd696c1a934a04e": {
+      "same": true,
+      "reason": "Identifies .seconds ignoring whole days."
+    },
+    "8424b97819f60b89": {
+      "same": false,
+      "reason": "About function complexity, not the layering import."
+    },
+    "848b83172e76f518": {
+      "same": false,
+      "reason": "Generic coupling; does not name the cycle."
+    },
+    "8540946a009d9ea7": {
+      "same": true,
+      "reason": "Flags build_transcript as a long function."
+    },
+    "86c8841ca66e935f": {
+      "same": true,
+      "reason": "Names day_of_month being invalid for some months like Feb 30."
+    },
+    "8ae67d05d22c3485": {
+      "same": true,
+      "reason": "Notes the actor is not checked as the course's instructor."
+    },
+    "8f89a56c6d2c8221": {
+      "same": false,
+      "reason": "Vague coupling claim on another file, not the specific cycle."
+    },
+    "8faccb193f9ff71e": {
+      "same": false,
+      "reason": "Vague special-character concern; does not identify path traversal."
+    },
+    "970a8fe3121643c9": {
+      "same": false,
+      "reason": "About a permission condition, not duplicated code."
+    },
+    "98afbbdb53df852f": {
+      "same": false,
+      "reason": "About fleet.models responsibilities, not the duplicated license rule."
+    },
+    "9972def2c72c132f": {
+      "same": true,
+      "reason": "Points at the nested ifs forming the deep nesting."
+    },
+    "9fb39e764f8942ae": {
+      "same": false,
+      "reason": "List comprehension lint, not the long function."
+    },
+    "a653afd424b97e89": {
+      "same": true,
+      "reason": "Flags render_monthly_report as too complex, suggests helpers."
+    },
+    "aad08958511d718d": {
+      "same": false,
+      "reason": "Claims a sign bug in summary.py, not the duplicated totals."
+    },
+    "ad26d123948be584": {
+      "same": false,
+      "reason": "Generic layering claim, not the specific import."
+    },
+    "af11b35a3ee04218": {
+      "same": false,
+      "reason": "About an enrolled check, not the long function."
+    },
+    "b1707bedc423c847": {
+      "same": true,
+      "reason": "Reports the posts-text import cycle."
+    },
+    "b182e54cdcb3fbc1": {
+      "same": true,
+      "reason": "Flags cost_report as a long function."
+    },
+    "b94b0a1fda4fe19d": {
+      "same": false,
+      "reason": "About the author check logic, not nesting."
+    },
+    "b9b4e856d34d1f91": {
+      "same": false,
+      "reason": "About frost readings docs, not the repeated 3.6 factor."
+    },
+    "be4f23cb0310bda1": {
+      "same": false,
+      "reason": "Wrongly claims inverted condition, not the duplicated pass mark."
+    },
+    "c01c7b964564fa3c": {
+      "same": false,
+      "reason": "About booking fee calculation, not nesting."
+    },
+    "c5c6711d1da71280": {
+      "same": false,
+      "reason": "About re-pinning, not duplicated code."
+    },
+    "c72aee6fc33059e5": {
+      "same": false,
+      "reason": "Generic layering on another module, not the cycle."
+    },
+    "d0c2666b288845c4": {
+      "same": true,
+      "reason": "Reports the cancellation-reservations import cycle."
+    },
+    "d76cf8d8eb92506d": {
+      "same": false,
+      "reason": "About complex functions, not the import cycle."
+    },
+    "d834cb0d5fadc91a": {
+      "same": false,
+      "reason": "Generic coupling; does not name the cycle."
+    },
+    "da28adad5b29f50a": {
+      "same": false,
+      "reason": "Separation of concerns claim, not the duplicated pass mark."
+    },
+    "dff9b8dd1e1ef9f2": {
+      "same": true,
+      "reason": "Identifies and used where or is required."
+    },
+    "e1ccf0787e52e110": {
+      "same": false,
+      "reason": "About the sign of amounts, not dividing by transaction count."
+    },
+    "e216bf079a982235": {
+      "same": true,
+      "reason": "Flags the lambda late-binding of loop variable user."
+    },
+    "efa7ac7e86cadf98": {
+      "same": false,
+      "reason": "About nesting in hide_reported, not lock/pin duplication."
+    },
+    "f03e9efc5d6c17c0": {
+      "same": false,
+      "reason": "Generic coupling on another module, not the cycle."
+    },
+    "f2567bbbe0b375c2": {
+      "same": true,
+      "reason": "Says VAT should cover room and extras subtotal."
+    },
+    "f3cb411282c28eef": {
+      "same": true,
+      "reason": "Identifies > should be >= for max_uses."
+    },
+    "f3fd7ee50065dab7": {
+      "same": false,
+      "reason": "About _to_employee, not SQL injection."
+    },
+    "f7486d8335223dfd": {
+      "same": true,
+      "reason": "Flags render_monthly_report as a long function."
+    },
+    "f7e7932a2b71cd3a": {
+      "same": false,
+      "reason": "About rounding, not the long function."
+    },
+    "f97694a5296db2be": {
+      "same": false,
+      "reason": "About fleet.report coupling, not the duplicated license rule."
+    },
+    "fef6afd630126cc8": {
+      "same": true,
+      "reason": "Identifies averaging over transactions instead of calendar months."
+    },
+    "020c59f33af28b52": {
+      "same": true,
+      "reason": "Describes the same reservations/cancellation import cycle from the other side."
+    },
+    "0699ca5e8b1006de": {
+      "same": true,
+      "reason": "Same defect: divides by number of expenses instead of months."
+    },
+    "072f6ac9e454299b": {
+      "same": false,
+      "reason": "Finding is about missing duplicate detection, not deep nesting."
+    },
+    "0790bcefde528af1": {
+      "same": true,
+      "reason": "Same duplication of Payslip.render_text."
+    },
+    "07a216b8267da17a": {
+      "same": true,
+      "reason": "Same duplicated CSV export steps."
+    },
+    "1ae83650d7297419": {
+      "same": true,
+      "reason": "Same path traversal via unchecked invoice name."
+    },
+    "1b0d33bcf249742e": {
+      "same": false,
+      "reason": "Finding is about retired vehicles being excluded, not the long function."
+    },
+    "227131502707c74a": {
+      "same": true,
+      "reason": "Same SQL injection via department."
+    },
+    "24831b4fb09473d1": {
+      "same": true,
+      "reason": "Same truncation instead of rounding."
+    },
+    "2715f8143deeddc2": {
+      "same": true,
+      "reason": "Same dead helper _right."
+    },
+    "2799b8c2e068ef2e": {
+      "same": true,
+      "reason": "Same VAT on room charge only."
+    },
+    "2b996c88b32023e5": {
+      "same": true,
+      "reason": "Same predictable ticket codes from random module."
+    },
+    "2c8f73070190390e": {
+      "same": true,
+      "reason": "Same re-implementation of per-category totals."
+    },
+    "2cd9804dfaa4d999": {
+      "same": true,
+      "reason": "Same purchase/refunds import cycle."
+    },
+    "2d84b855362accf2": {
+      "same": true,
+      "reason": "Same duplicated permission checks and audit code."
+    },
+    "34ec760a9eb40199": {
+      "same": true,
+      "reason": "Same timedelta.seconds ignoring days."
+    },
+    "3aebb13a100007ea": {
+      "same": true,
+      "reason": "Same mutable default rejected list."
+    },
+    "4522757a853f216d": {
+      "same": true,
+      "reason": "Same inclusive overlap comparison blocking back-to-back stays."
+    },
+    "47c8f7a1032852a9": {
+      "same": true,
+      "reason": "Same shared mutable default prerequisites."
+    },
+    "56d3d96e2fe1c02e": {
+      "same": true,
+      "reason": "Same missing reset of department totals."
+    },
+    "5beac0fd26f54734": {
+      "same": true,
+      "reason": "Same aggregate/alerts import cycle."
+    },
+    "632fa98a31fea1f7": {
+      "same": false,
+      "reason": "Finding is about seats returning to sale, not the deep nesting."
+    },
+    "6bd8dc48764e38e5": {
+      "same": true,
+      "reason": "Same swapped prorate arguments."
+    },
+    "6bedaffd8a2ca84f": {
+      "same": true,
+      "reason": "Same duplicated overtime rule with own constant."
+    },
+    "73f69bcc4021d99f": {
+      "same": false,
+      "reason": "Finding is about out-of-order trips, not duplicated license rule."
+    },
+    "745e471720827987": {
+      "same": true,
+      "reason": "Finding explicitly cites the deep nesting and suggests guard clauses."
+    },
+    "76f024d5d6b7e96e": {
+      "same": true,
+      "reason": "Same reversed rollover subtraction."
+    },
+    "7a256baceeddfb24": {
+      "same": true,
+      "reason": "Same deeply nested occupancy loop."
+    },
+    "7edabce9b89fbe70": {
+      "same": false,
+      "reason": "Finding is about unvalidated threshold, not nesting."
+    },
+    "81783d35bc3c1bfc": {
+      "same": true,
+      "reason": "Same unescaped display_name XSS."
+    },
+    "81f2ba69c9160bf4": {
+      "same": false,
+      "reason": "Finding is about non-atomic writes, not path traversal."
+    },
+    "88024826daf55b6b": {
+      "same": true,
+      "reason": "Same dead and duplicated _average_rate."
+    },
+    "8bd5312e391f9970": {
+      "same": true,
+      "reason": "Same missing run reset."
+    },
+    "992ae17ec1fe3209": {
+      "same": true,
+      "reason": "Same exclusive upper bound."
+    },
+    "a4e5247c3f08c388": {
+      "same": true,
+      "reason": "Same mutable default entries list."
+    },
+    "ab82737fa641f006": {
+      "same": true,
+      "reason": "Same crash for day 29-31 in short months."
+    },
+    "b0118f7d20b52570": {
+      "same": true,
+      "reason": "Same dead helper _percent_of_lessons."
+    },
+    "b0b7c9dfa20ff96b": {
+      "same": true,
+      "reason": "Same SQL injection in search."
+    },
+    "b29da00f50c71ded": {
+      "same": true,
+      "reason": "Same missing course-instructor check."
+    },
+    "b4d0f2c386d11e06": {
+      "same": true,
+      "reason": "Same path traversal via station_id."
+    },
+    "b5d16a5e724440f7": {
+      "same": true,
+      "reason": "Same storage-to-presentation dependency."
+    },
+    "bb11f4ee41a0b374": {
+      "same": false,
+      "reason": "Finding is about lock/pin duplication, not hide_reported nesting."
+    },
+    "bcd0948ce910473b": {
+      "same": true,
+      "reason": "Same any() instead of all()."
+    },
+    "bfed6618c16da71a": {
+      "same": true,
+      "reason": "Same revenue using base price instead of paid."
+    },
+    "c6d35f5f32262b38": {
+      "same": true,
+      "reason": "Same path traversal via receipt filename."
+    },
+    "c76d8b6399851e04": {
+      "same": true,
+      "reason": "Same permanent bans never active."
+    },
+    "cd4f14cea6c453cd": {
+      "same": true,
+      "reason": "Same duplicated license rule vs Driver.can_drive."
+    },
+    "d51880acfd7d8324": {
+      "same": false,
+      "reason": "Finding is about CSV formula injection, not duplicated export logic."
+    },
+    "d98b31237fe2a998": {
+      "same": true,
+      "reason": "Same late-binding lambda bug."
+    },
+    "dc4b5ce536dbfa53": {
+      "same": true,
+      "reason": "Same cancellation/reservations import cycle."
+    },
+    "dd86335bb5d6ce50": {
+      "same": true,
+      "reason": "Same text/posts import cycle."
+    },
+    "e53d6e4634d49215": {
+      "same": true,
+      "reason": "Same inclusion of first fill-up liters."
+    },
+    "e58e28c0792583d3": {
+      "same": true,
+      "reason": "Same mutable default special_requests."
+    },
+    "e601d5c15607792b": {
+      "same": true,
+      "reason": "Same hard-coded 70 duplicating pass rule."
+    },
+    "e79543234f66a3bb": {
+      "same": true,
+      "reason": "Same off-by-one in max_uses check."
+    },
+    "ea5ae877898a6e99": {
+      "same": true,
+      "reason": "Same LIFO pop on waitlist."
+    },
+    "eeefd9cdcc40445b": {
+      "same": true,
+      "reason": "Same half-even rounding instead of half-up."
+    },
+    "f4bdcea2e5886576": {
+      "same": true,
+      "reason": "Same and instead of or for due check."
+    },
+    "f576924983fd1d78": {
+      "same": false,
+      "reason": "Finding is about frost comparison mismatch, not the repeated 3.6 factor."
+    },
+    "fa339a71f49f94bd": {
+      "same": false,
+      "reason": "Finding is about re-enrolling completed courses, not any() vs all()."
+    },
+    "fce29692868c1650": {
+      "same": false,
+      "reason": "Finding is about capacity validation, not the mutable default."
+    }
+  }
+}

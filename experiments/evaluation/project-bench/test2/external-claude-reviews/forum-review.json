@@ -1,0 +1,82 @@
+[
+  {
+    "file": "forum/text.py",
+    "line_start": 56,
+    "line_end": 56,
+    "category": "security",
+    "title": "Stored XSS through unescaped display_name",
+    "explanation": "display_name is free text chosen by the user (User docstring) but is interpolated into the post HTML without html.escape, while the README promises everything users type is escaped. A display name like '<script>...</script>' is rendered verbatim next to every post of that user (verified with Board.render_page)."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 26,
+    "line_end": 28,
+    "category": "bug",
+    "title": "Permanent bans are never active",
+    "explanation": "is_active returns False whenever until is None, yet Ban and Moderation.ban document a ban without an end date as permanent. Every permanent ban has no effect and the user keeps posting (verified: is_banned is False one hour after a permanent ban). Should be `self.start <= now and (self.until is None or now < self.until)`."
+  },
+  {
+    "file": "forum/posts.py",
+    "line_start": 70,
+    "line_end": 70,
+    "category": "bug",
+    "title": "Edit window uses timedelta.seconds, ignoring days",
+    "explanation": "`(now - post.created_at).seconds` is only the seconds component of the timedelta (0..86399), not the total duration. A post created 1 day and 5 minutes ago gives 300 seconds, so its author may edit it again (verified); authors regain edit rights for 15 minutes every 24 hours forever. Use `now - post.created_at < EDIT_WINDOW`."
+  },
+  {
+    "file": "forum/notifications.py",
+    "line_start": 66,
+    "line_end": 77,
+    "category": "bug",
+    "title": "Late-binding lambda sends every mention notification to the last mentioned user",
+    "explanation": "The lambdas close over the loop variable `user` and run after the loop finishes, so all of them see its last value. A post mentioning @bob and @carl sends two notifications to carl and none to bob (verified). Bind the value at creation (e.g. `lambda user=user: ...` or functools.partial)."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 64,
+    "line_end": 67,
+    "category": "security",
+    "title": "Any staff member can lift any ban, including their own",
+    "explanation": "lift_bans only checks actor.is_staff. It applies no role hierarchy (ban requires a higher role than the target) and does not check whether the actor is banned, so a moderator banned by an admin can immediately lift their own ban (verified), and a moderator can undo bans an admin placed."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 55,
+    "line_end": 57,
+    "category": "security",
+    "title": "Banned staff can still ban other users",
+    "explanation": "lock_thread and pin_thread refuse actors who are banned, but ban() never checks is_banned for the actor, so a banned moderator keeps the power to ban members. Permission checks are inconsistent across moderator actions."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 58,
+    "line_end": 58,
+    "category": "bug",
+    "title": "Ban duration not validated",
+    "explanation": "days=0 or a negative value creates a ban whose `until` is not after `start`, which is never active, yet it is stored and written to the audit log as a ban. days should be required to be positive."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 120,
+    "line_end": 120,
+    "category": "bug",
+    "title": "Threshold of 0 or less hides every post",
+    "explanation": "threshold is not validated; with threshold <= 0, `len(reporters) >= threshold` is true for posts nobody reported, so every visible post passed in gets hidden."
+  },
+  {
+    "file": "forum/moderation.py",
+    "line_start": 82,
+    "line_end": 104,
+    "category": "quality",
+    "title": "lock_thread and pin_thread duplicate the permission checks",
+    "explanation": "The staff, banned and own-thread checks and the audit logging are copy-pasted between the two methods and only partly repeated in ban/lift_bans, which is how the permission rules have already drifted apart. A shared helper that authorises a moderator action would keep them consistent."
+  },
+  {
+    "file": "forum/text.py",
+    "line_start": 12,
+    "line_end": 12,
+    "category": "architecture",
+    "title": "Circular import between text and posts",
+    "explanation": "text.py imports forum.posts (Post, EDIT_GRACE) while posts.py imports forum.text (extract_mentions for Post.mentions). It only works because both use `from forum import module` and deferred annotations; importing names directly would break. The data model also depends on the HTML rendering module. Move mention extraction into its own module, or move was_edited next to the edit rules in posts."
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "file": "budget/budgets.py",
+    "line_start": 73,
+    "line_end": 73,
+    "category": "bug",
+    "title": "Rollover carries overspending forward instead of unspent money",
+    "explanation": "carry = max(spent - available, ZERO) is the overspend, so with rollover an under-spent month carries nothing and an over-spent month increases next month's budget by the amount overspent. The docstring says unspent money rolls over and overspending is never carried. It must be max(available - spent, ZERO). Verified: limit 100, spent 30 -> next month 100 (expected 170); limit 10, spent 30 -> next month 30 (expected 10)."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 116,
+    "line_end": 119,
+    "category": "security",
+    "title": "SQL injection in Ledger.search",
+    "explanation": "The search text is interpolated into the SQL string with an f-string. Any quote breaks the query (search(\"it's\") raises sqlite3.OperationalError) and crafted input can change the WHERE clause (e.g. \"' OR 1=1 OR '\") to read every transaction. Use a bound parameter: memo LIKE ? with '%' + text + '%', escaping % and _ with an ESCAPE clause so they are matched literally."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 90,
+    "line_end": 97,
+    "category": "bug",
+    "title": "Transfer is not atomic; money can vanish",
+    "explanation": "The withdrawal is committed by the first record() call before the deposit is attempted. If the deposit fails (unknown target account, DB error), the source has been debited with no matching credit. Verified: transfer('c', 'nope', ...) raises KeyError after reducing the balance of 'c' by the amount. Both inserts must run in one SQLite transaction, and the target should be validated before anything is written."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 77,
+    "line_end": 88,
+    "category": "bug",
+    "title": "Overdraft check runs outside the insert transaction (check-then-act race)",
+    "explanation": "The balance is read and compared in separate statements before the 'with self._conn' block that inserts the transaction. Two writers (threads or processes sharing the database file) can both pass the check and drive a no-overdraft account below zero. The balance read and insert should happen in a single transaction (BEGIN IMMEDIATE) or be enforced in SQL."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 48,
+    "line_end": 56,
+    "category": "bug",
+    "title": "No-overdraft account can be opened with a negative balance",
+    "explanation": "open_account accepts a negative opening balance even when allow_overdraft is False, violating the Account invariant that such accounts never go below zero (verified: opening -50 gives balance -50.00). Reject opening < 0 unless overdraft is allowed."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 44,
+    "line_end": 46,
+    "category": "quality",
+    "title": "Foreign keys not enforced and connection never closed",
+    "explanation": "SQLite ignores REFERENCES unless PRAGMA foreign_keys=ON is set on the connection, so the schema's account reference is not enforced at the database level. The Ledger also has no close() or context-manager support, so the connection (and file handle/locks for an on-disk database) leaks."
+  },
+  {
+    "file": "budget/ledger.py",
+    "line_start": 11,
+    "line_end": 11,
+    "category": "architecture",
+    "title": "Storage layer depends on the presentation layer",
+    "explanation": "ledger.py imports format_money from budget.report, and report.py imports budgets and summary. The persistence module therefore pulls in the reporting stack just to format an error message, inverting the dependency direction and inviting import cycles. Money formatting belongs in budget.money (or the error should carry the Decimal)."
+  },
+  {
+    "file": "budget/recurring.py",
+    "line_start": 48,
+    "line_end": 48,
+    "category": "bug",
+    "title": "Rules due on day 29-31 crash in short months",
+    "explanation": "date(year, month, rule.day_of_month) raises ValueError('day is out of range for month') for e.g. day_of_month=31 in February/April. The RecurringRule docstring says the rule is then due on the last day of the month. Clamp with min(rule.day_of_month, calendar.monthrange(year, month)[1]). This breaks occurrences, post_due and monthly_commitment for any such rule (verified)."
+  },
+  {
+    "file": "budget/recurring.py",
+    "line_start": 54,
+    "line_end": 64,
+    "category": "bug",
+    "title": "post_due is not idempotent and partially commits on failure",
+    "explanation": "Nothing records which occurrences were already posted, so running post_due twice over overlapping ranges posts rent/salary twice. Each record() commits individually, so when one occurrence fails (e.g. InsufficientFundsError) the earlier ones stay in the ledger while the exception propagates, and a retry duplicates them. Track posted (rule, date) pairs or check for existing transactions and post the batch in one transaction."
+  },
+  {
+    "file": "budget/summary.py",
+    "line_start": 61,
+    "line_end": 65,
+    "category": "bug",
+    "title": "monthly_average divides by number of expenses, not number of months",
+    "explanation": "The docstring says every calendar month from first's month to last's month counts, including months without spending, but spent is divided by len(expenses). Two expenses of 30 in January over Jan-Mar give 30.00 instead of 20.00 (verified). Divide by len(months_between(month_key(first), month_key(last)))."
+  },
+  {
+    "file": "budget/report.py",
+    "line_start": 28,
+    "line_end": 31,
+    "category": "quality",
+    "title": "Per-category spending logic duplicated and inconsistent with budgets",
+    "explanation": "render_month re-implements the per-category totals already in summary.spending_by_category. In addition, summary/report count only expenses (refunds are ignored) while budgets.spent_in_month nets refunds against spending, so the same month's category 'spending' differs between the report and the budget status. One shared definition should be used."
+  },
+  {
+    "file": "budget/report.py",
+    "line_start": 21,
+    "line_end": 22,
+    "category": "quality",
+    "title": "Dead helper _right",
+    "explanation": "_right is never used anywhere in the package; render_month does its own alignment with format specs."
+  }
+]

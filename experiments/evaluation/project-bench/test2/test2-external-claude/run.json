@@ -1,0 +1,12 @@
+{
+  "protocol": "project-bench-v2",
+  "split": "test2",
+  "arm": "external-claude",
+  "started_at": "2026-10-27T18:28:05+00:00",
+  "frozen": false,
+  "external": true,
+  "git": {
+    "commit": "",
+    "dirty": false
+  }
+}

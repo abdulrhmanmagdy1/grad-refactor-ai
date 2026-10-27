@@ -1,0 +1,513 @@
+{
+  "summaries": {
+    "static": {
+      "projects": 8,
+      "issues": {
+        "count": 20,
+        "total": 55,
+        "rate": 0.3636,
+        "ci95": [
+          0.2493,
+          0.4958
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 4,
+          "total": 8,
+          "rate": 0.5,
+          "ci95": [
+            0.2152,
+            0.7848
+          ],
+          "right_category": 4
+        },
+        "bug": {
+          "count": 5,
+          "total": 24,
+          "rate": 0.2083,
+          "ci95": [
+            0.0924,
+            0.4047
+          ],
+          "right_category": 5
+        },
+        "quality": {
+          "count": 8,
+          "total": 15,
+          "rate": 0.5333,
+          "ci95": [
+            0.3012,
+            0.7519
+          ],
+          "right_category": 8
+        },
+        "security": {
+          "count": 3,
+          "total": 8,
+          "rate": 0.375,
+          "ci95": [
+            0.1368,
+            0.6943
+          ],
+          "right_category": 3
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 19,
+          "total": 55,
+          "rate": 0.3455,
+          "ci95": [
+            0.2336,
+            0.4775
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 5,
+            "total": 24,
+            "rate": 0.2083,
+            "ci95": [
+              0.0924,
+              0.4047
+            ]
+          },
+          "quality": {
+            "count": 7,
+            "total": 15,
+            "rate": 0.4667,
+            "ci95": [
+              0.2481,
+              0.6988
+            ]
+          },
+          "security": {
+            "count": 3,
+            "total": 8,
+            "rate": 0.375,
+            "ci95": [
+              0.1368,
+              0.6943
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 28,
+        "on_decoy": 2,
+        "on_issue": 26,
+        "on_issue_share": {
+          "count": 26,
+          "total": 28,
+          "rate": 0.9286,
+          "ci95": [
+            0.7735,
+            0.9802
+          ]
+        },
+        "by_origin": {
+          "static:on_decoy": 2,
+          "static:on_issue": 26
+        }
+      },
+      "decoys_hit": {
+        "count": 2,
+        "total": 16,
+        "rate": 0.125,
+        "ci95": [
+          0.035,
+          0.3602
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        }
+      },
+      "fixes": {},
+      "ready_fixes": 0,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 0,
+        "dropped_on_seeded_issue": 0
+      },
+      "review_s": {
+        "median": 0.98,
+        "max": 1.11
+      },
+      "model_calls": 0
+    },
+    "full-14b": {
+      "projects": 8,
+      "issues": {
+        "count": 39,
+        "total": 55,
+        "rate": 0.7091,
+        "ci95": [
+          0.5786,
+          0.8123
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 8,
+          "total": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ],
+          "right_category": 8
+        },
+        "bug": {
+          "count": 15,
+          "total": 24,
+          "rate": 0.625,
+          "ci95": [
+            0.4271,
+            0.7884
+          ],
+          "right_category": 15
+        },
+        "quality": {
+          "count": 10,
+          "total": 15,
+          "rate": 0.6667,
+          "ci95": [
+            0.4171,
+            0.8482
+          ],
+          "right_category": 8
+        },
+        "security": {
+          "count": 6,
+          "total": 8,
+          "rate": 0.75,
+          "ci95": [
+            0.4093,
+            0.9285
+          ],
+          "right_category": 3
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 28,
+          "total": 55,
+          "rate": 0.5091,
+          "ci95": [
+            0.3808,
+            0.6362
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          },
+          "bug": {
+            "count": 13,
+            "total": 24,
+            "rate": 0.5417,
+            "ci95": [
+              0.3507,
+              0.7211
+            ]
+          },
+          "quality": {
+            "count": 7,
+            "total": 15,
+            "rate": 0.4667,
+            "ci95": [
+              0.2481,
+              0.6988
+            ]
+          },
+          "security": {
+            "count": 4,
+            "total": 8,
+            "rate": 0.5,
+            "ci95": [
+              0.2152,
+              0.7848
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 166,
+        "unlabelled": 85,
+        "on_issue": 72,
+        "on_decoy": 9,
+        "on_issue_share": {
+          "count": 72,
+          "total": 166,
+          "rate": 0.4337,
+          "ci95": [
+            0.3607,
+            0.5098
+          ]
+        },
+        "by_origin": {
+          "agent:on_decoy": 7,
+          "agent:on_issue": 46,
+          "agent:unlabelled": 85,
+          "static:on_decoy": 2,
+          "static:on_issue": 26
+        }
+      },
+      "decoys_hit": {
+        "count": 6,
+        "total": 16,
+        "rate": 0.375,
+        "ci95": [
+          0.1848,
+          0.6136
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 1,
+          "total": 32,
+          "rate": 0.0312,
+          "ci95": [
+            0.0055,
+            0.1574
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 14,
+          "total": 32,
+          "rate": 0.4375,
+          "ci95": [
+            0.2817,
+            0.6067
+          ]
+        }
+      },
+      "fixes": {
+        "proposal_ready/resolves": 1,
+        "rejected/harmful": 23,
+        "rejected/no_effect": 12,
+        "rejected/no_proposal": 7,
+        "rejected/resolves": 1,
+        "uncertain/harmful": 2,
+        "uncertain/no_effect": 21,
+        "uncertain/resolves": 9
+      },
+      "ready_fixes": 1,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 225,
+        "dropped_on_seeded_issue": 70
+      },
+      "review_s": {
+        "median": 852.06,
+        "max": 997.95
+      },
+      "model_calls": 693
+    },
+    "external-claude": {
+      "projects": 8,
+      "issues": {
+        "count": 53,
+        "total": 55,
+        "rate": 0.9636,
+        "ci95": [
+          0.8768,
+          0.99
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 8,
+          "total": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ],
+          "right_category": 6
+        },
+        "bug": {
+          "count": 24,
+          "total": 24,
+          "rate": 1.0,
+          "ci95": [
+            0.862,
+            1.0
+          ],
+          "right_category": 24
+        },
+        "quality": {
+          "count": 13,
+          "total": 15,
+          "rate": 0.8667,
+          "ci95": [
+            0.6212,
+            0.9626
+          ],
+          "right_category": 9
+        },
+        "security": {
+          "count": 8,
+          "total": 8,
+          "rate": 1.0,
+          "ci95": [
+            0.6756,
+            1.0
+          ],
+          "right_category": 8
+        }
+      },
+      "confirmed": {
+        "issues": {
+          "count": 49,
+          "total": 55,
+          "rate": 0.8909,
+          "ci95": [
+            0.7817,
+            0.949
+          ]
+        },
+        "by_category": {
+          "architecture": {
+            "count": 8,
+            "total": 8,
+            "rate": 1.0,
+            "ci95": [
+              0.6756,
+              1.0
+            ]
+          },
+          "bug": {
+            "count": 24,
+            "total": 24,
+            "rate": 1.0,
+            "ci95": [
+              0.862,
+              1.0
+            ]
+          },
+          "quality": {
+            "count": 9,
+            "total": 15,
+            "rate": 0.6,
+            "ci95": [
+              0.3575,
+              0.8018
+            ]
+          },
+          "security": {
+            "count": 8,
+            "total": 8,
+            "rate": 1.0,
+            "ci95": [
+              0.6756,
+              1.0
+            ]
+          }
+        },
+        "issues_located_but_not_judged": 0
+      },
+      "findings": {
+        "total": 103,
+        "on_issue": 60,
+        "unlabelled": 38,
+        "on_decoy": 5,
+        "on_issue_share": {
+          "count": 60,
+          "total": 103,
+          "rate": 0.5825,
+          "ci95": [
+            0.486,
+            0.6731
+          ]
+        },
+        "by_origin": {
+          "static:on_decoy": 5,
+          "static:on_issue": 60,
+          "static:unlabelled": 38
+        }
+      },
+      "decoys_hit": {
+        "count": 4,
+        "total": 16,
+        "rate": 0.25,
+        "ci95": [
+          0.1018,
+          0.495
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        }
+      },
+      "fixes": {},
+      "ready_fixes": 0,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 0,
+        "dropped_on_seeded_issue": 0
+      },
+      "review_s": {
+        "median": 0.0,
+        "max": 0.0
+      },
+      "model_calls": 0
+    }
+  },
+  "paired": null,
+  "paired_judged": null
+}

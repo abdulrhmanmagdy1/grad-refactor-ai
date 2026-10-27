@@ -1,0 +1,130 @@
+[
+  {
+    "file": "enrollment/catalog.py",
+    "line_start": 25,
+    "line_end": 41,
+    "category": "bug",
+    "title": "Mutable default prerequisites list is shared between courses",
+    "explanation": "prerequisites defaults to a single [] object, which is stored directly in each Course (line 32). add_prerequisite appends to course.prerequisites (line 41), mutating that shared list, so every course created without explicit prerequisites gains the new prerequisite. Verified: after add_prerequisite('B', 'A'), course C also requires A. The caller's list is also aliased when passed explicitly. Use None as default and copy with list(prerequisites)."
+  },
+  {
+    "file": "enrollment/catalog.py",
+    "line_start": 36,
+    "line_end": 41,
+    "category": "bug",
+    "title": "add_prerequisite allows self-references and cycles",
+    "explanation": "Nothing prevents add_prerequisite('X', 'X') or A->B->A. Such courses can never be enrolled in, since enrollment requires completing a prerequisite that itself requires them. Reject code == required and detect cycles before appending."
+  },
+  {
+    "file": "enrollment/catalog.py",
+    "line_start": 19,
+    "line_end": 34,
+    "category": "bug",
+    "title": "Course capacity is not validated",
+    "explanation": "capacity can be 0 or negative; such a course silently waitlists every student forever. Validate capacity >= 1 (or treat 0 explicitly as closed)."
+  },
+  {
+    "file": "enrollment/catalog.py",
+    "line_start": 43,
+    "line_end": 45,
+    "category": "bug",
+    "title": "Duplicate lesson ids break progress percent",
+    "explanation": "add_lesson appends without checking for duplicates. percent_complete divides by len(course.lessons) while finished lessons are a set, so a course with a duplicated lesson can never reach 100% even though all_lessons_done (set comparison) says it is finished."
+  },
+  {
+    "file": "enrollment/registration.py",
+    "line_start": 52,
+    "line_end": 52,
+    "category": "bug",
+    "title": "Prerequisite check uses any() instead of all()",
+    "explanation": "A student who completed only one of several prerequisites is allowed to enroll. The docstring and README require every prerequisite. Verified: a course needing P1 and P2 accepts a student who completed only P1. Use all(...)."
+  },
+  {
+    "file": "enrollment/registration.py",
+    "line_start": 89,
+    "line_end": 89,
+    "category": "bug",
+    "title": "Waitlist promotion is last-in-first-out",
+    "explanation": "queue.pop() removes the most recently waitlisted student, but the waitlist is documented as first-come-first-served and drop() promises the student who has waited longest. Verified: with b, c, d waiting, dropping a promotes d. Use queue.pop(0) (or a deque.popleft())."
+  },
+  {
+    "file": "enrollment/registration.py",
+    "line_start": 54,
+    "line_end": 71,
+    "category": "bug",
+    "title": "Students can re-enroll in a course they already completed",
+    "explanation": "enroll only refuses students currently seated or waitlisted; a student with the course in _completed can take a seat again, consuming capacity."
+  },
+  {
+    "file": "enrollment/certificates.py",
+    "line_start": 81,
+    "line_end": 81,
+    "category": "bug",
+    "title": "Completed students keep their seat forever",
+    "explanation": "Issuing a certificate records completion but leaves the student in the course's enrolled list (eligibility even requires them to stay enrolled). Seats of finished students are never released and waitlisted students are never promoted, so a course fills up permanently after `capacity` completions."
+  },
+  {
+    "file": "enrollment/quizzes.py",
+    "line_start": 57,
+    "line_end": 59,
+    "category": "security",
+    "title": "Any instructor can override any course's grades",
+    "explanation": "The docstring says only the instructor who teaches the quiz's course may override a score, but the code only checks actor.role is INSTRUCTOR. An instructor of another course can set any student's score on any quiz, which also makes that student eligible for a certificate. Compare actor.user_id with catalog.course(quiz.course_code).instructor_id."
+  },
+  {
+    "file": "enrollment/quizzes.py",
+    "line_start": 45,
+    "line_end": 50,
+    "category": "bug",
+    "title": "Score overrides cannot lower a grade",
+    "explanation": "override_score appends the manual result as just another attempt, and best() picks the highest score. A regrade that reduces a score (or corrects a wrongly high one) has no effect on pass/fail, certificates or the transcript. An override should replace or take precedence over graded attempts."
+  },
+  {
+    "file": "enrollment/quizzes.py",
+    "line_start": 35,
+    "line_end": 39,
+    "category": "bug",
+    "title": "Quiz submissions accepted from students not enrolled in the course",
+    "explanation": "submit grades and stores attempts for any student id without checking that the student is enrolled in the quiz's course, unlike ProgressTracker.complete_lesson which enforces enrollment. Attempts are also unlimited, so answers can be brute-forced while only the best attempt counts."
+  },
+  {
+    "file": "enrollment/certificates.py",
+    "line_start": 22,
+    "line_end": 28,
+    "category": "bug",
+    "title": "Certificate file names collide between different students/courses",
+    "explanation": "The name is f'{student_id}-{code}' with every non [A-Za-z0-9_-] character replaced by '_'. Student 'a-b' in course 'c' and student 'a' in course 'b-c' both map to 'a-b-c.txt' (verified), as do ids differing only in '.' vs '_'. One student's certificate silently overwrites another's. Use an unambiguous separator/encoding or a per-student subdirectory, and refuse to overwrite."
+  },
+  {
+    "file": "enrollment/certificates.py",
+    "line_start": 52,
+    "line_end": 52,
+    "category": "quality",
+    "title": "Pass threshold duplicated instead of using is_passing",
+    "explanation": "quizzes_passed hard-codes 70 instead of using quizzes.is_passing / PASS_PERCENT, so the certificate rule and the transcript's pass/fail verdict can drift apart if the threshold changes."
+  },
+  {
+    "file": "enrollment/models.py",
+    "line_start": 41,
+    "line_end": 62,
+    "category": "bug",
+    "title": "Quiz and question data are not validated",
+    "explanation": "Question.answer is not checked against the choices range (an out-of-range answer makes the question unanswerable) and points can be zero or negative. A quiz with no questions has max_score 0, so is_passing (0 >= 0) is always true and the certificate check passes it automatically."
+  },
+  {
+    "file": "enrollment/models.py",
+    "line_start": 25,
+    "line_end": 38,
+    "category": "architecture",
+    "title": "Mutable Course objects leak catalog invariants",
+    "explanation": "Catalog.course()/courses() return the live, mutable Course dataclass, so any caller can change capacity, append unvalidated prerequisites or lessons and bypass the checks in Catalog. Likewise Quiz.questions can be edited after results were recorded, leaving stored QuizResult.max_score inconsistent. Make these value objects immutable (tuples) and route changes through Catalog."
+  },
+  {
+    "file": "enrollment/progress.py",
+    "line_start": 55,
+    "line_end": 59,
+    "category": "quality",
+    "title": "Dead function _percent_of_lessons",
+    "explanation": "_percent_of_lessons is never used and contradicts percent_complete (float with rounding vs integer floor), inviting confusion about which rule is authoritative."
+  }
+]

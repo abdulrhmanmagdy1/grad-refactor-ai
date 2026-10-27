@@ -1,0 +1,90 @@
+[
+  {
+    "file": "fleet/fuel.py",
+    "line_start": 33,
+    "line_end": 34,
+    "category": "bug",
+    "title": "Mutable default list shared between FuelLog instances",
+    "explanation": "`entries: list[FuelEntry] = []` is evaluated once and the list is stored without copying. Every FuelLog() created without arguments shares the same list, so fill-ups added to one log appear in all others (verified: a fresh FuelLog() already contains an entry added to an earlier one). Passing a list also aliases the caller's list, which add() then mutates. Use `entries: list[FuelEntry] | None = None` and `list(entries or [])`."
+  },
+  {
+    "file": "fleet/fuel.py",
+    "line_start": 95,
+    "line_end": 95,
+    "category": "bug",
+    "title": "Consumption counts the fuel of the first full-tank fill-up",
+    "explanation": "The docstring says the liters bought at the first full-tank fill-up were burnt before the measured stretch and must not be counted, but the slice `ordered[first : last + 1]` includes them. Full fill-ups of 40 L at 1000 km and 30 L at 1500 km give 14.0 L/100km instead of 6.0. The slice should be `ordered[first + 1 : last + 1]`."
+  },
+  {
+    "file": "fleet/maintenance.py",
+    "line_start": 72,
+    "line_end": 72,
+    "category": "bug",
+    "title": "Service due only when BOTH limits passed instead of whichever comes first",
+    "explanation": "Rules are due by distance or by time, whichever comes first (ServiceRule docstring and README), but is_due returns `km_due and time_due`. A vehicle that drove 50 000 km in a month is never due, and a rule with only one limit set (the other left None, which the class explicitly allows) can never be due at all because the missing limit's flag is always False. Should be `km_due or time_due`."
+  },
+  {
+    "file": "fleet/maintenance.py",
+    "line_start": 83,
+    "line_end": 84,
+    "category": "bug",
+    "title": "Never-serviced vehicle assumed to have joined the fleet at 0 km",
+    "explanation": "When there is no service record, the baseline odometer is hard-coded to 0.0. Vehicles that join the fleet with an existing odometer reading (e.g. the 10 000 km Transit in the tests, or any used vehicle) are reported as due by distance even though they have driven nothing since joining. The odometer at in_service_since is not stored anywhere, so the model cannot compute this correctly."
+  },
+  {
+    "file": "fleet/maintenance.py",
+    "line_start": 47,
+    "line_end": 47,
+    "category": "quality",
+    "title": "Duplicate rule names silently overwrite each other",
+    "explanation": "Rules are keyed by name in a dict comprehension, so two rules with the same name silently keep only the last one, unlike Fleet.add_vehicle/add_driver which reject duplicate ids. A misconfigured plan loses a rule without any error."
+  },
+  {
+    "file": "fleet/storage.py",
+    "line_start": 25,
+    "line_end": 28,
+    "category": "security",
+    "title": "Path traversal through the uploaded receipt filename",
+    "explanation": "Only the suffix of the user-supplied filename is checked; the name itself is joined into the path unchanged. Uploading '../../../evil.pdf' (or an absolute path such as '/etc/x.pdf' or 'C:/x.pdf', which in pathlib replaces the root entirely) makes save_receipt write outside root/receipts/<entry_id>/ (verified: resolves outside the receipts directory), so a driver can create or overwrite arbitrary .pdf/.jpg/.png files. Use Path(filename).name, reject separators, and check that the resolved path stays under the receipts directory."
+  },
+  {
+    "file": "fleet/storage.py",
+    "line_start": 44,
+    "line_end": 50,
+    "category": "architecture",
+    "title": "Only vehicles and drivers are persisted; trips, fuel and services are lost",
+    "explanation": "save_fleet/load_fleet store vehicles and drivers only. TripLog, FuelLog and MaintenancePlan keep their history purely in memory with no save/load path (TripLog restarts ids at 1), yet receipts are written to disk keyed by fuel entry_id. After a restart the receipt folders refer to entries that no longer exist, and new entries reuse the same ids, so new receipts land in (and can overwrite) old entries' folders."
+  },
+  {
+    "file": "fleet/storage.py",
+    "line_start": 50,
+    "line_end": 50,
+    "category": "quality",
+    "title": "Fleet file overwritten in place, not atomically",
+    "explanation": "write_text truncates the only copy of the fleet data and then writes it; a crash or serialization error part way leaves a corrupt or empty file and the data is lost. Write to a temporary file in the same directory and os.replace it."
+  },
+  {
+    "file": "fleet/report.py",
+    "line_start": 30,
+    "line_end": 30,
+    "category": "bug",
+    "title": "Cost report ignores retired vehicles' spending in the period",
+    "explanation": "The report iterates only fleet.active_vehicles(). A vehicle retired after or during the reported period had real fuel and service costs and distance in that period, but it disappears from the report and from the fleet Total line, so reports understate fleet costs and past reports change retroactively when a vehicle is retired."
+  },
+  {
+    "file": "fleet/trips.py",
+    "line_start": 63,
+    "line_end": 63,
+    "category": "quality",
+    "title": "License check duplicates Driver.can_drive",
+    "explanation": "TripLog.record reimplements the license-validity rule (`day > driver.license_expires`) instead of calling driver.can_drive(day). The rule now lives in two places and can drift apart."
+  },
+  {
+    "file": "fleet/trips.py",
+    "line_start": 59,
+    "line_end": 79,
+    "category": "bug",
+    "title": "Trips can be recorded out of date order; 'oldest first' not guaranteed",
+    "explanation": "record() never checks that the trip day is not earlier than the vehicle's previous trip, while the odometer logic assumes trips arrive chronologically. A late-entered older trip gets its start_km from a later trip, and trips_for returns insertion order although its docstring promises oldest first. Reject out-of-order days or sort by day."
+  }
+]

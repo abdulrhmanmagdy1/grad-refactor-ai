@@ -42,3 +42,30 @@ calls the code wrongly fails; only 9 reached the spec checker and 2 were blamed 
 code. So the gain over static comes from the 14B agents, as in the v1 14B arm (27/55 on
 the v1 test split). That the filter is too broad is a finding of this run, not something
 tuned on it; see the report for the follow-up.
+
+## Reference arm: Claude as the reviewer
+
+To see how far the local pipeline is from a frontier model, Claude (Opus, through Claude
+Code subagents) reviewed the same 8 projects: four separate sessions, each given only a
+copy of two projects' code folders (no manifest, hidden tests or reference fix), allowed to
+read the code and run the project's tests, asked to report every real problem as JSON. Its
+findings ([external-claude-reviews/](external-claude-reviews/)) were scored with the same
+matching rule by [scripts/project_benchmark_external.py](../../../../scripts/project_benchmark_external.py)
+([test2-external-claude/](test2-external-claude/)), and the 61 new pairs were judged by a
+new judge session with the same instructions ([judge/labels-claude-new.json](judge/labels-claude-new.json),
+merged in [judge/labels-all.json](judge/labels-all.json)); tables in
+[report-with-claude.md](report-with-claude.md).
+
+| | Static | Full (14B, local pipeline) | Claude (reference) |
+|---|---|---|---|
+| Issues found, judge confirmed | 19/55 (35%) | 28/55 (51%) | 49/55 (89%) |
+| ... bug | 5/24 | 13/24 | 24/24 |
+| ... security | 3/8 | 4/8 | 8/8 |
+| ... architecture | 4/8 | 4/8 | 8/8 |
+| ... quality | 7/15 | 7/15 | 9/15 |
+| Findings (off every seeded place, on decoys) | 28 (0, 2) | 166 (85, 9) | 103 (38, 5) |
+
+The comparison favors Claude in ways the numbers do not show: the projects were written by
+Claude models and the judge is a Claude model, so the reference reviewer shares their way of
+seeding and describing problems. It also proposed no fixes, so the fix-safety measures do not
+apply to it. It is a ceiling for orientation, not a result of this project.

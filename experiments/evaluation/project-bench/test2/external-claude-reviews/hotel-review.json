@@ -1,0 +1,138 @@
+[
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 58,
+    "line_end": 58,
+    "category": "bug",
+    "title": "Overlap check treats the check-out day as occupied",
+    "explanation": "overlaps() uses inclusive comparisons (<=). A stay ending on day X conflicts with a new stay starting on day X, and vice versa, so back-to-back bookings are refused even though the guest does not sleep there on the check-out night (README and docstring say the room can be sold again that day). Must be self.check_in < check_out and check_in < self.check_out."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 122,
+    "line_end": 122,
+    "category": "bug",
+    "title": "Mutable default argument for special_requests",
+    "explanation": "special_requests defaults to a single shared list. Every reservation made without requests gets that same list object, so add_request() on one reservation appends the request to all of them (and to every future default booking)."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 136,
+    "line_end": 136,
+    "category": "bug",
+    "title": "Caller's special_requests list is stored by reference",
+    "explanation": "The list passed in is stored as-is instead of copied, so later add_request() calls mutate the caller's list (and any reservation sharing it), and the caller mutating its list silently changes the reservation."
+  },
+  {
+    "file": "hotel/invoice.py",
+    "line_start": 64,
+    "line_end": 65,
+    "category": "bug",
+    "title": "VAT charged on the room charge only, not on extras",
+    "explanation": "vat is computed from room_charge instead of subtotal, so extras (minibar, laundry...) are invoiced without VAT, contrary to the docstring 'VAT is charged on the whole subtotal, room and extras alike'. Under-collects tax on every invoice with extras."
+  },
+  {
+    "file": "hotel/invoice.py",
+    "line_start": 101,
+    "line_end": 106,
+    "category": "security",
+    "title": "Path traversal in InvoiceArchive.read",
+    "explanation": "name comes from the receipt typed in at the front desk and is joined to root without validation. '../../secret.txt' or an absolute path reads any file readable by the process, despite the docstring promising only archived invoices can be read. Resolve the path and check it is inside root (or only accept names from names())."
+  },
+  {
+    "file": "hotel/invoice.py",
+    "line_start": 87,
+    "line_end": 95,
+    "category": "security",
+    "title": "Archive file name built from unvalidated reference",
+    "explanation": "The file name is derived from reservation.reference, which can come from restored records (ReservationBook.restore does no validation). A reference containing path separators or '..' makes store() write outside the archive directory. store() also silently overwrites an existing archived invoice with the same reference."
+  },
+  {
+    "file": "hotel/cancellation.py",
+    "line_start": 8,
+    "line_end": 8,
+    "category": "architecture",
+    "title": "Circular import between cancellation and reservations",
+    "explanation": "cancellation imports hotel.reservations while reservations imports hotel.cancellation. It only works because of the 'from hotel import reservations' module form; importing a name directly or changing import order breaks it. The fee policy should take plain values, or Reservation/Status should live in a module that does not depend on the policy."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 12,
+    "line_end": 12,
+    "category": "architecture",
+    "title": "Reservation book imports the policy module that imports it back",
+    "explanation": "Other side of the import cycle: reservations depends on cancellation, which depends on reservations for Reservation/Status."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 61,
+    "line_end": 74,
+    "category": "bug",
+    "title": "Special requests containing '|' are corrupted on export/restore",
+    "explanation": "records() joins requests with '|' (line 176) and _from_record splits on '|' (line 72) with no escaping. A request such as 'late arrival | after 23:00' comes back as two requests; empty items are also dropped. Use a structured encoding such as a JSON list."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 182,
+    "line_end": 198,
+    "category": "bug",
+    "title": "restore() performs no validation and is not atomic",
+    "explanation": "Restored records are appended without checking for duplicate references, unknown room numbers, overlapping active bookings or check_out > check_in (a zero-night record later causes division by zero in fee_for and _average_rate). If a record fails midway, earlier records stay loaded, leaving the book partially restored. Duplicate references make get() return the wrong one."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 196,
+    "line_end": 196,
+    "category": "bug",
+    "title": "Reference number parsed outside the error handling",
+    "explanation": "int(reservation.reference[1:]) runs after the try block, so a malformed reference (e.g. 'X12A') raises ValueError without the promised log entry, and after the reservation has already been appended to the book."
+  },
+  {
+    "file": "hotel/reservations.py",
+    "line_start": 86,
+    "line_end": 95,
+    "category": "architecture",
+    "title": "Mutable Reservation objects leak out of the book",
+    "explanation": "get()/all()/reserve() return the live mutable Reservation dataclasses, so callers can change status, dates or price directly and bypass the availability and cancellation rules enforced by the book."
+  },
+  {
+    "file": "hotel/rooms.py",
+    "line_start": 50,
+    "line_end": 52,
+    "category": "bug",
+    "title": "add_room accepts a room whose type differs from the registered type",
+    "explanation": "Only the type code is checked. A Room built with RoomType('DBL', ..., base_rate=1) is accepted even though the registered DBL type has another rate or capacity; pricing then uses room.room_type and charges the wrong rate. Compare with (or bind to) the catalog's registered RoomType."
+  },
+  {
+    "file": "hotel/rooms.py",
+    "line_start": 81,
+    "line_end": 85,
+    "category": "bug",
+    "title": "Rooms can be taken out of service while they have active bookings",
+    "explanation": "set_in_service(False) does not check for active reservations, leaving confirmed guests booked into a room the rest of the system considers unavailable, with no warning."
+  },
+  {
+    "file": "hotel/reports.py",
+    "line_start": 37,
+    "line_end": 46,
+    "category": "quality",
+    "title": "Deeply nested O(rooms x reservations) occupancy loop",
+    "explanation": "For every room the whole reservation list is scanned with four levels of nested ifs and the loop does not stop on the first match. Hard to read and quadratic; it also re-implements the night-overlap logic that belongs to Reservation. Index active reservations by room once."
+  },
+  {
+    "file": "hotel/reports.py",
+    "line_start": 68,
+    "line_end": 70,
+    "category": "quality",
+    "title": "Dead and duplicated helper _average_rate",
+    "explanation": "_average_rate is never used and duplicates the average-night computation in cancellation.fee_for."
+  },
+  {
+    "file": "hotel/reports.py",
+    "line_start": 19,
+    "line_end": 20,
+    "category": "quality",
+    "title": "Frozen dataclass holds mutable lists",
+    "explanation": "DailySummary is frozen but arrivals/departures are lists, so the 'immutable' summary can still be mutated; use tuples."
+  }
+]

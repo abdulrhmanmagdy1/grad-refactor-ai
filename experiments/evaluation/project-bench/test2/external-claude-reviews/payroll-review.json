@@ -1,0 +1,90 @@
+[
+  {
+    "file": "payroll/money.py",
+    "line_start": 11,
+    "line_end": 13,
+    "category": "bug",
+    "title": "to_cents rounds half-even, not half-up",
+    "explanation": "quantize() without a rounding argument uses the context default ROUND_HALF_EVEN, so 2.345 becomes 2.34 instead of 2.35, contradicting the docstring and README. Every payroll amount is affected. Pass rounding=ROUND_HALF_UP."
+  },
+  {
+    "file": "payroll/payslips.py",
+    "line_start": 83,
+    "line_end": 83,
+    "category": "bug",
+    "title": "Prorate arguments swapped for salaried new joiners",
+    "explanation": "prorate(employee.rate, days_in_month, worked) computes salary * days_in_month / worked instead of salary * worked / days_in_month. Someone joining on 16 April with a 3000 salary is paid 6000 instead of 1500; the more days missed, the more they are paid."
+  },
+  {
+    "file": "payroll/report.py",
+    "line_start": 40,
+    "line_end": 50,
+    "category": "bug",
+    "title": "Department totals are not reset between departments",
+    "explanation": "When the department changes only headcount is reset (line 46); gross, deductions and net keep accumulating, so every department after the first includes the money of all previous departments, contrary to the docstring."
+  },
+  {
+    "file": "payroll/employees.py",
+    "line_start": 106,
+    "line_end": 111,
+    "category": "security",
+    "title": "SQL injection in by_department",
+    "explanation": "The department typed in by HR on the web form is interpolated into the SQL string. A value like x' OR '1'='1 returns every employee and other payloads can read arbitrary data; a quote in a legitimate department name breaks the query. Use a ? parameter."
+  },
+  {
+    "file": "payroll/payslips.py",
+    "line_start": 94,
+    "line_end": 96,
+    "category": "bug",
+    "title": "Timesheet period is not checked against the payslip period",
+    "explanation": "build_payslip only checks the employee id. A March timesheet passed for an April payslip is silently paid as April hours. Check timesheet.year/month equal year/month."
+  },
+  {
+    "file": "payroll/timesheets.py",
+    "line_start": 57,
+    "line_end": 63,
+    "category": "bug",
+    "title": "Overtime lost for ISO weeks spanning two months",
+    "explanation": "A timesheet only holds the days of one month, so a week that straddles a month boundary is split in two and each part is compared to 40 hours separately. 30 h at the end of March plus 20 h at the start of April (50 h in one ISO week) produces no overtime at all, violating the 'above 40 hours in an ISO week' rule."
+  },
+  {
+    "file": "payroll/tax.py",
+    "line_start": 52,
+    "line_end": 54,
+    "category": "bug",
+    "title": "Flat health insurance can make net pay negative",
+    "explanation": "Health insurance of 25.00 is charged whenever gross > 0. An employee whose gross is below the deductions (e.g. one hour worked) gets a negative net, which then goes into the bank transfer file as a negative payment. Cap deductions at gross or carry the shortfall."
+  },
+  {
+    "file": "payroll/money.py",
+    "line_start": 26,
+    "line_end": 31,
+    "category": "bug",
+    "title": "parse_amount raises InvalidOperation and accepts NaN/Infinity",
+    "explanation": "Invalid text such as 'abc' raises decimal.InvalidOperation, not ValueError, so callers handling the documented ValueError miss it. 'NaN' parses and returns NaN; 'Infinity' raises from quantize. Commas are stripped anywhere ('1,2,3' -> 123). Validate the format and finiteness."
+  },
+  {
+    "file": "payroll/report.py",
+    "line_start": 56,
+    "line_end": 69,
+    "category": "architecture",
+    "title": "Overtime rule duplicated in the report module",
+    "explanation": "overtime_by_department re-implements split_overtime with its own WEEKLY_HOURS constant (line 17) instead of reusing timesheets.split_overtime/OVERTIME_THRESHOLD, so the two can drift apart. It also raises KeyError for a timesheet whose employee is not in the list."
+  },
+  {
+    "file": "payroll/report.py",
+    "line_start": 72,
+    "line_end": 82,
+    "category": "quality",
+    "title": "Payslip rendering duplicated",
+    "explanation": "_payslip_block is a copy of Payslip.render_text; any change to the payslip layout must be made twice. Reuse render_text."
+  },
+  {
+    "file": "payroll/employees.py",
+    "line_start": 59,
+    "line_end": 66,
+    "category": "quality",
+    "title": "Connection lifetime not managed",
+    "explanation": "EmployeeStore opens a SQLite connection in __init__ but offers no context-manager support; any exception between creation and close() leaks the connection."
+  }
+]
