@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "name": "delivery",
+  "description": "Food delivery service: opening hours, menus with options, distance-band fees, tips, courier assignment and delivery estimates.",
+  "author": "test3 author A",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "delivery/fees.py",
+      "lines": [43, 43],
+      "anchor": "if distance < upper:",
+      "symbol": "band_fee",
+      "description": "The docstring and README say each band includes its upper limit, but the strict comparison sends exactly 2, 5 km to the next band and rejects exactly 8 km.",
+      "fix_hint": "Compare with <= so a distance equal to a band's limit gets that band's fee.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_fee_band_limit_is_inclusive"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "delivery/hours.py",
+      "lines": [19, 24],
+      "anchor": "if window.opens <= moment < window.closes:",
+      "symbol": "is_open",
+      "description": "Windows that run past midnight (closes earlier than opens) are documented but never match: the range check is always false for them and the early hours of the next weekday are never considered.",
+      "fix_hint": "For an overnight window, match times at or after opening on its weekday and times before closing on the following weekday.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_overnight_window_open_before_and_after_midnight"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "delivery/couriers.py",
+      "lines": [49, 52],
+      "anchor": "distance_km(c.location, order.customer_location)",
+      "symbol": "CourierPool.assign",
+      "description": "The courier should be the one closest to the restaurant where the food is picked up, but the distance is measured to the customer's location.",
+      "fix_hint": "Measure the distance from each courier to restaurant.location.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_courier_closest_to_restaurant_is_assigned"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "predictable-token",
+      "file": "delivery/orders.py",
+      "lines": [38, 38],
+      "anchor": "random.choices(TOKEN_ALPHABET, k=TOKEN_LENGTH)",
+      "symbol": "new_tracking_token",
+      "description": "The secret tracking token, which reveals the courier's position, is generated with the random module's Mersenne Twister, whose output can be predicted from earlier tokens.",
+      "fix_hint": "Generate the token with the secrets module (secrets.choice or secrets.token_urlsafe).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_tracking_tokens_do_not_follow_the_random_seed"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "delivery/estimates.py",
+      "lines": [8, 8],
+      "anchor": "from delivery import couriers",
+      "modules": ["delivery.estimates", "delivery.couriers"],
+      "other_locations": [{"file": "delivery/couriers.py", "lines": [5, 5]}],
+      "description": "couriers imports estimates to compute pickup times while estimates imports couriers for the vehicle speed table, so the two modules depend on each other.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "delivery/menu.py",
+      "lines": [15, 36],
+      "anchor": "if option not in item.options:",
+      "symbol": "check_lines",
+      "description": "The line check nests a loop and ifs six levels deep with each else far from its condition; guard clauses with continue would flatten it.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "delivery/couriers.py",
+      "lines": [66, 70],
+      "anchor": "for order_id in list(self._assignments):",
+      "why_it_is_fine": "It iterates over a list copy of the keys, so popping assignments inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "delivery/menu.py",
+      "lines": [64, 71],
+      "anchor": "digest = hashlib.sha256()",
+      "why_it_is_fine": "The hash is a cache fingerprint of public menu data, not a password or a secret; truncating it is fine for change detection."
+    }
+  ]
+}

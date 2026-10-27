@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "name": "pharmacy",
+  "description": "Batch stock sold first-expiring first, prescriptions with refill limits and dosage checks, pharmacist approval of controlled medicines, and sales receipts.",
+  "author": "test3 author (Claude subagent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "pharmacy/inventory.py",
+      "lines": [87, 87],
+      "anchor": "lines: list[str] = []",
+      "symbol": "Inventory.expiry_report",
+      "description": "The default report list is created once and shared, so every call without an explicit list appends to the lines of all earlier calls and the report grows each time it is asked for.",
+      "fix_hint": "Default to None and start a new list inside the method when no list is passed.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_expiry_report_is_the_same_when_asked_twice"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "pharmacy/prescriptions.py",
+      "lines": [32, 32],
+      "anchor": "if dose_mg > medicine.max_daily_mg:",
+      "symbol": "check_dosage",
+      "description": "The daily-limit check compares the single dose instead of the daily total with max_daily_mg, so a dose taken too many times a day passes.",
+      "fix_hint": "Compare daily_mg with medicine.max_daily_mg.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_daily_total_above_limit_is_rejected"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-sort-order",
+      "file": "pharmacy/inventory.py",
+      "lines": [68, 68],
+      "anchor": "key=lambda b: b.expiry, reverse=True",
+      "symbol": "Inventory.take",
+      "description": "Batches are sorted latest expiry first, so stock is taken from the newest delivery and short-dated batches stay on the shelf, the opposite of the documented first-expiring-first rule.",
+      "fix_hint": "Sort by expiry ascending (drop reverse=True).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_take_uses_the_first_expiring_batch"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "missing-permission-check",
+      "file": "pharmacy/controlled.py",
+      "lines": [48, 52],
+      "anchor": "if not staff.active:",
+      "symbol": "ApprovalRegister.approve",
+      "description": "approve only checks that the member of staff is active, never that they are a pharmacist, so a technician or cashier can approve the sale of a controlled medicine.",
+      "fix_hint": "Raise PermissionError unless staff.role is Role.PHARMACIST.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_S1_technician_cannot_approve_a_controlled_fill",
+        "test_S1_cashier_cannot_approve_a_controlled_fill"
+      ]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "pharmacy/inventory.py",
+      "lines": [8, 8],
+      "anchor": "from pharmacy import receipts",
+      "modules": ["pharmacy.inventory", "pharmacy.receipts"],
+      "other_locations": [{"file": "pharmacy/receipts.py", "lines": [9, 9]}],
+      "description": "inventory imports receipts to format money and receipts imports inventory to describe picks; the stock layer depends on the presentation layer and the two modules form a cycle.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "repeated-magic-number",
+      "file": "pharmacy/dispensing.py",
+      "lines": [76, 76],
+      "anchor": "if (pick.expiry - on).days <= 30:",
+      "symbol": "Counter._take",
+      "other_locations": [
+        {"file": "pharmacy/receipts.py", "lines": [93, 93]},
+        {"file": "pharmacy/inventory.py", "lines": [92, 92]}
+      ],
+      "description": "The 30-day short-dated window is written out as a bare number in three functions in three modules; changing the policy means finding every copy.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "pharmacy/receipts.py",
+      "lines": [76, 79],
+      "anchor": "def _line_discount(amount: Decimal, percent: int) -> Decimal:",
+      "symbol": "_line_discount",
+      "description": "The private discount helper is never called anywhere in the package.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "pharmacy/inventory.py",
+      "lines": [80, 84],
+      "anchor": "for batch in list(batches):",
+      "why_it_is_fine": "It iterates over a copy of each batch list, so removing empty batches from the original list while looping is safe."
+    },
+    {
+      "id": "D2",
+      "file": "pharmacy/dispensing.py",
+      "lines": [70, 74],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs the failure and re-raises it unchanged, so nothing is swallowed."
+    }
+  ]
+}

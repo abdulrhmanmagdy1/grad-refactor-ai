@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "name": "helpdesk",
+  "description": "IT helpdesk: tickets with priorities and SLAs, skill and load based assignment, escalation timers, comment attachments and an SLA report.",
+  "author": "test3 author (helpdesk)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "late-binding-closure",
+      "file": "helpdesk/escalation.py",
+      "lines": [45, 45],
+      "anchor": "lambda: self._escalate(ticket)",
+      "symbol": "Escalator.schedule",
+      "description": "The timer action is a lambda that reads the loop variable when it fires, not when it is created, so when several tickets are scheduled together every timer escalates the last ticket and the others are never escalated.",
+      "fix_hint": "Bind the ticket when the timer is created, e.g. functools.partial(self._escalate, ticket) or lambda ticket=ticket: ...",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_each_unanswered_ticket_is_escalated_once",
+        "test_B1_answered_ticket_is_left_alone_while_others_escalate"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "state-not-updated",
+      "file": "helpdesk/assignment.py",
+      "lines": [62, 64],
+      "anchor": "new_agent.open_tickets += 1",
+      "symbol": "AssignmentBoard.reassign",
+      "description": "The docstring says the ticket counts towards the new agent's load instead of the previous agent's, but the previous agent's open_tickets is never decreased, so after a reassignment that agent looks busier than they are and is skipped or hits max_open.",
+      "fix_hint": "Decrease the previous assignee's load (for example call self.release(ticket)) before giving the ticket to the new agent.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_reassigning_moves_the_load_to_the_new_agent"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-direction",
+      "file": "helpdesk/models.py",
+      "lines": [20, 20],
+      "anchor": "return Priority(min(self + 1, Priority.LOW))",
+      "symbol": "Priority.raised",
+      "description": "A lower number is more urgent, so raising a priority must subtract one and stop at CRITICAL; the code adds one and stops at LOW, so escalation makes unanswered tickets less urgent.",
+      "fix_hint": "return Priority(max(self - 1, Priority.CRITICAL))",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B3_raising_a_priority_makes_it_more_urgent",
+        "test_B3_escalated_ticket_moves_up_one_priority"
+      ]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "helpdesk/attachments.py",
+      "lines": [35, 36],
+      "anchor": "target = folder / filename",
+      "symbol": "UploadStore.save",
+      "description": "The user-chosen file name is joined to the ticket folder unchecked, so a name like ../../x writes outside the ticket folder or outside the uploads folder altogether.",
+      "fix_hint": "Reject names that contain path parts (Path(filename).name != filename, '.' or '..'), or keep only the base name and check that the resolved target stays inside the ticket folder.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_attachment_names_cannot_leave_the_ticket_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "helpdesk/report.py",
+      "lines": [36, 39],
+      "anchor": "deadline = ticket.created_at + timedelta(hours=_RESOLUTION_HOURS[ticket.priority])",
+      "symbol": "_breached",
+      "modules": ["helpdesk.report", "helpdesk.sla"],
+      "other_locations": [
+        {"file": "helpdesk/report.py", "lines": [11, 16]},
+        {"file": "helpdesk/sla.py", "lines": [16, 21]},
+        {"file": "helpdesk/sla.py", "lines": [40, 43]}
+      ],
+      "description": "The report keeps its own table of resolution hours and its own breach rule instead of using sla.RESOLUTION_TARGETS and sla.resolution_breached; the two will drift apart as soon as one target changes.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "helpdesk/report.py",
+      "lines": [59, 76],
+      "anchor": "def open_breaches_by_agent(",
+      "symbol": "open_breaches_by_agent",
+      "description": "Five nested levels of for/if where guard clauses (continue) and setdefault would keep the loop flat.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "helpdesk/escalation.py",
+      "lines": [57, 61],
+      "anchor": "for timer in list(self._timers):",
+      "why_it_is_fine": "It loops over a copy of the timer list, so removing fired timers from the real list inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "helpdesk/desk.py",
+      "lines": [101, 105],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs, deletes the files already stored for this comment and re-raises, so no error is swallowed."
+    }
+  ]
+}

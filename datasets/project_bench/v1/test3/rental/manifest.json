@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "name": "rental",
+  "description": "Car rental agency: vehicles by class at branches, one-way rentals, mileage allowances, late returns, damage deposits and invoices.",
+  "author": "test3 author (rental)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "rental/contracts.py",
+      "lines": [29, 29],
+      "anchor": "return max(1, (end - start) // timedelta(days=1))",
+      "symbol": "rental_days",
+      "description": "The docstring says every started 24-hour period is a whole day (24h01 is two days), but floor division drops the started day, so 25 hours bills one day and late returns lose their partial days.",
+      "fix_hint": "Round up: count the whole days and add one when there is a remainder, keeping the minimum of one day.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_started_days_are_billed_as_whole_days"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "swapped-arguments",
+      "file": "rental/invoice.py",
+      "lines": [82, 82],
+      "anchor": "days = contracts.late_days(returned_at, contract.due_at)",
+      "symbol": "late_charge",
+      "description": "late_days takes (due_at, returned_at) but is called with the return time first, so late returns are never charged and early returns are charged as late.",
+      "fix_hint": "Call contracts.late_days(contract.due_at, returned_at).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_late_return_is_charged", "test_B2_early_return_has_no_late_charge"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "rental/contracts.py",
+      "lines": [119, 119],
+      "anchor": "extras: list[str] = []",
+      "symbol": "RentalDesk.open_contract",
+      "other_locations": [{"file": "rental/contracts.py", "lines": [136, 136]}],
+      "description": "The extras default is a shared list and the young-driver surcharge is appended to it, so every later contract opened without extras carries the young-driver charge (and the contract keeps a reference to the caller's list).",
+      "fix_hint": "Default to None and work on a fresh copy: extras = list(extras or []).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_young_driver_surcharge_does_not_leak_into_later_contracts"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "missing-permission-check",
+      "file": "rental/contracts.py",
+      "lines": [181, 182],
+      "anchor": "if staff.branch_code != contract.dropoff_branch:",
+      "symbol": "RentalDesk.waive_damage",
+      "description": "The docstring and README say only a manager of the drop-off branch may waive damage, but only the branch is checked, so any counter agent there can cancel a damage charge.",
+      "fix_hint": "Raise PermissionError unless staff.is_manager, in addition to the branch check.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_counter_agent_cannot_waive_damage"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "rental/contracts.py",
+      "lines": [10, 10],
+      "anchor": "from rental import invoice",
+      "modules": ["rental.contracts", "rental.invoice"],
+      "other_locations": [{"file": "rental/invoice.py", "lines": [10, 10]}],
+      "description": "contracts imports invoice to bill a returned contract and invoice imports contracts for the day counting rules; the two modules depend on each other and only work because each uses the other lazily.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "magic-numbers",
+      "file": "rental/invoice.py",
+      "lines": [53, 53],
+      "anchor": "Decimal(\"0.14\")",
+      "symbol": "Invoice.tax",
+      "other_locations": [{"file": "rental/invoice.py", "lines": [115, 115]}],
+      "description": "The 14% sales tax rate is written as a bare literal twice (0.14 in Invoice.tax and 1.14 in quote) instead of one named constant next to the rate card; changing the rate means finding both.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "rental/contracts.py",
+      "lines": [42, 46],
+      "anchor": "def _periods_overlap(",
+      "symbol": "_periods_overlap",
+      "description": "The private helper _periods_overlap is never called anywhere in the package.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "rental/fleet.py",
+      "lines": [114, 117],
+      "anchor": "for plate, vehicle in list(self._vehicles.items()):",
+      "why_it_is_fine": "It iterates over a list copy of the items, so deleting from the dict inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "rental/contracts.py",
+      "lines": [37, 38],
+      "anchor": "if returned_at <= due_at + GRACE_PERIOD:",
+      "why_it_is_fine": "The grace period is inclusive by the docstring and README: a car back exactly 59 minutes after it was due is on time."
+    }
+  ]
+}

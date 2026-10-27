@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "name": "orders",
+  "description": "Online shop backend: carts, product variants and stock, coupon codes, shipping cost by weight and zone, order states and Decimal refunds.",
+  "author": "test3 author (gym, orders)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "orders/order.py",
+      "lines": [60, 60],
+      "anchor": "history: list[tuple[str, str]] = [],",
+      "symbol": "Order.__init__",
+      "description": "history defaults to one list object shared by every Order created without an explicit history, so every order's history and timeline contain the events of all other orders.",
+      "fix_hint": "Default to None and create a new list per order.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_each_order_has_its_own_history",
+        "test_B1_timeline_shows_only_that_order"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "orders/shipping.py",
+      "lines": [22, 22],
+      "anchor": "return max(1, round(weight_kg))",
+      "symbol": "billable_kilos",
+      "description": "The docstring and README say every started kilogram is billed (round up), but round() rounds to nearest with ties to even, so 1.2 kg is billed as 1 kg and 2.5 kg as 2 kg.",
+      "fix_hint": "Round up: math.ceil(weight_kg) (or to_integral_value with ROUND_CEILING), still at least 1.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B2_every_started_kilogram_is_billed",
+        "test_B2_shipping_cost_uses_started_kilograms"
+      ]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "orders/order.py",
+      "lines": [156, 158],
+      "anchor": "if amount > order.paid:",
+      "symbol": "OrderBook.refund",
+      "description": "The limit check compares the new refund with the whole payment instead of the remaining refundable amount it just computed, so several partial refunds can together pay back more than the customer paid.",
+      "fix_hint": "Compare amount with remaining (paid minus already refunded).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_partial_refunds_cannot_exceed_the_payment"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "missing-permission-check",
+      "file": "orders/order.py",
+      "lines": [140, 141],
+      "anchor": "self._move(order, \"returned\", customer_id)",
+      "symbol": "OrderBook.request_return",
+      "description": "The docstring promises a PermissionError for another customer's order and cancel() has that ownership check, but request_return never compares order.customer_id with customer_id, so any customer can return (and trigger refunds for) anyone's shipped order.",
+      "fix_hint": "Raise PermissionError when order.customer_id != customer_id before changing the state.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_customer_cannot_return_someone_elses_order"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "mixed-responsibilities",
+      "file": "orders/utils.py",
+      "lines": [1, 51],
+      "anchor": "\"\"\"Helpers used across the shop.\"\"\"",
+      "modules": ["orders.utils", "orders.shipping", "orders.coupons", "orders.checkout", "orders.store"],
+      "description": "utils.py is a grab bag of unrelated jobs: money rounding, coupon code normalisation, the shipping zone table, the confirmation email text and CSV file export. Shipping geography belongs in shipping, the code rule in coupons, email and export in their own modules.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "orders/coupons.py",
+      "lines": [55, 68],
+      "anchor": "def validate(self, code: str, subtotal: Decimal, customer_id: str, today: date) -> Coupon:",
+      "symbol": "CouponBook.validate",
+      "description": "validate nests five ifs with each error raised far from its condition; guard clauses that raise early would make each rule one flat check.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "magic-number",
+      "file": "orders/shipping.py",
+      "lines": [31, 31],
+      "anchor": "if subtotal >= Decimal(\"75.00\"):",
+      "symbol": "shipping_cost",
+      "other_locations": [
+        {"file": "orders/cart.py", "lines": [70, 70]},
+        {"file": "orders/checkout.py", "lines": [58, 58]}
+      ],
+      "description": "The free-shipping threshold 75.00 is written as a literal in three functions in three modules; changing it in one place would leave the cart banner and checkout summary wrong. It should be one named constant.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "orders/store.py",
+      "lines": [47, 49],
+      "anchor": "query = f\"SELECT order_id, customer_id, state FROM orders WHERE order_id IN ({marks})\"",
+      "why_it_is_fine": "The f-string only inserts a list of '?' placeholders whose length matches the ids; the ids themselves are passed as bound parameters, so there is no injection."
+    },
+    {
+      "id": "D2",
+      "file": "orders/store.py",
+      "lines": [38, 40],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs the failure with its traceback and re-raises it; nothing is swallowed and the transaction has already been rolled back by the connection context manager."
+    }
+  ]
+}

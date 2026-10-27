@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "name": "gym",
+  "description": "Gym back office: membership plans with expiry and freezes, class timetable with capacity and waitlists, check-ins, personal trainer sessions and monthly billing.",
+  "author": "test3 author (gym, orders)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "gym/memberships.py",
+      "lines": [68, 68],
+      "anchor": "days = (last_day - first_day).days",
+      "symbol": "MembershipBook.freeze",
+      "description": "The freeze runs from first_day through last_day with both days included, but the day count is the plain date difference, so every freeze is one day short: the expiry moves one day too little, a one-day freeze moves it not at all, and the freeze allowance is undercounted.",
+      "fix_hint": "Count the days inclusively: (last_day - first_day).days + 1.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_freeze_counts_both_first_and_last_day",
+        "test_B1_one_day_freeze_moves_expiry_by_one_day",
+        "test_B1_freeze_allowance_counts_inclusive_days"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-end-of-queue",
+      "file": "gym/classes.py",
+      "lines": [56, 56],
+      "anchor": "promoted = self.waitlist.pop()",
+      "symbol": "GymClass.cancel",
+      "description": "The waitlist is appended to in arrival order and the docstring says the member who waited longest gets the free place, but pop() takes the most recent arrival (last in, first out).",
+      "fix_hint": "Promote the first waiting member with pop(0) (or use a deque and popleft).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_longest_waiting_member_gets_the_place"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "gym/billing.py",
+      "lines": [57, 66],
+      "anchor": "self.invoices.extend(issued)",
+      "symbol": "Ledger.close_month",
+      "description": "The class docstring says the ledger holds no pending charges after close_month, but the pending charges are never cleared, so every later month invoices all earlier charges again.",
+      "fix_hint": "Clear self.pending after the invoices are issued.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_closed_charges_are_not_billed_again"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "predictable-token",
+      "file": "gym/checkins.py",
+      "lines": [45, 45],
+      "anchor": "random.choices(TOKEN_ALPHABET, k=TOKEN_LENGTH)",
+      "symbol": "CheckInDesk.issue_token",
+      "description": "Entry tokens are the only credential the turnstile checks, yet they come from the random module, a seeded Mersenne Twister whose output can be predicted; tokens must come from a cryptographically secure source.",
+      "fix_hint": "Generate the token with the secrets module (secrets.choice or secrets.token_urlsafe).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_tokens_do_not_follow_the_random_module_seed"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "gym/memberships.py",
+      "lines": [9, 9],
+      "anchor": "from gym import billing",
+      "modules": ["gym.memberships", "gym.billing"],
+      "other_locations": [{"file": "gym/billing.py", "lines": [9, 9]}],
+      "description": "memberships imports billing for the Ledger it charges freeze fees to, and billing imports memberships for active_days and MembershipBook; it only loads because both sides import the module rather than names.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "duplicated-logic",
+      "file": "gym/memberships.py",
+      "lines": [85, 90],
+      "anchor": "share = Decimal(unused) / Decimal(days_in_month)",
+      "symbol": "MembershipBook.cancel",
+      "other_locations": [{"file": "gym/billing.py", "lines": [72, 74]}],
+      "description": "The proration rule (days in month, share of the month, monthly fee times share rounded half up to cents) is written out twice, in MembershipBook.cancel and billing.prorated_fee, with the CENT constant defined in both modules.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "gym/reports.py",
+      "lines": [13, 72],
+      "anchor": "def monthly_report(",
+      "symbol": "monthly_report",
+      "description": "monthly_report is a 60-line function that builds five unrelated report sections (memberships, check-ins, classes, personal training, revenue) inline; each section should be its own function.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "gym/classes.py",
+      "lines": [63, 66],
+      "anchor": "for member_id in list(self.waitlist):",
+      "why_it_is_fine": "It iterates over a copy of the waitlist, so removing members from the real list during the loop skips nobody."
+    },
+    {
+      "id": "D2",
+      "file": "gym/classes.py",
+      "lines": [105, 108],
+      "anchor": "digest = hashlib.md5(usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is only a change fingerprint of the public timetable, explicitly marked not for security; nothing secret or adversarial depends on it."
+    }
+  ]
+}

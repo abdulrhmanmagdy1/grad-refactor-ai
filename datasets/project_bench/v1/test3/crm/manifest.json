@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "name": "crm",
+  "description": "Small sales CRM: contacts and companies deduplicated by email, pipeline stages with probabilities, activity reminders, CSV import folder and a monthly forecast.",
+  "author": "test3 author B",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "crm/contacts.py",
+      "lines": [64, 64],
+      "anchor": "tags: list[str] = [],",
+      "symbol": "ContactBook.add_contact",
+      "description": "Contacts added without tags all share the default list object, so tagging one contact tags every contact created without tags, across books.",
+      "fix_hint": "Default tags to None and give each new contact its own list.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_contacts_without_tags_do_not_share_a_list"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "case-sensitive-compare",
+      "file": "crm/contacts.py",
+      "lines": [15, 15],
+      "anchor": "return email.strip()",
+      "symbol": "normalize_email",
+      "description": "The docstring and README say duplicates are detected regardless of letter case, but the key only strips whitespace, so Ann@Example.com and ann@example.com become two contacts.",
+      "fix_hint": "Lower-case the stripped address (strip().lower() or casefold()).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_email_duplicates_ignore_letter_case"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "swapped-arguments",
+      "file": "crm/pipeline.py",
+      "lines": [65, 65],
+      "anchor": "StageChange(deal.deal_id, stage, previous, at)",
+      "symbol": "Pipeline.move",
+      "description": "StageChange takes from_stage then to_stage, but move passes the new stage first, so the history is backwards and entered_stage_at finds the wrong moves.",
+      "fix_hint": "Pass previous as from_stage and stage as to_stage.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_history_records_from_and_to_stage"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "crm/importer.py",
+      "lines": [36, 37],
+      "anchor": "target = self.import_dir / filename",
+      "symbol": "CsvImporter.save_upload",
+      "description": "The uploaded file name is joined to the import folder unchecked, so a name like ../../x writes anywhere the process can write.",
+      "fix_hint": "Resolve the target and reject names that leave the import folder, or keep only the base name.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_upload_cannot_leave_the_import_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "crm/forecast.py",
+      "lines": [11, 16],
+      "anchor": "WIN_CHANCE: dict[str, Decimal] = {",
+      "modules": ["crm.forecast", "crm.pipeline"],
+      "other_locations": [{"file": "crm/pipeline.py", "lines": [11, 18]}],
+      "description": "The forecast keeps its own copy of the stage win probabilities instead of using pipeline.STAGE_PROBABILITY and weighted_amount, so changing a stage's probability in the pipeline leaves the forecast stale.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "crm/importer.py",
+      "lines": [53, 108],
+      "anchor": "def import_contacts(self, path: Path, book: ContactBook) -> ImportResult:",
+      "symbol": "CsvImporter.import_contacts",
+      "description": "One function checks the header, validates rows, creates companies, parses tags, cleans phone numbers, merges contacts and logs; the per-row steps belong in helpers.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "crm/pipeline.py",
+      "lines": [86, 88],
+      "anchor": "def _stage_rank(stage: str) -> int:",
+      "symbol": "_stage_rank",
+      "description": "The private helper is never called anywhere in the package.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "crm/importer.py",
+      "lines": [46, 51],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs with the traceback and re-raises, so no error is swallowed."
+    },
+    {
+      "id": "D2",
+      "file": "crm/activities.py",
+      "lines": [30, 41],
+      "anchor": "current = datetime.now() if now is None else now",
+      "why_it_is_fine": "The default is None and the current time is read on each call, not once when the function is defined."
+    }
+  ]
+}

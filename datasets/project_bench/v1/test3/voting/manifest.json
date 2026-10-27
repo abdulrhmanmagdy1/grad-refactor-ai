@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "name": "voting",
+  "description": "Club elections: voter eligibility, one-time tokens, ranked ballots counted by instant runoff, quorum rules, a hash-chained audit log and result export.",
+  "author": "test3 author (Claude subagent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "voting/quorum.py",
+      "lines": [43, 43],
+      "anchor": "return max(1, int(eligible * share))",
+      "symbol": "quorum_required",
+      "description": "The docstring says the quorum is rounded up to a whole ballot, but int() truncates, so a third of 10 members gives a quorum of 3 instead of 4.",
+      "fix_hint": "Round the product up (math.ceil, or ceiling division on the fraction).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_quorum_rounds_up_to_a_whole_ballot"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "voting/counting.py",
+      "lines": [40, 41],
+      "anchor": "tally = {candidate: 0 for candidate in candidates}",
+      "symbol": "instant_runoff",
+      "description": "The tally is created once before the round loop and never reset, so each round's votes are added to the previous rounds' totals; the documented 'counted afresh' rule is broken and a first-round leader can win a round they should lose.",
+      "fix_hint": "Start a new tally for the remaining candidates at the top of each round.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_each_round_is_counted_afresh"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "voting/ballots.py",
+      "lines": [99, 102],
+      "anchor": "elif any(name not in self.candidates for name in ranking):",
+      "symbol": "BallotBox.cast",
+      "description": "The docstring requires each candidate to appear at most once in a ranking, but cast only checks for an empty ranking and unknown names, so a ballot ranking the same candidate twice is accepted.",
+      "fix_hint": "Reject the ballot when len(set(ranking)) != len(ranking).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_ranking_a_candidate_twice_is_rejected"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "predictable-token",
+      "file": "voting/ballots.py",
+      "lines": [82, 82],
+      "anchor": "random.choices(TOKEN_ALPHABET, k=TOKEN_LENGTH)",
+      "symbol": "BallotBox.issue_token",
+      "description": "Voting tokens, the only credential for casting a ballot, come from the random module's Mersenne Twister, which is predictable from its seed or earlier outputs, so tokens can be guessed and ballots cast in other members' names.",
+      "fix_hint": "Generate tokens with the secrets module or random.SystemRandom.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_tokens_do_not_follow_the_random_seed"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "voting/ballots.py",
+      "lines": [74, 79],
+      "anchor": "or self.election_day - member.joined < timedelta(days=MIN_MEMBERSHIP_DAYS)",
+      "symbol": "BallotBox.issue_token",
+      "modules": ["voting.ballots", "voting.voters"],
+      "other_locations": [{"file": "voting/voters.py", "lines": [45, 50]}],
+      "description": "The eligibility rule (dues paid, not suspended, member for the minimum number of days) is implemented again inside the ballot box instead of calling Roll.is_eligible, so the two copies can drift apart.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "voting/audit.py",
+      "lines": [65, 96],
+      "anchor": "def suspicious_activity(entries: list[AuditEntry], max_rejections: int) -> list[str]:",
+      "symbol": "suspicious_activity",
+      "description": "suspicious_activity handles three unrelated checks in one loop nested five levels deep (for, elif, if, if/else, if), which makes it hard to read and extend.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "voting/export.py",
+      "lines": [42, 44],
+      "anchor": "json_path = results_dir / f\"{stem}.json\"",
+      "why_it_is_fine": "The file name comes from slugify, which keeps only lower-case letters, digits and dashes, so an election name with ../ or slashes cannot leave the results folder."
+    },
+    {
+      "id": "D2",
+      "file": "voting/counting.py",
+      "lines": [53, 53],
+      "anchor": "if 2 * tally[leader] > counted or len(remaining) == 1:",
+      "why_it_is_fine": "2 * votes > counted is the integer form of 'more than half'; exactly half is correctly not a majority."
+    }
+  ]
+}
