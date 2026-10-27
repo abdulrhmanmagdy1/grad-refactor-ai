@@ -121,8 +121,11 @@ def bundle(adapter: Path | None) -> dict:
         "git_head": git("rev-parse", "HEAD"),
         # Only the bundled repository files matter for the bundle's provenance; edits
         # elsewhere in the working tree (for example frontend/) do not make it dirty.
-        "git_dirty": bool(
-            git("status", "--porcelain", "--untracked-files=all", "--", *sorted(repo_files))
+        # One status call for the whole tree, filtered to the bundled files (passing every
+        # file as an argument outgrows the Windows command-line limit).
+        "git_dirty": any(
+            line[3:].strip().strip('"') in repo_files
+            for line in git("status", "--porcelain", "--untracked-files=all").splitlines()
         ),
         "adapter": None if adapter is None else adapter.relative_to(ROOT).as_posix(),
         "files": hashes,
