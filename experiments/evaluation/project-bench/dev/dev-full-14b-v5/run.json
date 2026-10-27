@@ -1,0 +1,51 @@
+{
+  "protocol": "project-bench-v2",
+  "split": "dev",
+  "arm": "full-14b",
+  "started_at": "2026-10-27T18:24:44+00:00",
+  "projects": {
+    "library": "47b25a6fa31f6b4e04bc50424433b576672c07695212ed4c86fcd9cd0038ae12",
+    "parking": "b32e400fe9a13d2cbfad26d677b938843e35c078566a234d3568f28f5e5a1118",
+    "recipes": "e512202a9c4d05c144b0f2d302a02d6eeca2ab42bdddbc569da3024852bf2208"
+  },
+  "settings": {
+    "max_calls": 110,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "spec_functions": 8,
+    "spec_tokens": 700,
+    "spec_checks": 2,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "context_tokens": 8192
+  },
+  "frozen": false,
+  "freeze_problems": [],
+  "git": {
+    "commit": "",
+    "dirty": false
+  },
+  "python": "3.11.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "finished_at": "2026-10-27T19:13:45+00:00",
+  "model_arm": "14b",
+  "frozen_except_model": false
+}

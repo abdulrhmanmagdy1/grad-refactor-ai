@@ -199,6 +199,24 @@ built from names, a missing ownership check, `random` tokens, an open-ended ban,
 default, accumulators not reset, swapped arguments). No change to the review was made
 after that review appeared other than the two prompted by the dev run named above.
 
+### project-bench-v3: mypy, spec-test repair and a third test split
+
+After test2 (judge confirmed: static 19/55, full 28/55, Claude as a reference 49/55),
+prompt version project-v5 added mypy to the static checks, the signatures of related
+project modules to the spec tester's prompt, and one repair round for spec tests that call
+the code wrongly (on test2 the misuse filter had set aside 102 of 111 failing tests); a
+security fix also made ruff and mypy run isolated from the uploaded project. On the dev
+split v5 and v4.1 (14B) located the same 15 of 22 issues, with no ready fix breaking a test
+in either; v5 is the final configuration because it carries the security fix. It is
+measured on `test3`, eight projects by four new authors who did not report their seeded
+issues, frozen in `experiments/evaluation/project-bench/freeze-test3.json`.
+
+What the developer saw of `test3` before its freeze: the authors' validator lines, and the
+repository's automatic security review of the written and committed files, which named
+about seventeen of its problems (in orders, rental, voting, helpdesk, pharmacy, gym, crm
+and delivery). The review code and prompts were last changed before test3 existed; the only
+step between seeing those notices and the freeze was the v5 dev run above.
+
 ## Freeze
 
 `scripts/project_benchmark.py freeze` writes `experiments/evaluation/project-bench/
