@@ -34,8 +34,9 @@ from refactor_ai.project.testrun import ProjectTestRunner, TestReport
 from refactor_ai.project.workspace import IntakeError, Workspace, extract_project
 
 # v1 froze the test split with prompt version project-v3; v2 adds the spec tests
-# (project-v4) and a second, new test split.
-PROTOCOL_ID = "project-bench-v2"
+# (project-v4) and a second, new test split; v3 adds mypy and spec-test repair (project-v5)
+# with a third split.
+PROTOCOL_ID = "project-bench-v3"
 DATASET_ROOT = Path("datasets") / "project_bench" / "v1"
 SPLITS = ("dev", "test", "test2", "test3")
 # Splits that run only under a freeze record.
