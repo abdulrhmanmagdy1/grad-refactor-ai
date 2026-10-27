@@ -186,6 +186,19 @@ model.
 
 The v1 test results (static 18/55 judge confirmed, full 19/55) showed that bugs which contradict the documentation were found only when a linter rule covers them. Prompt version project-v4 adds the spec tester (see the design document): tests written from the documentation, run on the project, with failing tests judged by a checker. Because v1's test split has been seen, v2 is measured on a new split, `test2`, written by four new authors under the same rules who were also asked not to report their seeded issues, so the developer saw only the validator's ok lines. `test2` is frozen in `experiments/evaluation/project-bench/freeze-test2.json` before any review of it; the dev split stays the place for tuning. v1's records and freeze stay as they are.
 
+The v2 final arm is the full pipeline at project-v4 (with the misuse filter and the spec
+checker's README added after the first v4 dev run) on Qwen2.5-Coder-14B-Instruct Q4_K_M
+(`configs/model.project.14b.json`), run on Kaggle, because the 14B arm of v1 showed the
+3B model is the bottleneck. The static arm is run alongside.
+
+What the developer saw of `test2` before its freeze: the authors' validator lines (which
+issue ids the static checks find), and, without asking for it, the repository's automatic
+security review of the committed files, which named eleven problems in budget, weatherlog,
+payroll, forum, hotel, fleet, enrollment and ticketing (SQL built with f-strings, paths
+built from names, a missing ownership check, `random` tokens, an open-ended ban, a mutable
+default, accumulators not reset, swapped arguments). No change to the review was made
+after that review appeared other than the two prompted by the dev run named above.
+
 ## Freeze
 
 `scripts/project_benchmark.py freeze` writes `experiments/evaluation/project-bench/

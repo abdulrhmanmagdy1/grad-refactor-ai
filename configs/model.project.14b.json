@@ -1,0 +1,13 @@
+{
+  "python": "python",
+  "model_dir": "../models/Qwen2.5-Coder-14B-Instruct-GGUF",
+  "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+  "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+  "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+  "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+  "context_tokens": 8192,
+  "gpu_layers": -1,
+  "device": "cuda",
+  "dtype": "float16",
+  "load_timeout_s": 1800
+}
