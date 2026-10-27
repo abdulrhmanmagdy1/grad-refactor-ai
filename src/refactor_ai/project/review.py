@@ -21,6 +21,7 @@ from __future__ import annotations
 import ast
 import re
 import sys
+import textwrap
 import time
 from collections import Counter, defaultdict
 from collections.abc import Callable
@@ -104,7 +105,7 @@ RULE_ADVICE_PROJECT = {
 
 @dataclass
 class ReviewSettings:
-    max_calls: int = 80
+    max_calls: int = 110
     time_limit_s: float = 45 * 60
     bug_functions: int = 12
     quality_windows: int = 6
@@ -118,6 +119,10 @@ class ReviewSettings:
     checker_tokens: int = 160
     fixer_tokens: int = 1200
     reviewer_tokens: int = 256
+    # Spec tests: functions whose documented behavior the tester checks, and its budget.
+    spec_functions: int = 8
+    spec_tokens: int = 700
+    spec_checks: int = 2
     max_input_tokens: int = 6000
     call_timeout_s: float = 240.0
     seed: int = 42
@@ -184,6 +189,9 @@ class ProjectReviewer:
         self.lines: dict[str, list[str]] = {}
         self.index: ProjectIndex | None = None
         self._readme: str | None = None
+        # Spec test files kept for the run (name -> code): passing tests and failing tests
+        # the spec checker blamed on the code. They join every test run of the fixes.
+        self.spec_files: dict[str, str] = {}
 
     # --- helpers -------------------------------------------------------------------------
 
@@ -293,6 +301,9 @@ class ProjectReviewer:
             self.on_progress(ProjectStatus.REVIEWING, "Agents are reviewing quality and security")
             candidates.extend(self._quality(index, findings, model_counts))
             findings.extend(self._checked(candidates, model_counts))
+            if self.settings.run_tests and self.test_runner is not None:
+                self.on_progress(ProjectStatus.REVIEWING, "Agents are testing documented behavior")
+                findings.extend(self._spec_findings(index, model_counts))
             self._stage("agents", started)
         else:
             self.outcome.warnings.append(
@@ -583,6 +594,141 @@ class ProjectReviewer:
         counts["kept"] = len(kept)
         return kept
 
+    # --- spec tests ----------------------------------------------------------------------
+
+    def _spec_targets(self, index: ProjectIndex) -> list[FunctionInfo]:
+        """Documented functions, the riskiest first: their docstring says what to test."""
+        functions = [
+            f
+            for f in index.functions
+            if not f.is_test
+            and f.lines >= 3
+            and not (f.name.startswith("__") and f.name != "__init__")
+        ]
+        functions.sort(key=lambda f: self._risk(f, Counter()))
+        targets = []
+        for function in functions:
+            lines = self._lines(function.file)
+            code = textwrap.dedent("\n".join(lines[function.line_start - 1 : function.line_end]))
+            try:
+                node = ast.parse(code).body[0]
+            except (SyntaxError, ValueError, IndexError):
+                continue
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and ast.get_docstring(
+                node
+            ):
+                targets.append(function)
+        return targets[: self.settings.spec_functions]
+
+    def _spec_findings(self, index: ProjectIndex, counts: dict) -> list[Finding]:
+        """Bugs shown by tests written from the documentation.
+
+        The tester writes tests of what each documented function promises; they run in the
+        sandbox on the unchanged project. Each failing test goes to the spec checker, which
+        says whether the code or the test is wrong. Tests that pass, and failing tests
+        blamed on the code, are kept and run with every fix: a fix that makes a blamed test
+        pass has a test that fails before it and passes after it.
+        """
+        found = []
+        for number, function in enumerate(self._spec_targets(index), 1):
+            module = index.by_file[function.file].name
+            text = self._call(
+                "spec_tester",
+                f"{function.file}:{function.qualname}",
+                Role.ANALYSIS,
+                agents.spec_test_messages(
+                    module,
+                    function.qualname,
+                    self.workspace.read(function.file),
+                    self._description(),
+                ),
+                self.settings.spec_tokens,
+            )
+            if text is None:
+                continue
+            parsed = agents.parse_spec_tests(text)
+            if parsed.error:
+                counts["spec_unreadable"] = counts.get("spec_unreadable", 0) + 1
+                continue
+            name, code = f"test_zz_spec_{number:02d}.py", parsed.extra["code"]
+            report = self.test_runner.run(self.workspace.root, {name: code}, (name,))
+            counts["spec_tests"] = counts.get("spec_tests", 0) + len(parsed.extra["tests"])
+            if report.status != "ran":
+                continue
+            short = {full: full.rsplit("::", 1)[-1].split("[", 1)[0] for full in report.passed}
+            keep = set(short.values())
+            lines = self._lines(function.file)
+            body = "\n".join(lines[function.line_start - 1 : function.line_end])
+            blamed = []
+            failing = sorted(report.failed)  # errors are broken tests, not evidence
+            counts["spec_failing"] = counts.get("spec_failing", 0) + len(failing)
+            for full in failing[: self.settings.spec_checks]:
+                test = full.rsplit("::", 1)[-1].split("[", 1)[0]
+                message = report.messages.get(full, "")
+                answer = self._call(
+                    "spec_checker",
+                    f"{function.file}:{function.qualname}:{test}",
+                    Role.REVIEW,
+                    agents.spec_check_messages(
+                        function.qualname,
+                        agents.spec_test_source(code, test),
+                        message,
+                        body,
+                        function.line_start,
+                    ),
+                    self.settings.checker_tokens,
+                )
+                verdict, reason = None, ""
+                if answer is not None:
+                    checked = agents.parse_verdict(answer, ("code_wrong", "test_wrong", "unsure"))
+                    if not checked.error:
+                        verdict = checked.extra["verdict"]
+                        reason = " ".join(checked.extra["reasons"])
+                if verdict == "code_wrong":
+                    keep.add(test)
+                    blamed.append((test, reason, message))
+                else:
+                    self.outcome.dropped.append(
+                        {
+                            "spec_test": test,
+                            "file": function.file,
+                            "symbol": function.qualname,
+                            "reason": f"spec_checker:{verdict}",
+                        }
+                    )
+            if keep:
+                self.spec_files[name] = agents.drop_tests(code, set(parsed.extra["tests"]) - keep)
+            if not blamed:
+                continue
+            counts["spec_blamed_on_code"] = counts.get("spec_blamed_on_code", 0) + len(blamed)
+            test, reason, message = blamed[0]
+            source = agents.spec_test_source(code, test)
+            found.append(
+                Finding(
+                    id="",
+                    category=Category.BUG,
+                    severity=Severity.HIGH,
+                    source="agent:spec_tester",
+                    file=function.file,
+                    line_start=function.line_start,
+                    line_end=function.line_end,
+                    symbol=function.qualname,
+                    title=f"{function.qualname} does not do what its documentation says"[:120],
+                    explanation=(
+                        f"{reason} The test {test}, written from the documentation, fails: "
+                        f"{message[:300]} Test: {source[:600]}"
+                    ).strip(),
+                    evidence=f"failing test {test} (written from the documentation)",
+                    recommendation=(
+                        "Change the function so that it does what its documentation says and "
+                        "the test passes."
+                    ),
+                    fixable=True,
+                    also_reported_by=["agent:spec_checker"],
+                )
+            )
+        return found
+
     # --- merging and ids -----------------------------------------------------------------
 
     @staticmethod
@@ -604,7 +750,9 @@ class ProjectReviewer:
                 static_at.setdefault((finding.file, finding.line_start), finding)
         merged, agent_at = [], {}
         for finding in findings:
-            if finding.source.startswith("agent:") and finding.line_start:
+            # A spec test finding covers the whole function and keeps its own place.
+            spec = finding.source == "agent:spec_tester"
+            if finding.source.startswith("agent:") and finding.line_start and not spec:
                 key = (finding.file, finding.line_start)
                 twin = static_at.get(key) or agent_at.get(key)
                 if twin is not None:
@@ -637,7 +785,7 @@ class ProjectReviewer:
             self.outcome.baseline_tests = {"status": "not_available", "detail": "No tests found."}
             return None
         self.on_progress(ProjectStatus.FIXING, "Running the project's tests before any fix")
-        report = self.test_runner.run(self.workspace.root)
+        report = self.test_runner.run(self.workspace.root, dict(self.spec_files))
         self.outcome.baseline_tests = report.summary()
         return report if report.status == "ran" else None
 
@@ -830,7 +978,7 @@ class ProjectReviewer:
         if baseline is None:
             detail = (self.outcome.baseline_tests or {}).get("detail") or "No usable test run."
             return FixCheck(status="not_available", detail=detail), 0
-        after = self.test_runner.run(self.workspace.root, {file: patched})
+        after = self.test_runner.run(self.workspace.root, {**self.spec_files, file: patched})
         status, detail = compare(baseline, after)
         newly = len(after.passed - baseline.passed) if after.status == "ran" else 0
         if status == "pass" and not self._tested(name, index):
@@ -846,7 +994,7 @@ class ProjectReviewer:
             pattern.search(self.workspace.read(module.file))
             for module in index.modules.values()
             if module.is_test
-        )
+        ) or any(pattern.search(code) for code in self.spec_files.values())
 
     def _review(self, targets: list[Finding], diff: str) -> tuple[FixCheck, list[str]]:
         problem = "; ".join(f"line {f.line_start}: {f.title}" for f in targets)

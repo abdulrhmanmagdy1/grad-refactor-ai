@@ -182,6 +182,10 @@ extra locations were findings about something else on the same lines. The full v
 also lost 12 of 198 model calls to the laptop running out of memory while reloading the
 model.
 
+### project-bench-v2: spec tests and a second test split
+
+The v1 test results (static 18/55 judge confirmed, full 19/55) showed that bugs which contradict the documentation were found only when a linter rule covers them. Prompt version project-v4 adds the spec tester (see the design document): tests written from the documentation, run on the project, with failing tests judged by a checker. Because v1's test split has been seen, v2 is measured on a new split, `test2`, written by four new authors under the same rules who were also asked not to report their seeded issues, so the developer saw only the validator's ok lines. `test2` is frozen in `experiments/evaluation/project-bench/freeze-test2.json` before any review of it; the dev split stays the place for tuning. v1's records and freeze stay as they are.
+
 ## Freeze
 
 `scripts/project_benchmark.py freeze` writes `experiments/evaluation/project-bench/

@@ -1,11 +1,13 @@
-"""Prompts and output parsers of the project review agents (prompt version project-v3).
+"""Prompts and output parsers of the project review agents (prompt version project-v4).
 
-Six model roles, each with its own prompt and a strict parser:
+Seven model roles, each with its own prompt and a strict parser:
 
 - bug finder: suspected bugs in one function;
 - quality and security reviewer: problems in one window of a file;
 - architecture reviewer: problems in the project's structure, from the project map only;
 - finding checker: is one suspected problem real?
+- spec tester: pytest tests of what a function is documented to do, and its checker,
+  which says whether a failing one shows a wrong function or a wrong test;
 - fixer: the whole corrected function for one finding;
 - fix reviewer: does the fix address the finding and change nothing else?
 
@@ -18,6 +20,7 @@ items are kept). They never ask the model again.
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from dataclasses import dataclass, field
@@ -25,7 +28,7 @@ from dataclasses import dataclass, field
 from refactor_ai.contracts import ChatMessage
 from refactor_ai.task_format import parse_refactor_output
 
-PROMPT_VERSION = "project-v3"
+PROMPT_VERSION = "project-v4"
 # How much of the project README the finders see as the description of intended behavior.
 MAX_DESCRIPTION = 800
 SEVERITIES = ("high", "medium", "low")
@@ -160,6 +163,56 @@ def check_messages(title: str, problem: str, code: str, first_line: int) -> list
         f"```python\n{numbered(code, first_line)}\n```\n\n"
         'Return JSON: {"reason": "<what the code does and what it should do, one or two '
         'sentences>", "verdict": "real|not_a_problem|unsure"}'
+    )
+    return [
+        ChatMessage(role="system", content=REVIEWER_SYSTEM),
+        ChatMessage(role="user", content=user),
+    ]
+
+
+TESTER_SYSTEM = (
+    "You write pytest tests that check what Python code is documented to do. You take the "
+    "expected results from the documentation, never from the code."
+)
+
+
+def spec_test_messages(
+    module: str, qualname: str, source: str, description: str | None = None
+) -> list[ChatMessage]:
+    """Tests of the behavior that `qualname`'s docstring, name and the README promise."""
+    user = (
+        f"{_description(description)}"
+        f"Module `{module}`:\n```python\n{source.rstrip()}\n```\n\n"
+        f"Write at most 3 pytest test functions for `{qualname}`, each checking one behavior "
+        "that its docstring, its name or the project description promises, including the "
+        "edge cases they mention (limits, empty inputs, inclusive or exclusive bounds). "
+        "Take every expected value from the documentation, not from the code: when the code "
+        "and the documentation disagree, the test expects what the documentation says. "
+        f"Import what you need from `{module}`. Use only the standard library and pytest "
+        "(tmp_path for files); no network and no other processes. Name the tests "
+        "test_spec_1, test_spec_2 and test_spec_3. Return one ```python code block with the "
+        "imports and the tests, nothing else."
+    )
+    return [
+        ChatMessage(role="system", content=TESTER_SYSTEM),
+        ChatMessage(role="user", content=user),
+    ]
+
+
+def spec_check_messages(
+    qualname: str, test_code: str, failure: str, code: str, first_line: int
+) -> list[ChatMessage]:
+    """Is the code wrong, or the test written from its documentation?"""
+    user = (
+        f"A test written from the documentation of `{qualname}` fails.\n\n"
+        f"Test:\n```python\n{test_code.rstrip()}\n```\n\nFailure:\n{failure.strip()}\n\n"
+        f"Code:\n```python\n{numbered(code, first_line)}\n```\n\n"
+        "Decide which one is wrong. code_wrong: the code does not do what its docstring, "
+        "name or the documentation say, and the test expects the documented behavior. "
+        "test_wrong: the test expects something the documentation does not promise, or sets "
+        "things up wrongly. First say what the documentation promises and what the code does.\n"
+        'Return JSON: {"reason": "<one or two sentences>", '
+        '"verdict": "code_wrong|test_wrong|unsure"}'
     )
     return [
         ChatMessage(role="system", content=REVIEWER_SYSTEM),
@@ -418,6 +471,61 @@ def parse_fix(text: str) -> Parsed:
     if parsed.error or not parsed.code:
         return Parsed(error=parsed.error or "no_code_block")
     return Parsed(extra={"code": parsed.code, "explanation": _text(parsed.explanation)})
+
+
+_CODE_BLOCK = re.compile(r"```[a-zA-Z0-9_-]*[ \t]*\n(.*?)(?:```|\Z)", re.DOTALL)
+MAX_SPEC_TESTS = 3
+
+
+def parse_spec_tests(text: str) -> Parsed:
+    """The tester's code block: imports and up to three top-level test functions.
+
+    Anything else at the top level (helpers, fixtures, classes) is kept, since tests may
+    need it; only the first three test functions are kept, so the tests a fix must pass
+    stay few and named.
+    """
+    match = _CODE_BLOCK.search(text or "")
+    code = match.group(1) if match else ""
+    if not code.strip():
+        return Parsed(error="no_code_block")
+    try:
+        tree = ast.parse(code)
+    except (SyntaxError, ValueError, RecursionError):
+        return Parsed(error="does_not_parse")
+    tests = [
+        node
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name.startswith("test")
+    ]
+    if not tests:
+        return Parsed(error="no_tests")
+    extra = tests[MAX_SPEC_TESTS:]
+    tree.body = [node for node in tree.body if node not in extra]
+    names = [node.name for node in tests[:MAX_SPEC_TESTS]]
+    if len(set(names)) != len(names):
+        return Parsed(error="duplicate_test_names")
+    return Parsed(extra={"code": ast.unparse(tree) + "\n", "tests": names}, repaired=bool(extra))
+
+
+def drop_tests(code: str, names: set[str]) -> str:
+    """The test file without the named test functions."""
+    tree = ast.parse(code)
+    tree.body = [
+        node
+        for node in tree.body
+        if not (isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name in names)
+    ]
+    return ast.unparse(tree) + "\n"
+
+
+def spec_test_source(code: str, name: str) -> str:
+    """The source of one test function in a test file."""
+    tree = ast.parse(code)
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name:
+            return ast.get_source_segment(code, node) or ""
+    return ""
 
 
 def normalize_code(text: str) -> str:

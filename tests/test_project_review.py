@@ -133,6 +133,8 @@ class ScriptedProvider:
                 }
             ),
             "Find real bugs": '{"findings": []}',
+            "Write at most 3 pytest test functions": "No tests for this one.",
+            "A test written from the documentation": '{"reason": "-", "verdict": "test_wrong"}',
             "security and code-quality": '{"findings": []}',
             "A reviewer claims this problem": '{"verdict": "real", "reason": "yes"}',
             # The fix reviewer's prompt also quotes the problem, so it is matched first.
@@ -339,6 +341,78 @@ def test_a_fix_only_the_agents_ask_for_needs_a_test_to_be_ready(tmp_path):
     assert review(exposing).disposition is Disposition.PROPOSAL_READY
 
 
+CLAMP = (
+    "def clamp(value, low, high):\n"
+    '    """value limited to low..high, both ends included."""\n'
+    "    if value < low:\n"
+    "        return low\n"
+    "    if value >= high:\n"
+    "        return high - 1\n"
+    "    return value\n"
+)
+CLAMP_TESTS = "from app.limits import clamp\n\n\ndef test_low():\n    assert clamp(-1, 0, 5) == 0\n"
+SPEC_ANSWER = (
+    "```python\nfrom app.limits import clamp\n\n\n"
+    "def test_spec_1():\n    assert clamp(3, 0, 5) == 3\n"
+    "\n\ndef test_spec_2():\n    assert clamp(9, 0, 5) == 5\n\n\ndef test_spec_3():\n"
+    "    assert clamp(2, 0, 5) == 99\n```"
+)
+FIXED_CLAMP = (
+    "```python\ndef clamp(value, low, high):\n"
+    '    """value limited to low..high, both ends included."""\n'
+    "    if value < low:\n        return low\n    if value > high:\n        return high\n"
+    "    return value\n```\nExplanation: include the upper end."
+)
+
+
+def spec_review(tmp_path, verdicts: dict[str, str]):
+    files = {"app/__init__.py": "", "app/limits.py": CLAMP, "tests/test_limits.py": CLAMP_TESTS}
+    workspace = extract_project(project_zip(files), tmp_path / "ws")
+    provider = ScriptedProvider(
+        {
+            "Write at most 3 pytest test functions": SPEC_ANSWER,
+            "does not do what its documentation says": FIXED_CLAMP,
+        }
+    )
+
+    def check(test: str) -> str:
+        return json.dumps({"reason": f"about {test}", "verdict": verdicts.get(test, "test_wrong")})
+
+    # The checker prompt shows the failing test in a code block, so each test gets its own
+    # verdict (the fixer's prompt quotes the test without the block).
+    provider.answers = {
+        **{f"```python\ndef {test}": check(test) for test in ("test_spec_2", "test_spec_3")},
+        **provider.answers,
+    }
+    settings = ReviewSettings(run_tests=True)
+    reviewer = ProjectReviewer(workspace, provider, settings, test_runner=ProjectTestRunner())
+    return reviewer, reviewer.run()
+
+
+def test_spec_tests_show_a_bug_the_finders_missed_and_prove_its_fix(tmp_path):
+    reviewer, outcome = spec_review(tmp_path, {"test_spec_2": "code_wrong"})
+    [spec] = [f for f in outcome.findings if f.source == "agent:spec_tester"]
+    assert spec.symbol == "clamp" and spec.category is Category.BUG and spec.fixable
+    assert "test_spec_2" in spec.explanation and spec.line_start == 1 and spec.line_end == 7
+    # The passing test and the blamed one are kept; the test blamed on itself is dropped.
+    [kept] = reviewer.spec_files.values()
+    assert "test_spec_1" in kept and "test_spec_2" in kept and "test_spec_3" not in kept
+    assert {d.get("spec_test") for d in outcome.dropped if "spec_test" in d} == {"test_spec_3"}
+    assert outcome.summary["model_findings"]["spec_blamed_on_code"] == 1
+    fix = next(f for f in outcome.fixes if f.symbol == "clamp")
+    # test_spec_2 fails before the fix and passes after it: evidence, so the fix is ready.
+    assert fix.tests.status == "pass" and fix.disposition is Disposition.PROPOSAL_READY
+    roles = [call.role for call in outcome.calls]
+    assert roles.count("spec_tester") == 1 and roles.count("spec_checker") == 2
+
+
+def test_a_failing_spec_test_blamed_on_itself_is_no_finding(tmp_path):
+    reviewer, outcome = spec_review(tmp_path, {})
+    assert not [f for f in outcome.findings if f.source == "agent:spec_tester"]
+    [kept] = reviewer.spec_files.values()  # only the passing test is kept
+    assert "test_spec_1" in kept and "test_spec_2" not in kept
+
+
 def test_a_fix_that_closes_an_import_cycle_is_rejected(tmp_path):
     files = {
         "README.md": "Averages are taken over the values given.",
@@ -509,4 +583,14 @@ def test_parse_report_refuses_doctypes_and_reads_results(tmp_path):
     report = parse_report(path)
     assert report.passed == {"t::ok"} and report.failed == {"t::bad"}
     assert report.errors == {"t::err"} and report.skipped == 1
+    assert report.messages == {"t::bad": "x", "t::err": "x"}
     assert parse_report(tmp_path / "missing.xml") is None
+    long = "y" * 5000
+    path.write_text(
+        "<testsuite>"
+        f'<testcase classname="t" name="bad"><failure message="assert 1 == 2">{long}tail'
+        "</failure></testcase></testsuite>"
+    )
+    message = parse_report(path).messages["t::bad"]
+    assert message.startswith("assert 1 == 2") and message.endswith("tail")
+    assert len(message) <= 800

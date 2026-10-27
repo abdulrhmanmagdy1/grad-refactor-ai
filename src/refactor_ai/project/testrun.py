@@ -100,6 +100,8 @@ class TestReport:
     passed: set[str] = field(default_factory=set)
     failed: set[str] = field(default_factory=set)
     errors: set[str] = field(default_factory=set)
+    # Failure or error text per failing test, bounded.
+    messages: dict[str, str] = field(default_factory=dict)
     skipped: int = 0
     duration_s: float = 0.0
     detail: str = ""
@@ -140,6 +142,18 @@ def compare(baseline: TestReport, after: TestReport) -> tuple[str, str]:
 MAX_REPORT_BYTES = 5_000_000
 
 
+MAX_MESSAGE = 800
+
+
+def _failure_text(element) -> str:
+    """pytest's message and the end of its traceback (where the assertion is)."""
+    message = element.get("message", "") or ""
+    text = (element.text or "").strip()
+    tail = text[-(MAX_MESSAGE // 2) :] if text else ""
+    combined = message if not tail or tail in message else f"{message}\n{tail}"
+    return combined[:MAX_MESSAGE]
+
+
 def parse_report(path: Path) -> TestReport | None:
     """pytest's JUnit XML report. The project's own code could rewrite this file, so it is
     size-limited and may not declare a DTD or entities."""
@@ -162,8 +176,10 @@ def parse_report(path: Path) -> TestReport | None:
             report.skipped += 1
         elif case.find("failure") is not None:
             report.failed.add(name)
+            report.messages[name] = _failure_text(case.find("failure"))
         elif case.find("error") is not None:
             report.errors.add(name)
+            report.messages[name] = _failure_text(case.find("error"))
         else:
             report.passed.add(name)
     return report
@@ -300,6 +316,9 @@ class ProjectTestRunner:
         if drop:
             for path in [copy, *copy.rglob("*")]:
                 os.chown(path, UNPRIVILEGED_ID, UNPRIVILEGED_ID)
+            # The temporary folder above the copy is private to root; the unprivileged
+            # user may pass through it (not list it) to reach the copy.
+            os.chmod(copy.parent, 0o711)
         memory = self.memory_mb * 1024 * 1024
         cpu = int(self.cpu_s)
 

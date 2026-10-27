@@ -37,6 +37,13 @@ from refactor_ai.project.testrun import ProjectTestRunner  # noqa: E402
 
 RESULTS = ROOT / "experiments" / "evaluation" / "project-bench"
 FREEZE = RESULTS / "freeze.json"
+
+
+def freeze_path(split: str) -> Path:
+    """The freeze record of a protected split (test: v1, test2: v2)."""
+    return FREEZE if split == "test" else RESULTS / f"freeze-{split}.json"
+
+
 ARMS = ("static", "full")
 FROZEN_CODE = (
     "src/refactor_ai/project/*.py",
@@ -81,9 +88,10 @@ def freeze_state(split: str, config: Path) -> dict:
 
 
 def freeze_problems(split: str, config: Path) -> list[str]:
-    if not FREEZE.is_file():
-        return [f"{FREEZE.relative_to(ROOT).as_posix()} does not exist"]
-    frozen = json.loads(FREEZE.read_text(encoding="utf-8"))
+    path = freeze_path(split)
+    if not path.is_file():
+        return [f"{path.relative_to(ROOT).as_posix()} does not exist"]
+    frozen = json.loads(path.read_text(encoding="utf-8"))
     current = freeze_state(split, config)
     return [
         f"{key} differs from the freeze record"
@@ -135,24 +143,26 @@ def command_validate(args: argparse.Namespace) -> int:
 
 def command_freeze(args: argparse.Namespace) -> int:
     runner = ProjectTestRunner()
-    for project in selected("test", None):
+    for project in selected(args.split, None):
         if not benchmark.validate(project, runner).ok:
             print(f"{project.name} does not validate; nothing was frozen")
             return 1
     record = {
-        **freeze_state("test", Path(args.model_config)),
+        **freeze_state(args.split, Path(args.model_config)),
         "frozen_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "git": git_state(),
     }
-    FREEZE.parent.mkdir(parents=True, exist_ok=True)
-    FREEZE.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8", newline="\n")
-    print(f"wrote {FREEZE.relative_to(ROOT).as_posix()}")
+    target = freeze_path(args.split)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8", newline="\n")
+    print(f"wrote {target.relative_to(ROOT).as_posix()}")
     return 0
 
 
 def command_run(args: argparse.Namespace) -> int:
     config = Path(args.model_config)
-    frozen_problems = freeze_problems(args.split, config) if args.split == "test" else []
+    protected = args.split in benchmark.FROZEN_SPLITS
+    frozen_problems = freeze_problems(args.split, config) if protected else []
     if frozen_problems and not args.allow_unfrozen:
         print("The test split runs only under the freeze record:")
         for problem in frozen_problems:
@@ -171,7 +181,7 @@ def command_run(args: argparse.Namespace) -> int:
         "projects": {project.name: project.sha256() for project in projects},
         "settings": dataclasses.asdict(settings),
         "model": model_identity(config) if args.arm == "full" else None,
-        "frozen": args.split == "test" and not frozen_problems,
+        "frozen": protected and not frozen_problems,
         "freeze_problems": frozen_problems,
         "git": git_state(),
         "python": sys.version.split()[0],
@@ -392,7 +402,8 @@ def main(argv: list[str] | None = None) -> int:
     validate.add_argument("--no-tests", action="store_true", help="skip the test runs")
     validate.set_defaults(handler=command_validate)
 
-    freeze = commands.add_parser("freeze", help="write the freeze record of the test split")
+    freeze = commands.add_parser("freeze", help="write the freeze record of a test split")
+    freeze.add_argument("--split", choices=benchmark.FROZEN_SPLITS, default="test2")
     freeze.add_argument("--model-config", default="configs/model.project.local.json")
     freeze.set_defaults(handler=command_freeze)
 

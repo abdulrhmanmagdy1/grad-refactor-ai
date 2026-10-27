@@ -33,9 +33,13 @@ from refactor_ai.project.service import apply_recorded_fix
 from refactor_ai.project.testrun import ProjectTestRunner, TestReport
 from refactor_ai.project.workspace import IntakeError, Workspace, extract_project
 
-PROTOCOL_ID = "project-bench-v1"
+# v1 froze the test split with prompt version project-v3; v2 adds the spec tests
+# (project-v4) and a second, new test split.
+PROTOCOL_ID = "project-bench-v2"
 DATASET_ROOT = Path("datasets") / "project_bench" / "v1"
-SPLITS = ("dev", "test")
+SPLITS = ("dev", "test", "test2")
+# Splits that run only under a freeze record.
+FROZEN_SPLITS = ("test", "test2")
 MANIFEST = "manifest.json"
 HIDDEN_SOURCE = Path("hidden") / "test_hidden.py"
 # The hidden tests are copied to the project root under this name and run on their own,

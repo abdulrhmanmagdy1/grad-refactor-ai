@@ -46,7 +46,7 @@ def test_finders_see_the_project_description_shortened():
         user = messages[1].content
         assert user.startswith("Project description (from its README):\nFines start the day")
         assert "x" * agents.MAX_DESCRIPTION not in user and "x" * 700 in user
-    assert agents.PROMPT_VERSION == "project-v3"
+    assert agents.PROMPT_VERSION == "project-v4"
     assert agents.ELSEWHERE in messages[1].content
 
 
@@ -159,6 +159,36 @@ def test_parse_verdict_errors():
     allowed = ("accept", "reject", "uncertain")
     assert agents.parse_verdict('{"verdict": "maybe"}', allowed).error == "invalid_verdict"
     assert agents.parse_verdict("no verdict", allowed).error == "unparseable_output"
+
+
+def test_parse_spec_tests_keeps_three_named_tests_and_helpers():
+    answer = (
+        "Here:\n```python\nimport pytest\nfrom app.m import f\n\n\n"
+        "def helper():\n    return 1\n\n\n"
+        + "".join(f"def test_spec_{n}():\n    assert f() == {n}\n\n\n" for n in range(1, 5))
+        + "```"
+    )
+    parsed = agents.parse_spec_tests(answer)
+    assert parsed.extra["tests"] == ["test_spec_1", "test_spec_2", "test_spec_3"]
+    assert "def helper" in parsed.extra["code"] and "test_spec_4" not in parsed.extra["code"]
+    assert parsed.repaired  # the fourth test was cut
+    unclosed = agents.parse_spec_tests("```python\ndef test_a():\n    assert True\n")
+    assert unclosed.extra["tests"] == ["test_a"]
+    assert agents.parse_spec_tests("no code").error == "no_code_block"
+    assert agents.parse_spec_tests("```python\ndef test_a(:\n```").error == "does_not_parse"
+    assert agents.parse_spec_tests("```python\nx = 1\n```").error == "no_tests"
+    code = parsed.extra["code"]
+    assert "test_spec_2" not in agents.drop_tests(code, {"test_spec_2"})
+    assert agents.spec_test_source(code, "test_spec_1").startswith("def test_spec_1():")
+    assert agents.spec_test_source(code, "missing") == ""
+    tester = agents.spec_test_messages("app.m", "f", "def f():\n    pass\n", "Readme.")
+    assert "Import what you need from `app.m`" in tester[1].content
+    assert "from the documentation, not from the code" in tester[1].content
+    checker = agents.spec_check_messages(
+        "f", "def test_a(): ...", "assert 1 == 2", "def f(): ...", 3
+    )
+    assert "code_wrong|test_wrong|unsure" in checker[1].content
+    assert checker[1].content.index('"reason') < checker[1].content.index('"verdict"')
 
 
 def test_parse_fix_formats():

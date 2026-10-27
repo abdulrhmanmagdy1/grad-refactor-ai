@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--project", action="append")
     args = parser.parse_args(argv)
     problems = []
-    if args.split == "test":
+    if args.split in benchmark.FROZEN_SPLITS:
         problems = frozen.freeze_problems(args.split, Path(args.model_config))
         other = [problem for problem in problems if problem != MODEL_PROBLEM]
         if other:
@@ -88,7 +88,8 @@ def main(argv: list[str] | None = None) -> int:
             arm=f"full-{args.name}",
             model_arm=args.name,
             frozen=False,
-            frozen_except_model=args.split == "test" and problems in ([], [MODEL_PROBLEM]),
+            frozen_except_model=args.split in benchmark.FROZEN_SPLITS
+            and problems in ([], [MODEL_PROBLEM]),
         )
         run_path.write_text(json.dumps(run, indent=2) + "\n", encoding="utf-8", newline="\n")
     if records_path.is_file():
