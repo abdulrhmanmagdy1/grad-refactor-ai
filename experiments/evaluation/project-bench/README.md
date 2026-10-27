@@ -89,3 +89,30 @@ Paired, judge confirmed: 14B found 9 issues static missed and missed none it fou
 arm's 79 fixes, 27 break a test when applied: 26 were rejected and 1 stayed uncertain,
 none ready. 11 fixes that do fix their bug stayed uncertain, most with the reason
 `model_only` (no test showed the bug): the spec tests of project-v4 target exactly that.
+
+## Model-size arm: Qwen2.5-Coder-32B-Instruct
+
+Same frozen pipeline and test split, `bartowski/Qwen2.5-Coder-32B-Instruct-GGUF` Q4_K_M
+(revision 40b525506a4f, sha256 8e2fd78ff55e) split over 2 x T4; `"frozen_except_model":
+true`. All 498 model calls succeeded; in ledger the call budget or time limit was reached.
+Results in [test-full-32b/](test-full-32b/); the 26 pairs first seen in this arm were
+judged by another new session with the same instructions
+([judge/labels-32b-new.json](judge/labels-32b-new.json), merged into
+[judge/labels-all.json](judge/labels-all.json)); all four arms in
+[report-models.md](report-models.md).
+
+| | Static | 3B | 14B | 32B |
+|---|---|---|---|---|
+| Issues found, judge confirmed | 18/55 | 19/55 | 27/55 | 27/55 |
+| ... bug | 4/24 | 4/24 | 10/24 | 10/24 |
+| ... security | 4/8 | 4/8 | 6/8 | 4/8 |
+| Findings (off every seeded place) | 27 (0) | 155 (85) | 164 (84) | 103 (48) |
+| Fixable issues fixed by some fix | 0/32 | 4/32 | 14/32 | 13/32 |
+| Fixes marked ready (and fixing their bug) | 0 | 1 (1) | 1 (1) | 4 (4) |
+| Ready fixes that break a test | 0 | 0 | 0 | 0 |
+| Median review time | 1.6 s | 347 s | 612 s | 1009 s |
+
+14B and 32B find the same number of issues (each finds 5 the other misses; McNemar
+p = 1.0). 32B reports 40% fewer findings, half as many off every seeded place, and has 4
+ready fixes, all of which fix their bug; of its fixes that break a test, 9 were rejected
+and 1 stayed uncertain.
