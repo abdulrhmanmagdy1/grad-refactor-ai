@@ -188,6 +188,16 @@ def test_parse_spec_tests_keeps_three_named_tests_and_helpers():
         "f", "def test_a(): ...", "assert 1 == 2", "def f(): ...", 3
     )
     assert "code_wrong|test_wrong|unsure" in checker[1].content
+    with_readme = agents.spec_check_messages(
+        "f", "t", "assert 1 == 2", "c", 1, "Codes look like L1-001."
+    )
+    assert with_readme[1].content.startswith("Project description (from its README):\nCodes")
+    assert "is the test's guess" in with_readme[1].content
+    assert agents.misuse("AttributeError: 'Garage' object has no attribute 'spaces'")
+    assert agents.misuse("TypeError: park() missing 1 required positional argument: 'kind'")
+    assert agents.misuse("fixture 'garage' not found")
+    assert not agents.misuse("assert 'L1-001' == '1-1'")
+    assert not agents.misuse("ValueError: the limit is inclusive") and not agents.misuse("")
     assert checker[1].content.index('"reason') < checker[1].content.index('"verdict"')
 
 

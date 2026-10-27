@@ -200,17 +200,25 @@ def spec_test_messages(
 
 
 def spec_check_messages(
-    qualname: str, test_code: str, failure: str, code: str, first_line: int
+    qualname: str,
+    test_code: str,
+    failure: str,
+    code: str,
+    first_line: int,
+    description: str | None = None,
 ) -> list[ChatMessage]:
     """Is the code wrong, or the test written from its documentation?"""
     user = (
+        f"{_description(description)}"
         f"A test written from the documentation of `{qualname}` fails.\n\n"
         f"Test:\n```python\n{test_code.rstrip()}\n```\n\nFailure:\n{failure.strip()}\n\n"
         f"Code:\n```python\n{numbered(code, first_line)}\n```\n\n"
         "Decide which one is wrong. code_wrong: the code does not do what its docstring, "
         "name or the documentation say, and the test expects the documented behavior. "
         "test_wrong: the test expects something the documentation does not promise, or sets "
-        "things up wrongly. First say what the documentation promises and what the code does.\n"
+        "things up wrongly. A value, format or message that the docstring and the project "
+        "description do not state (or plainly imply) is the test's guess: test_wrong. First "
+        "say what the documentation promises and what the code does.\n"
         'Return JSON: {"reason": "<one or two sentences>", '
         '"verdict": "code_wrong|test_wrong|unsure"}'
     )
@@ -506,6 +514,23 @@ def parse_spec_tests(text: str) -> Parsed:
     if len(set(names)) != len(names):
         return Parsed(error="duplicate_test_names")
     return Parsed(extra={"code": ast.unparse(tree) + "\n", "tests": names}, repaired=bool(extra))
+
+
+# Exceptions that show a test calling the code the wrong way, not the code being wrong.
+MISUSE_ERRORS = (
+    "TypeError",
+    "AttributeError",
+    "NameError",
+    "ImportError",
+    "ModuleNotFoundError",
+    "fixture '",
+)
+
+
+def misuse(message: str) -> bool:
+    """Whether a failing spec test failed by calling the code wrongly."""
+    head = message.strip().splitlines()[0] if message.strip() else ""
+    return any(head.startswith(error) or f" {error}" in head for error in MISUSE_ERRORS)
 
 
 def drop_tests(code: str, names: set[str]) -> str:

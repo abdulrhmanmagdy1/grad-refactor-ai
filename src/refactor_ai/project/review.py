@@ -662,6 +662,10 @@ class ProjectReviewer:
             blamed = []
             failing = sorted(report.failed)  # errors are broken tests, not evidence
             counts["spec_failing"] = counts.get("spec_failing", 0) + len(failing)
+            # A test that fails by calling the code wrongly shows nothing about the code.
+            misused = [f for f in failing if agents.misuse(report.messages.get(f, ""))]
+            counts["spec_misused"] = counts.get("spec_misused", 0) + len(misused)
+            failing = [f for f in failing if f not in misused]
             for full in failing[: self.settings.spec_checks]:
                 test = full.rsplit("::", 1)[-1].split("[", 1)[0]
                 message = report.messages.get(full, "")
@@ -675,6 +679,7 @@ class ProjectReviewer:
                         message,
                         body,
                         function.line_start,
+                        self._description(),
                     ),
                     self.settings.checker_tokens,
                 )
