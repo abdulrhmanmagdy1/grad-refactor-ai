@@ -37,7 +37,7 @@ from refactor_ai.contracts import (
     ProviderMode,
     Role,
 )
-from refactor_ai.project import agents, fixes, static
+from refactor_ai.project import agents, fixes, static, typecheck
 from refactor_ai.project.index import (
     FunctionInfo,
     ProjectIndex,
@@ -45,6 +45,7 @@ from refactor_ai.project.index import (
     module_level_imports,
     project_map,
     reaches,
+    related_api,
 )
 from refactor_ai.project.models import (
     SEVERITY_ORDER,
@@ -594,6 +595,32 @@ class ProjectReviewer:
         counts["kept"] = len(kept)
         return kept
 
+    def _mypy_recheck(self, typed: list[Finding], function: FunctionInfo, state) -> FixCheck:
+        """mypy on the project with the fix: the fixed type errors are gone from the
+        function and no new one appears there."""
+        files = typecheck.checked_files(self.index)
+        before, _ = typecheck.run_mypy(self.workspace.root, files)
+        after, problem = typecheck.run_mypy(
+            self.workspace.root, files, {function.file: state.source}
+        )
+        if problem:
+            return FixCheck(status="error", detail=problem)
+        old = typecheck.in_span(before, function.file, function.line_start, function.line_end)
+        new = typecheck.in_span(after, function.file, state.span.def_line, state.span.end_line)
+        left = sorted({e["code"] for e in new} & {f.source.rsplit(":", 1)[1] for f in typed})
+        added = sorted({e["code"] for e in new} - {e["code"] for e in old})
+        if left or added:
+            detail = "; ".join(
+                part
+                for part in (
+                    f"Still reported by mypy: {', '.join(left)}." if left else "",
+                    f"New mypy errors: {', '.join(added)}." if added else "",
+                )
+                if part
+            )
+            return FixCheck(status="fail", detail=detail)
+        return FixCheck(status="pass", detail="mypy no longer reports the fixed errors.")
+
     # --- spec tests ----------------------------------------------------------------------
 
     def _spec_targets(self, index: ProjectIndex) -> list[FunctionInfo]:
@@ -620,6 +647,38 @@ class ProjectReviewer:
                 targets.append(function)
         return targets[: self.settings.spec_functions]
 
+    def _spec_repair(self, function: FunctionInfo, name: str, code: str, report, counts: dict):
+        """One more try when the tests did not run or failed by calling the code wrongly:
+        the tester sees the errors and fixes how its tests call the code. Returns the new
+        (code, report), or None when no repair was needed or it did not help."""
+        broken = sorted(report.errors) + [
+            f for f in sorted(report.failed) if agents.misuse(report.messages.get(f, ""))
+        ]
+        if report.status == "ran" and not broken:
+            return None
+        if report.status != "ran":
+            failures = report.detail or report.status
+        else:
+            failures = "\n".join(
+                f"{full.rsplit('::', 1)[-1]}: {report.messages.get(full, '')[:300]}"
+                for full in broken[:3]
+            )
+        text = self._call(
+            "spec_tester",
+            f"{function.file}:{function.qualname}:repair",
+            Role.ANALYSIS,
+            agents.spec_repair_messages(function.qualname, code, failures),
+            self.settings.spec_tokens,
+        )
+        if text is None:
+            return None
+        parsed = agents.parse_spec_tests(text)
+        if parsed.error:
+            return None
+        counts["spec_repaired"] = counts.get("spec_repaired", 0) + 1
+        again = self.test_runner.run(self.workspace.root, {name: parsed.extra["code"]}, (name,))
+        return parsed.extra["code"], again
+
     def _spec_findings(self, index: ProjectIndex, counts: dict) -> list[Finding]:
         """Bugs shown by tests written from the documentation.
 
@@ -641,6 +700,7 @@ class ProjectReviewer:
                     function.qualname,
                     self.workspace.read(function.file),
                     self._description(),
+                    related_api(index, self.workspace, module),
                 ),
                 self.settings.spec_tokens,
             )
@@ -653,6 +713,12 @@ class ProjectReviewer:
             name, code = f"test_zz_spec_{number:02d}.py", parsed.extra["code"]
             report = self.test_runner.run(self.workspace.root, {name: code}, (name,))
             counts["spec_tests"] = counts.get("spec_tests", 0) + len(parsed.extra["tests"])
+            repaired = self._spec_repair(function, name, code, report, counts)
+            if repaired is not None:
+                code, report = repaired
+                parsed.extra["tests"] = agents.parse_spec_tests(f"```python\n{code}```").extra.get(
+                    "tests", parsed.extra["tests"]
+                )
             if report.status != "ran":
                 continue
             short = {full: full.rsplit("::", 1)[-1].split("[", 1)[0] for full in report.passed}
@@ -917,6 +983,9 @@ class ProjectReviewer:
         fix.syntax = FixCheck(status="pass", detail="The patched file parses.")
         total = fixes.AppliedFix(state.source, state.span, fix.diff)
         fix.static_recheck = fixes.static_recheck(fixed, function.file, source, span, total)
+        typed = [f for f in fixed if f.source.startswith("static:mypy:")]
+        if typed and fix.static_recheck.status in ("pass", "partial"):
+            fix.static_recheck = self._mypy_recheck(typed, function, state)
         if notes:
             fix.static_recheck.detail = (fix.static_recheck.detail or "") + (
                 " Not fixed: " + "; ".join(notes)

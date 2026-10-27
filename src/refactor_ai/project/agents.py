@@ -1,4 +1,4 @@
-"""Prompts and output parsers of the project review agents (prompt version project-v4).
+"""Prompts and output parsers of the project review agents (prompt version project-v5).
 
 Seven model roles, each with its own prompt and a strict parser:
 
@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from refactor_ai.contracts import ChatMessage
 from refactor_ai.task_format import parse_refactor_output
 
-PROMPT_VERSION = "project-v4"
+PROMPT_VERSION = "project-v5"
 # How much of the project README the finders see as the description of intended behavior.
 MAX_DESCRIPTION = 800
 SEVERITIES = ("high", "medium", "low")
@@ -177,11 +177,22 @@ TESTER_SYSTEM = (
 
 
 def spec_test_messages(
-    module: str, qualname: str, source: str, description: str | None = None
+    module: str,
+    qualname: str,
+    source: str,
+    description: str | None = None,
+    api: str | None = None,
 ) -> list[ChatMessage]:
     """Tests of the behavior that `qualname`'s docstring, name and the README promise."""
+    related = (
+        "Project modules it uses (signatures only; build their objects with these):\n"
+        f"```python\n{api.rstrip()}\n```\n\n"
+        if api
+        else ""
+    )
     user = (
         f"{_description(description)}"
+        f"{related}"
         f"Module `{module}`:\n```python\n{source.rstrip()}\n```\n\n"
         f"Write at most 3 pytest test functions for `{qualname}`, each checking one behavior "
         "that its docstring, its name or the project description promises, including the "
@@ -192,6 +203,21 @@ def spec_test_messages(
         "(tmp_path for files); no network and no other processes. Name the tests "
         "test_spec_1, test_spec_2 and test_spec_3. Return one ```python code block with the "
         "imports and the tests, nothing else."
+    )
+    return [
+        ChatMessage(role="system", content=TESTER_SYSTEM),
+        ChatMessage(role="user", content=user),
+    ]
+
+
+def spec_repair_messages(qualname: str, test_code: str, failures: str) -> list[ChatMessage]:
+    """The tester's second try when its tests called the code wrongly."""
+    user = (
+        f"Your tests for `{qualname}` could not check it: they call the code the wrong way.\n\n"
+        f"Tests:\n```python\n{test_code.rstrip()}\n```\n\nErrors:\n{failures.strip()}\n\n"
+        "Fix how the tests import, build and call things, using the signatures you were "
+        "shown. Keep each test's name and its expected values, which come from the "
+        "documentation. Return one ```python code block with the imports and the tests."
     )
     return [
         ChatMessage(role="system", content=TESTER_SYSTEM),

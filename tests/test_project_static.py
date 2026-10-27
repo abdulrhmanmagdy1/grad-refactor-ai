@@ -394,5 +394,94 @@ def test_ruff_problems_become_warnings(tmp_path, monkeypatch):
 
     monkeypatch.setattr(static.subprocess, "run", fail)
     findings, warnings = static.scan(workspace, build_index(workspace))
-    assert warnings == ["ruff could not run: OSError"]
+    assert warnings == ["ruff could not run: OSError", "mypy could not run: OSError"]
     assert all(not f.source.startswith("static:ruff") for f in findings)
+
+
+def test_mypy_reports_defects_and_skips_annotation_noise(tmp_path):
+    from refactor_ai.project import typecheck
+
+    files = {
+        "app/__init__.py": "",
+        "app/shop.py": code(
+            """
+            from dataclasses import dataclass
+
+
+            @dataclass
+            class Item:
+                name: str
+                price: float
+
+
+            def total(items: list[Item]) -> float:
+                return sum(item.cost for item in items)
+
+
+            def label(item: Item | None) -> str:
+                return item.name.upper()
+
+
+            def loose(value):
+                return value + 1
+            """
+        ),
+        "tests/test_shop.py": "def test_x():\n    assert True\n",
+    }
+    workspace = extract_project(make_zip(files), tmp_path / "ws")
+    index = build_index(workspace)
+    assert typecheck.checked_files(index) == ["app/__init__.py", "app/shop.py"]
+    errors, problem = typecheck.run_mypy(workspace.root, typecheck.checked_files(index))
+    assert problem is None
+    findings = typecheck.mypy_findings(errors, index)
+    sources = sorted(f.source for f in findings)
+    assert sources == ["static:mypy:attr-defined", "static:mypy:union-attr"]
+    attr = next(f for f in findings if f.source.endswith("attr-defined"))
+    assert attr.symbol == "total" and attr.fixable and attr.category is Category.BUG
+    assert attr.line_start == 11 and "does not have" in attr.explanation
+    fixed = files["app/shop.py"].replace("item.cost", "item.price")
+    after, _ = typecheck.run_mypy(
+        workspace.root, typecheck.checked_files(index), {"app/shop.py": fixed}
+    )
+    assert [e["code"] for e in after] == ["union-attr"]
+    assert typecheck.in_span(after, "app/shop.py", 14, 15) == after
+
+
+def test_api_stub_and_related_api(tmp_path):
+    from refactor_ai.project.index import api_stub, related_api
+
+    models = code(
+        """
+        from dataclasses import dataclass
+
+        RATE = 0.25
+
+
+        @dataclass
+        class Loan:
+            loan_id: str
+            days: int = 14
+
+            def late(self, today: int) -> bool:
+                return today > self.days
+
+
+        def helper(x, *, scale=2):
+            return x * scale
+        """
+    )
+    stub = api_stub(models)
+    assert "@dataclass\nclass Loan:\n    loan_id: str\n    days: int = 14" in stub
+    assert "    def late(self, today: int) -> bool: ..." in stub
+    assert "def helper(x, *, scale=2): ..." in stub and "RATE = 0.25" in stub
+    assert "return" not in stub and api_stub("def (:") == ""
+    files = {
+        "lib/__init__.py": "",
+        "lib/models.py": models,
+        "lib/desk.py": "from lib.models import Loan\n\n\ndef lend():\n    return Loan('a')\n",
+    }
+    workspace = extract_project(make_zip(files), tmp_path / "ws")
+    index = build_index(workspace)
+    related = related_api(index, workspace, "lib.desk")
+    assert related.startswith("# lib\n") or "# lib.models\n" in related
+    assert "class Loan:" in related and related_api(index, workspace, "missing") == ""

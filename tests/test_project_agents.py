@@ -46,7 +46,7 @@ def test_finders_see_the_project_description_shortened():
         user = messages[1].content
         assert user.startswith("Project description (from its README):\nFines start the day")
         assert "x" * agents.MAX_DESCRIPTION not in user and "x" * 700 in user
-    assert agents.PROMPT_VERSION == "project-v4"
+    assert agents.PROMPT_VERSION == "project-v5"
     assert agents.ELSEWHERE in messages[1].content
 
 

@@ -425,6 +425,60 @@ def build_index(workspace: Workspace) -> ProjectIndex:
     )
 
 
+def _signature(node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
+    keyword = "async def" if isinstance(node, ast.AsyncFunctionDef) else "def"
+    returns = f" -> {ast.unparse(node.returns)}" if node.returns else ""
+    return f"{keyword} {node.name}({ast.unparse(node.args)}){returns}: ..."
+
+
+def api_stub(source: str) -> str:
+    """A module's public shape: classes with their fields and method signatures, functions
+    with their signatures and constants, without bodies."""
+    try:
+        tree = ast.parse(source)
+    except (SyntaxError, ValueError):
+        return ""
+    lines: list[str] = []
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            lines += [line for line in (*_decorators(node), _signature(node))]
+        elif isinstance(node, ast.ClassDef):
+            bases = ", ".join(ast.unparse(base) for base in node.bases)
+            lines += [
+                *_decorators(node),
+                f"class {node.name}({bases}):" if bases else f"class {node.name}:",
+            ]
+            for item in node.body:
+                if isinstance(item, ast.AnnAssign | ast.Assign):
+                    lines.append("    " + ast.unparse(item))
+                elif isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    lines += ["    " + d for d in _decorators(item)] + ["    " + _signature(item)]
+        elif isinstance(node, ast.AnnAssign | ast.Assign) and len(ast.unparse(node)) <= 120:
+            lines.append(ast.unparse(node))
+    return "\n".join(lines)
+
+
+def _decorators(node) -> list[str]:
+    return [f"@{ast.unparse(d)}" for d in node.decorator_list]
+
+
+def related_api(index: ProjectIndex, workspace: Workspace, module: str, limit: int = 3000) -> str:
+    """The public shape of the project modules that `module` imports, for writing code that
+    uses them correctly."""
+    info = index.modules.get(module)
+    if info is None:
+        return ""
+    parts = []
+    for name in sorted(info.imports):
+        other = index.modules.get(name)
+        if other is None or other.is_test or other.parse_error:
+            continue
+        stub = api_stub(workspace.read(other.file))
+        if stub:
+            parts.append(f"# {name}\n{stub}")
+    return "\n\n".join(parts)[:limit]
+
+
 def project_map(index: ProjectIndex, max_modules: int = 60) -> str:
     """A compact text description of the project for the architecture agent."""
     summary = index.summary()

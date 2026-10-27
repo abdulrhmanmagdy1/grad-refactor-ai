@@ -435,6 +435,11 @@ def _check_static(project: BenchProject, workspace: Workspace, index, result: Va
         key = _finding_key(finding)
         if not matching["finding_issues"].get(key) and not matching["finding_decoys"].get(key):
             where = f"{finding.file}:{finding.line_start}" if finding.line_start else finding.file
+            # mypy joined the static checks after the first splits were written; its findings
+            # outside the seeded places are reported, not held against those projects.
+            if finding.source.startswith("static:mypy:"):
+                result.notes.append(f"mypy outside the seeded places: {where} {finding.title}")
+                continue
             result.problems.append(
                 f"static finding outside every seeded place: {where} {finding.source} "
                 f"{finding.title}"

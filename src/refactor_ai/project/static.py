@@ -1,4 +1,5 @@
-"""Deterministic findings: ruff, the project rules, the index metrics and the guard-clause task.
+"""Deterministic findings: ruff, mypy, the project rules, the index metrics and the
+guard-clause task.
 
 ruff runs as a separate process on the workspace with a fixed rule selection and no
 configuration from the project (`--isolated`); it parses files and never executes them.
@@ -438,8 +439,14 @@ def scan(workspace: Workspace, index: ProjectIndex) -> tuple[list[Finding], list
     diagnostics, problem = run_ruff(workspace)
     if problem:
         warnings.append(problem)
+    from refactor_ai.project import typecheck
+
+    errors, problem = typecheck.run_mypy(workspace.root, typecheck.checked_files(index))
+    if problem:
+        warnings.append(problem)
     findings = [
         *ruff_findings(diagnostics, index),
+        *typecheck.mypy_findings(errors, index),
         *rule_findings(workspace, index),
         *index_findings(index),
         *task_findings(workspace, index),

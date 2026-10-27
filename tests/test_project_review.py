@@ -365,12 +365,13 @@ FIXED_CLAMP = (
 )
 
 
-def spec_review(tmp_path, verdicts: dict[str, str]):
+def spec_review(tmp_path, verdicts: dict[str, str], first_answer: str = SPEC_ANSWER):
     files = {"app/__init__.py": "", "app/limits.py": CLAMP, "tests/test_limits.py": CLAMP_TESTS}
     workspace = extract_project(project_zip(files), tmp_path / "ws")
     provider = ScriptedProvider(
         {
-            "Write at most 3 pytest test functions": SPEC_ANSWER,
+            "could not check it": SPEC_ANSWER,
+            "Write at most 3 pytest test functions": first_answer,
             "does not do what its documentation says": FIXED_CLAMP,
         }
     )
@@ -594,3 +595,13 @@ def test_parse_report_refuses_doctypes_and_reads_results(tmp_path):
     message = parse_report(path).messages["t::bad"]
     assert message.startswith("assert 1 == 2") and message.endswith("tail")
     assert len(message) <= 800
+
+
+def test_spec_tests_that_call_the_code_wrongly_get_one_repair(tmp_path):
+    # The first tests call clamp with two arguments: a TypeError, not evidence.
+    wrong = SPEC_ANSWER.replace("clamp(9, 0, 5)", "clamp(9, 5)")
+    reviewer, outcome = spec_review(tmp_path, {"test_spec_2": "code_wrong"}, wrong)
+    assert outcome.summary["model_findings"]["spec_repaired"] == 1
+    assert [f.symbol for f in outcome.findings if f.source == "agent:spec_tester"] == ["clamp"]
+    tester_calls = [c.target for c in outcome.calls if c.role == "spec_tester"]
+    assert tester_calls == ["app/limits.py:clamp", "app/limits.py:clamp:repair"]
