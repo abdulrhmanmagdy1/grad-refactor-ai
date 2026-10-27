@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "name": "fleet",
+  "description": "Vehicles and drivers, trips from odometer readings, fuel logs and consumption, maintenance due by distance or time, and a cost report.",
+  "author": "test2 benchmark author (language model, written without reading the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-boolean-operator",
+      "file": "fleet/maintenance.py",
+      "lines": [72, 72],
+      "anchor": "return km_due and time_due",
+      "symbol": "MaintenancePlan.is_due",
+      "description": "A service is due when the distance limit OR the time limit is reached (whichever comes first), but the code requires both, so rules with a single limit never fall due and a vehicle that passed one limit is not flagged.",
+      "fix_hint": "Return km_due or time_due.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_service_due_on_distance_alone",
+        "test_B1_service_due_on_time_alone",
+        "test_B1_rule_with_only_a_time_limit"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "fleet/fuel.py",
+      "lines": [33, 34],
+      "anchor": "entries: list[FuelEntry] = []",
+      "symbol": "FuelLog.__init__",
+      "description": "FuelLog() without arguments stores the shared default list, so every log created that way sees the fill-ups added to the others.",
+      "fix_hint": "Default to None and create a new list inside __init__.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_new_logs_start_empty"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "fleet/fuel.py",
+      "lines": [95, 95],
+      "anchor": "ordered[first : last + 1]",
+      "symbol": "consumption_l_per_100km",
+      "description": "The docstring says the liters of the first full-tank fill-up are not counted, but the slice starts at that fill-up, overstating consumption.",
+      "fix_hint": "Sum ordered[first + 1 : last + 1].",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_first_full_tank_not_counted"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "fleet/storage.py",
+      "lines": [28, 28],
+      "anchor": "return root / \"receipts\" / str(entry_id) / filename",
+      "symbol": "receipt_path",
+      "description": "The uploaded file name is joined to the storage folder unchecked, so a name with '..' writes the receipt anywhere on disk.",
+      "fix_hint": "Reject names whose resolved path leaves root/receipts/<entry_id> (or keep only the base name).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_receipt_cannot_escape_the_data_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "fleet/trips.py",
+      "lines": [63, 64],
+      "anchor": "if day > driver.license_expires:",
+      "symbol": "TripLog.record",
+      "modules": ["fleet.trips", "fleet.models"],
+      "other_locations": [{"file": "fleet/models.py", "lines": [39, 44]}],
+      "description": "The license validity rule lives in Driver.can_drive, but TripLog.record re-implements the comparison itself, so the two can drift apart.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "fleet/report.py",
+      "lines": [13, 75],
+      "anchor": "def cost_report(",
+      "symbol": "cost_report",
+      "description": "One 60-line function gathers the numbers, computes per-vehicle and fleet totals, sorts and formats the table; the per-km formatting and the line formatting are written twice.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "fleet/storage.py",
+      "lines": [41, 41],
+      "anchor": "hashlib.md5(content, usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is only a duplicate-upload fingerprint, explicitly marked not for security."
+    },
+    {
+      "id": "D2",
+      "file": "fleet/storage.py",
+      "lines": [83, 85],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except logs the failure and re-raises, so no error is swallowed."
+    }
+  ]
+}

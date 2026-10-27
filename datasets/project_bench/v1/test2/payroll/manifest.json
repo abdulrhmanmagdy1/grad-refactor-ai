@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "name": "payroll",
+  "description": "Employees, timesheets with weekly overtime, progressive income tax and deductions in Decimal, payslips and a monthly payroll report.",
+  "author": "test2 benchmark author",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "payroll/money.py",
+      "lines": [13, 13],
+      "anchor": "return amount.quantize(CENT)",
+      "symbol": "to_cents",
+      "description": "The docstring (and README) say half a cent rounds up, but quantize without a rounding mode uses the context default ROUND_HALF_EVEN, so 2.345 becomes 2.34.",
+      "fix_hint": "Pass rounding=ROUND_HALF_UP to quantize.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_half_cents_round_up"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "swapped-arguments",
+      "file": "payroll/payslips.py",
+      "lines": [83, 83],
+      "anchor": "salary = prorate(employee.rate, days_in_month, worked)",
+      "symbol": "gross_pay",
+      "description": "prorate takes (amount, part, whole) but is called with the month length as the part and the days employed as the whole, so a mid-month joiner is paid more than the full salary.",
+      "fix_hint": "Call prorate(employee.rate, worked, days_in_month).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_salary_is_prorated_for_a_mid_month_start"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "payroll/report.py",
+      "lines": [44, 46],
+      "anchor": "headcount = 0",
+      "symbol": "department_totals",
+      "description": "When a new department starts only the headcount is reset; gross, deductions and net keep the previous departments' sums, so every department after the first includes the ones before it.",
+      "fix_hint": "Reset gross, deductions and net to ZERO together with headcount when the department changes.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_department_totals_do_not_carry_over"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "payroll/employees.py",
+      "lines": [108, 110],
+      "anchor": "WHERE department = '{department}'",
+      "symbol": "EmployeeStore.by_department",
+      "description": "The department typed into the HR web form is formatted into the SQL text, so a value like \"x' OR '1'='1\" returns every employee (or runs other SQL).",
+      "fix_hint": "Use a ? placeholder and pass (department,) as the parameters.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_department_filter_is_not_injectable"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "payroll/report.py",
+      "lines": [64, 67],
+      "anchor": "if hours > WEEKLY_HOURS:",
+      "modules": ["payroll.report", "payroll.timesheets"],
+      "other_locations": [
+        {"file": "payroll/timesheets.py", "lines": [66, 77]},
+        {"file": "payroll/report.py", "lines": [17, 17]}
+      ],
+      "description": "The overtime rule (hours above 40 per ISO week) is implemented again in the report with its own WEEKLY_HOURS constant instead of using timesheets.split_overtime and OVERTIME_THRESHOLD; a change to the rule in one place leaves the report disagreeing with the payslips.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "payroll/report.py",
+      "lines": [85, 145],
+      "anchor": "def render_monthly_report(",
+      "symbol": "render_monthly_report",
+      "description": "About 60 lines that validate the input and render four separate sections (employees, departments, totals, overtime) plus a zero-pay note; each section should be its own helper.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "payroll/report.py",
+      "lines": [72, 82],
+      "anchor": "def _payslip_block(slip: Payslip) -> list[str]:",
+      "symbol": "_payslip_block",
+      "other_locations": [{"file": "payroll/payslips.py", "lines": [41, 51]}],
+      "description": "_payslip_block is a line-for-line copy of Payslip.render_text; the report should reuse the payslip's own rendering.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "payroll/employees.py",
+      "lines": [101, 103],
+      "anchor": "query = f\"SELECT * FROM employees WHERE employee_id IN ({placeholders})\"",
+      "why_it_is_fine": "The f-string only inserts a run of '?' placeholders; the ids themselves are passed as query parameters."
+    },
+    {
+      "id": "D2",
+      "file": "payroll/report.py",
+      "lines": [159, 159],
+      "anchor": "hashlib.md5(path.read_bytes(), usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is the checksum format the bank's upload form asks for, used only to detect damaged uploads, not for security (and marked usedforsecurity=False)."
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "name": "hotel",
+  "description": "Rooms and room types, reservations and availability, seasonal rates, cancellation fees and invoices for a small hotel.",
+  "author": "test2 benchmark author",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-comparison",
+      "file": "hotel/reservations.py",
+      "lines": [
+        58,
+        58
+      ],
+      "anchor": "return self.check_in <= check_out and check_in <= self.check_out",
+      "symbol": "Reservation.overlaps",
+      "description": "Stays are half-open (the guest leaves on the check-out day), but the inclusive comparisons make back-to-back stays overlap, so a room cannot be booked from the day the previous guest leaves.",
+      "fix_hint": "Use strict comparisons: self.check_in < check_out and check_in < self.check_out.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_guest_can_arrive_on_the_day_another_leaves"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "hotel/reservations.py",
+      "lines": [
+        122,
+        122
+      ],
+      "anchor": "special_requests: list[str] = [],",
+      "symbol": "ReservationBook.reserve",
+      "description": "The default list is shared by every reservation made without explicit requests, so add_request on one reservation shows up on all the others.",
+      "fix_hint": "Default to None and store a fresh list (list(special_requests or [])).",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B2_special_requests_are_not_shared_between_reservations"
+      ]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "hotel/invoice.py",
+      "lines": [
+        65,
+        65
+      ],
+      "anchor": "vat = to_money(room_charge * vat_rate)",
+      "symbol": "build_invoice",
+      "description": "The docstring says VAT is charged on the whole subtotal, room and extras, but it is computed on the room charge only.",
+      "fix_hint": "Compute VAT on subtotal instead of room_charge.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B3_vat_is_charged_on_extras_too"
+      ]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "hotel/invoice.py",
+      "lines": [
+        106,
+        106
+      ],
+      "anchor": "return (self.root / name).read_text(encoding=\"utf-8\")",
+      "symbol": "InvoiceArchive.read",
+      "description": "The file name comes from the front desk (the guest's receipt) and is joined to the archive root unchecked, so '../' names read any file the process can read.",
+      "fix_hint": "Resolve the path and refuse names that do not resolve to a file directly inside the archive root.",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_S1_archive_does_not_read_files_outside_it"
+      ]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "hotel/cancellation.py",
+      "lines": [
+        8,
+        8
+      ],
+      "anchor": "from hotel import reservations",
+      "modules": [
+        "hotel.cancellation",
+        "hotel.reservations"
+      ],
+      "other_locations": [
+        {
+          "file": "hotel/reservations.py",
+          "lines": [
+            12,
+            12
+          ]
+        }
+      ],
+      "description": "reservations imports cancellation to price a cancellation, and cancellation imports reservations back for the Reservation type and Status enum; the policy should depend only on plain data or the dependency should go one way.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "hotel/reports.py",
+      "lines": [
+        32,
+        47
+      ],
+      "anchor": "if reservation.check_in <= day < reservation.check_out:",
+      "symbol": "occupancy_by_type",
+      "description": "Six levels of nested for/if to decide whether a room is taken; the inner loop over every reservation per room could be one any() over a helper (or the book's is_available).",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "hotel/reports.py",
+      "lines": [
+        68,
+        70
+      ],
+      "anchor": "def _average_rate(reservation: Reservation) -> Decimal:",
+      "symbol": "_average_rate",
+      "description": "Private helper that nothing calls (and duplicates the average-night formula of the cancellation policy).",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "hotel/reservations.py",
+      "lines": [
+        159,
+        162
+      ],
+      "anchor": "for reservation in list(self._reservations):",
+      "why_it_is_fine": "It iterates over a copy of the list, so removing from the original while looping is safe."
+    },
+    {
+      "id": "D2",
+      "file": "hotel/reservations.py",
+      "lines": [
+        190,
+        194
+      ],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs which record failed and re-raises the original error, as the docstring promises."
+    }
+  ]
+}

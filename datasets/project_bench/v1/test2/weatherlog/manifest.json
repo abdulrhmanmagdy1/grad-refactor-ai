@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "name": "weatherlog",
+  "description": "Weather station readings: unit conversion, range validation, daily aggregates, alert rules and CSV export.",
+  "author": "test2 author (independent of the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "weatherlog/validation.py",
+      "lines": [33, 33],
+      "anchor": "if low <= value < high:",
+      "symbol": "check_range",
+      "description": "The limits are documented as inclusive but the upper bound is excluded, so 100% humidity, 500 mm of rain or 60 C are refused.",
+      "fix_hint": "Compare the upper bound with <= as well.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_upper_limits_are_accepted"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "state-not-reset",
+      "file": "weatherlog/alerts.py",
+      "lines": [50, 51],
+      "anchor": "if not self._passed(value):",
+      "symbol": "ThresholdRule.observe",
+      "description": "A reading back within the limit should end the station's run, but the run counter is left as it is, so non-consecutive breaches add up and fire the rule.",
+      "fix_hint": "Reset the station's run to 0 when the value is within the limit.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_run_restarts_after_a_reading_within_the_limit"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "weatherlog/ingest.py",
+      "lines": [51, 51],
+      "anchor": "rejected: list[Rejection] = []",
+      "symbol": "Ingestor.__init__",
+      "description": "The default rejected list is created once and shared by every Ingestor built without one, so rejections leak between ingestors.",
+      "fix_hint": "Default to None and create a new list per instance.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_ingestors_keep_their_own_rejections"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "path-traversal",
+      "file": "weatherlog/export.py",
+      "lines": [45, 45],
+      "anchor": "target = folder / f\"{station_id}.csv\"",
+      "symbol": "export_station_csv",
+      "description": "The station id (which comes from station payloads) is used as a file name without checks, so an id like '../x' writes outside the export folder.",
+      "fix_hint": "Reject station ids that are not a plain file name, or check the resolved path stays inside the folder.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_station_id_cannot_escape_the_export_folder"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "weatherlog/aggregate.py",
+      "lines": [11, 11],
+      "anchor": "from weatherlog import alerts",
+      "modules": ["weatherlog.aggregate", "weatherlog.alerts"],
+      "other_locations": [{"file": "weatherlog/alerts.py", "lines": [9, 9]}],
+      "description": "aggregate imports alerts only for FROST_LIMIT_C while alerts imports aggregate for daily summaries, making the two modules circular.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "weatherlog/ingest.py",
+      "lines": [81, 101],
+      "anchor": "def ingest_batch(self, batch: dict[str, Any], now: datetime | None = None) -> int:",
+      "symbol": "Ingestor.ingest_batch",
+      "description": "Six levels of nested if/for; guard clauses and a helper per item would flatten it.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "magic-number",
+      "file": "weatherlog/aggregate.py",
+      "lines": [54, 54],
+      "anchor": "* 3.6",
+      "symbol": "summarize_day",
+      "other_locations": [
+        {"file": "weatherlog/alerts.py", "lines": [67, 67]},
+        {"file": "weatherlog/export.py", "lines": [33, 33]}
+      ],
+      "description": "The m/s to km/h factor 3.6 is repeated in three modules instead of living in units.py next to the other conversions.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "weatherlog/models.py",
+      "lines": [76, 79],
+      "anchor": "for station_id in list(self._stations):",
+      "why_it_is_fine": "It iterates over a copy of the keys, so deleting from the dict inside the loop is safe."
+    },
+    {
+      "id": "D2",
+      "file": "weatherlog/export.py",
+      "lines": [77, 83],
+      "anchor": "hashlib.md5(usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is only a change-detection checksum for exported files, not a security control, and is marked usedforsecurity=False."
+    }
+  ]
+}

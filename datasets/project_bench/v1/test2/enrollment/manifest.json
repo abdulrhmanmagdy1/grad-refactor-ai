@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "enrollment",
+  "description": "Online course platform: courses with prerequisites and capacity, enrollment and waitlists, lesson progress, quiz grading and completion certificates.",
+  "author": "test2 benchmark author (Claude subagent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "mutable-default",
+      "file": "enrollment/catalog.py",
+      "lines": [25, 25],
+      "anchor": "prerequisites: list[str] = [],",
+      "symbol": "Catalog.add_course",
+      "description": "The default prerequisites list is one shared object stored on every course created without prerequisites, so add_prerequisite on one of them adds it to all of them.",
+      "fix_hint": "Default to None and store a fresh list (or always copy the argument).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_default_prerequisites_are_not_shared"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-index",
+      "file": "enrollment/registration.py",
+      "lines": [89, 89],
+      "anchor": "promoted = queue.pop()",
+      "symbol": "Registrar.drop",
+      "description": "The waitlist is first come first served, but pop() takes the most recent arrival instead of the student who waited longest.",
+      "fix_hint": "Promote queue.pop(0) (or use a deque and popleft).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_longest_waiting_student_is_promoted"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "any-instead-of-all",
+      "file": "enrollment/registration.py",
+      "lines": [52, 52],
+      "anchor": "return any(required in done for required in course.prerequisites)",
+      "symbol": "Registrar._has_prerequisites",
+      "description": "The docstring requires every prerequisite to be completed, but any() lets a student in after completing just one of them.",
+      "fix_hint": "Use all() over the prerequisites.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_every_prerequisite_is_required"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "missing-permission-check",
+      "file": "enrollment/quizzes.py",
+      "lines": [58, 59],
+      "anchor": "if actor.role is not Role.INSTRUCTOR:",
+      "symbol": "Gradebook.override_score",
+      "description": "Only the instructor who teaches the quiz's course may override a score, but the check accepts any instructor, so a teacher of another course can change grades.",
+      "fix_hint": "Also require actor.user_id to equal the course's instructor_id and raise PermissionError otherwise.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_only_the_course_instructor_may_override"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "duplicated-rule",
+      "file": "enrollment/certificates.py",
+      "lines": [52, 52],
+      "anchor": "best.score * 100 < 70 * best.max_score",
+      "symbol": "CertificateIssuer.quizzes_passed",
+      "modules": ["enrollment.certificates", "enrollment.quizzes"],
+      "other_locations": [{"file": "enrollment/quizzes.py", "lines": [23, 25]}],
+      "description": "The quiz pass mark is owned by quizzes (PASS_PERCENT and is_passing) but certificates re-implements it with a literal 70, so changing the pass mark would leave certificates on the old rule.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "long-function",
+      "file": "enrollment/transcript.py",
+      "lines": [11, 74],
+      "anchor": "def build_transcript(",
+      "symbol": "build_transcript",
+      "description": "build_transcript is a 60-line function that decides course status, formats waitlist, lesson and quiz lines and keeps running totals in one body; per-course and per-quiz helpers would make it readable.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "enrollment/progress.py",
+      "lines": [55, 59],
+      "anchor": "def _percent_of_lessons(finished: int, total: int) -> float:",
+      "symbol": "_percent_of_lessons",
+      "description": "The private helper _percent_of_lessons is never called; ProgressTracker.percent_complete computes progress itself.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "enrollment/certificates.py",
+      "lines": [78, 80],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except only logs the failure and re-raises it, so nothing is swallowed and the completion is not recorded."
+    },
+    {
+      "id": "D2",
+      "file": "enrollment/certificates.py",
+      "lines": [24, 27],
+      "anchor": "path = (directory / f\"{safe_name}.txt\").resolve()",
+      "why_it_is_fine": "The student id is reduced to [A-Za-z0-9_-] before it is joined, and the resolved path is checked to stay inside the directory."
+    }
+  ]
+}

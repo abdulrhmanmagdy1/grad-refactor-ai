@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "name": "budget",
+  "description": "Personal finance: accounts, categorized and recurring transactions, monthly budgets with rollover and spending summaries.",
+  "author": "test2 author (independent of the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-divisor",
+      "file": "budget/summary.py",
+      "lines": [65, 65],
+      "anchor": "spent / len(expenses)",
+      "symbol": "monthly_average",
+      "description": "The docstring promises an average per calendar month, counting months without spending, but the total is divided by the number of transactions.",
+      "fix_hint": "Divide by the number of months from first's month to last's month.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_average_counts_every_month_in_the_period"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "budget/recurring.py",
+      "lines": [48, 48],
+      "anchor": "due = date(year, month, rule.day_of_month)",
+      "symbol": "occurrences",
+      "description": "A rule due on the 29th to 31st should fall on the last day of shorter months, but the date is built directly and raises ValueError for February or 30-day months.",
+      "fix_hint": "Clamp day_of_month to the number of days in the month (calendar.monthrange).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_rule_on_the_31st_falls_on_the_last_day_of_short_months"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "swapped-operands",
+      "file": "budget/budgets.py",
+      "lines": [73, 73],
+      "anchor": "max(spent - available, ZERO)",
+      "symbol": "track",
+      "description": "Rollover should carry the unspent part (available - spent) into the next month; the subtraction is reversed, so overspending is carried and savings are dropped.",
+      "fix_hint": "carry = max(available - spent, ZERO) when rollover is on.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_unspent_money_rolls_over_and_overspending_does_not"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "sql-injection",
+      "file": "budget/ledger.py",
+      "lines": [118, 119],
+      "anchor": "memo LIKE '%{text}%'",
+      "symbol": "Ledger.search",
+      "description": "The search text is formatted into the SQL string, so quotes in it change the query (and a memo with an apostrophe breaks the search).",
+      "fix_hint": "Pass the pattern as a ? parameter.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_search_text_is_not_part_of_the_sql"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "layer-violation",
+      "file": "budget/ledger.py",
+      "lines": [11, 11],
+      "anchor": "from budget.report import format_money",
+      "modules": ["budget.ledger", "budget.report"],
+      "description": "The storage layer imports the presentation module (and through it summaries and budgets) just to format an amount; money formatting belongs in budget.money.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "budget/report.py",
+      "lines": [29, 31],
+      "anchor": "totals[t.category] = totals.get(t.category, ZERO) - t.amount",
+      "symbol": "render_month",
+      "other_locations": [{"file": "budget/summary.py", "lines": [37, 38]}],
+      "description": "render_month re-implements the per-category spending totals that summary.spending_by_category already computes.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "dead-code",
+      "file": "budget/report.py",
+      "lines": [21, 22],
+      "anchor": "def _right(text: str, width: int) -> str:",
+      "symbol": "_right",
+      "description": "_right is never called; the report formats widths inline.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "budget/ledger.py",
+      "lines": [112, 113],
+      "anchor": "where = f\" WHERE {' AND '.join(clauses)}\" if clauses else \"\"",
+      "why_it_is_fine": "The f-string only joins fixed clause strings written in the code; every user value is passed as a ? parameter."
+    },
+    {
+      "id": "D2",
+      "file": "budget/recurring.py",
+      "lines": [61, 63],
+      "anchor": "except Exception:",
+      "why_it_is_fine": "The broad except logs which recurring rule failed and re-raises, so no error is swallowed."
+    }
+  ]
+}

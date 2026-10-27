@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "name": "forum",
+  "description": "Discussion forum backend: users and roles, threads and posts, editing windows, bans and moderation, mentions and notifications, HTML rendering.",
+  "author": "test2 benchmark author (language model, written without reading the reviewer)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "late-binding-closure",
+      "file": "forum/notifications.py",
+      "lines": [70, 77],
+      "anchor": "lambda: Notification(",
+      "symbol": "mention_jobs",
+      "description": "The deferred jobs are lambdas that read the loop variable user when they run, after the loop ended, so every job notifies the last mentioned user.",
+      "fix_hint": "Bind the recipient when the job is created (default argument or functools.partial).",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B1_each_mentioned_user_gets_their_own_notification",
+        "test_B1_board_delivers_every_mention"
+      ]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "timedelta-seconds-field",
+      "file": "forum/posts.py",
+      "lines": [70, 70],
+      "anchor": "(now - post.created_at).seconds",
+      "symbol": "can_edit",
+      "description": "timedelta.seconds is only the seconds part and ignores whole days, so a post becomes editable again by its author for 15 minutes every day.",
+      "fix_hint": "Compare the timedelta itself with EDIT_WINDOW, or use total_seconds().",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B2_author_cannot_edit_a_day_later",
+        "test_B2_edit_refused_a_week_later"
+      ]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "missing-case",
+      "file": "forum/moderation.py",
+      "lines": [28, 28],
+      "anchor": "return self.until is not None and self.start <= now < self.until",
+      "symbol": "Ban.is_active",
+      "description": "The docstring says a ban without an end date is permanent, but a ban with until=None is never active, so permanent bans do nothing.",
+      "fix_hint": "Return self.start <= now and (self.until is None or now < self.until).",
+      "fixable_in_function": true,
+      "hidden_tests": [
+        "test_B3_permanent_ban_is_active",
+        "test_B3_permanently_banned_user_cannot_post"
+      ]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "xss-unescaped-output",
+      "file": "forum/text.py",
+      "lines": [56, 56],
+      "anchor": "{author.display_name}",
+      "symbol": "render_post",
+      "description": "The user-chosen display name is put into the HTML without escaping, so a name containing markup or a script tag is injected into every page showing the user's posts.",
+      "fix_hint": "Escape the display name with html.escape.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_display_name_is_escaped"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "forum/text.py",
+      "lines": [12, 12],
+      "anchor": "from forum import posts",
+      "modules": ["forum.text", "forum.posts"],
+      "other_locations": [{"file": "forum/posts.py", "lines": [8, 8]}],
+      "description": "posts imports text to extract mentions and text imports posts for the Post type and EDIT_GRACE; the two modules depend on each other.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "forum/moderation.py",
+      "lines": [106, 123],
+      "anchor": "def hide_reported(",
+      "symbol": "Moderation.hide_reported",
+      "description": "Five levels of nested loops and ifs; counting reporters per post could be done once up front with guard clauses.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "forum/moderation.py",
+      "lines": [82, 92],
+      "anchor": "def lock_thread(",
+      "symbol": "Moderation.lock_thread",
+      "other_locations": [{"file": "forum/moderation.py", "lines": [94, 104]}],
+      "description": "lock_thread and pin_thread repeat the same permission checks and audit entry code line for line.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "forum/text.py",
+      "lines": [33, 37],
+      "anchor": "def link(match: re.Match[str]) -> str:",
+      "why_it_is_fine": "The body was escaped before the substitution and the mention pattern only matches letters, digits and underscores, so the name put into the link cannot carry markup."
+    },
+    {
+      "id": "D2",
+      "file": "forum/notifications.py",
+      "lines": [51, 53],
+      "anchor": "for notification in list(items):",
+      "why_it_is_fine": "It iterates over a copy, so removing from the original list is safe."
+    }
+  ]
+}

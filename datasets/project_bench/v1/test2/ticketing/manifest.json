@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "name": "ticketing",
+  "description": "Events and venues with seat maps, expiring seat holds, checkout with price tiers and discount codes, refunds and a sales report.",
+  "author": "test2 benchmark author (Claude subagent)",
+  "issues": [
+    {
+      "id": "B1",
+      "category": "bug",
+      "kind": "wrong-rounding",
+      "file": "ticketing/pricing.py",
+      "lines": [42, 42],
+      "anchor": "return int(price_cents * (100 - percent_off) / 100)",
+      "symbol": "apply_discount",
+      "description": "The docstring promises rounding to the nearest cent but int() truncates, so a discounted 1995 at 15% gives 1695 instead of 1696.",
+      "fix_hint": "Round the discounted amount (round() or integer half-up arithmetic) instead of truncating with int().",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B1_discount_rounds_to_nearest_cent"]
+    },
+    {
+      "id": "B2",
+      "category": "bug",
+      "kind": "wrong-variable",
+      "file": "ticketing/reports.py",
+      "lines": [48, 48],
+      "anchor": "revenue[ticket.tier] += ticket.base_price_cents",
+      "symbol": "sales_by_tier",
+      "description": "Revenue is documented as what customers paid after discounts, but the report adds the undiscounted tier price.",
+      "fix_hint": "Add ticket.paid_cents instead of ticket.base_price_cents.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B2_report_revenue_is_what_customers_paid"]
+    },
+    {
+      "id": "B3",
+      "category": "bug",
+      "kind": "off-by-one",
+      "file": "ticketing/pricing.py",
+      "lines": [69, 70],
+      "anchor": "if found.times_used > found.max_uses:",
+      "symbol": "DiscountBook.redeem",
+      "description": "max_uses is the total number of orders allowed, but the check only refuses once times_used exceeds it, so the code can be redeemed max_uses + 1 times.",
+      "fix_hint": "Refuse when times_used >= max_uses.",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_B3_discount_code_stops_at_max_uses"]
+    },
+    {
+      "id": "S1",
+      "category": "security",
+      "kind": "predictable-token",
+      "file": "ticketing/purchase.py",
+      "lines": [32, 32],
+      "anchor": "random.choices(TICKET_CODE_ALPHABET, k=TICKET_CODE_LENGTH)",
+      "symbol": "_ticket_code",
+      "description": "Ticket codes admit the holder at the gate but are drawn from the seedable Mersenne Twister in the random module, so they can be predicted.",
+      "fix_hint": "Draw the code from a cryptographic source (secrets or random.SystemRandom).",
+      "fixable_in_function": true,
+      "hidden_tests": ["test_S1_ticket_codes_do_not_follow_the_random_seed"]
+    },
+    {
+      "id": "A1",
+      "category": "architecture",
+      "kind": "import-cycle",
+      "file": "ticketing/purchase.py",
+      "lines": [10, 10],
+      "anchor": "from ticketing import refunds",
+      "modules": ["ticketing.purchase", "ticketing.refunds"],
+      "other_locations": [{"file": "ticketing/refunds.py", "lines": [7, 7]}],
+      "description": "purchase imports refunds for the refund deadline and refunds imports purchase for TicketOffice, so the two modules depend on each other.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q1",
+      "category": "quality",
+      "kind": "duplicated-code",
+      "file": "ticketing/reports.py",
+      "lines": [55, 68],
+      "anchor": "def export_sales_csv(lines: list[TierLine], directory: Path) -> Path:",
+      "symbol": "export_sales_csv",
+      "other_locations": [{"file": "ticketing/reports.py", "lines": [71, 84]}],
+      "description": "The two CSV exports repeat the same buffer, writer, encode, write and checksum steps; only the header and row values differ.",
+      "fixable_in_function": false
+    },
+    {
+      "id": "Q2",
+      "category": "quality",
+      "kind": "deep-nesting",
+      "file": "ticketing/refunds.py",
+      "lines": [51, 73],
+      "anchor": "def cancel_event(office: purchase.TicketOffice) -> dict[str, int]:",
+      "symbol": "cancel_event",
+      "description": "cancel_event nests loops and conditions five levels deep (for, if, for, if, plus an if/else accumulator) where early continues and dict.get would keep it flat.",
+      "fixable_in_function": false
+    }
+  ],
+  "decoys": [
+    {
+      "id": "D1",
+      "file": "ticketing/reports.py",
+      "lines": [27, 27],
+      "anchor": "hashlib.md5(data, usedforsecurity=False)",
+      "why_it_is_fine": "MD5 is only an integrity checksum for export files, declared not for security; nothing relies on collision resistance."
+    },
+    {
+      "id": "D2",
+      "file": "ticketing/seating.py",
+      "lines": [68, 71],
+      "anchor": "for hold_id, hold in list(self._holds.items()):",
+      "why_it_is_fine": "It iterates over a list copy of the items, so deleting from the dict inside the loop is safe."
+    }
+  ]
+}
