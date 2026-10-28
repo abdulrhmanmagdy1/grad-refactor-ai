@@ -1,0 +1,256 @@
+{
+  "summaries": {
+    "static": {
+      "projects": 8,
+      "issues": {
+        "count": 18,
+        "total": 53,
+        "rate": 0.3396,
+        "ci95": [
+          0.2269,
+          0.4741
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 4,
+          "total": 8,
+          "rate": 0.5,
+          "ci95": [
+            0.2152,
+            0.7848
+          ],
+          "right_category": 4
+        },
+        "bug": {
+          "count": 5,
+          "total": 24,
+          "rate": 0.2083,
+          "ci95": [
+            0.0924,
+            0.4047
+          ],
+          "right_category": 5
+        },
+        "quality": {
+          "count": 6,
+          "total": 13,
+          "rate": 0.4615,
+          "ci95": [
+            0.2321,
+            0.7086
+          ],
+          "right_category": 6
+        },
+        "security": {
+          "count": 3,
+          "total": 8,
+          "rate": 0.375,
+          "ci95": [
+            0.1368,
+            0.6943
+          ],
+          "right_category": 3
+        }
+      },
+      "confirmed": null,
+      "findings": {
+        "total": 25,
+        "on_issue": 24,
+        "on_decoy": 1,
+        "on_issue_share": {
+          "count": 24,
+          "total": 25,
+          "rate": 0.96,
+          "ci95": [
+            0.8046,
+            0.9929
+          ]
+        },
+        "by_origin": {
+          "static:on_decoy": 1,
+          "static:on_issue": 24
+        }
+      },
+      "decoys_hit": {
+        "count": 1,
+        "total": 16,
+        "rate": 0.0625,
+        "ci95": [
+          0.0111,
+          0.2833
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 0,
+          "total": 32,
+          "rate": 0.0,
+          "ci95": [
+            0.0,
+            0.1072
+          ]
+        }
+      },
+      "fixes": {},
+      "ready_fixes": 0,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 0,
+        "dropped_on_seeded_issue": 0
+      },
+      "review_s": {
+        "median": 2.29,
+        "max": 3.49
+      },
+      "model_calls": 0
+    },
+    "full-14b": {
+      "projects": 8,
+      "issues": {
+        "count": 37,
+        "total": 53,
+        "rate": 0.6981,
+        "ci95": [
+          0.5646,
+          0.8048
+        ]
+      },
+      "issues_by_category": {
+        "architecture": {
+          "count": 5,
+          "total": 8,
+          "rate": 0.625,
+          "ci95": [
+            0.3057,
+            0.8632
+          ],
+          "right_category": 5
+        },
+        "bug": {
+          "count": 17,
+          "total": 24,
+          "rate": 0.7083,
+          "ci95": [
+            0.5083,
+            0.8509
+          ],
+          "right_category": 17
+        },
+        "quality": {
+          "count": 9,
+          "total": 13,
+          "rate": 0.6923,
+          "ci95": [
+            0.4237,
+            0.8732
+          ],
+          "right_category": 8
+        },
+        "security": {
+          "count": 6,
+          "total": 8,
+          "rate": 0.75,
+          "ci95": [
+            0.4093,
+            0.9285
+          ],
+          "right_category": 6
+        }
+      },
+      "confirmed": null,
+      "findings": {
+        "total": 174,
+        "unlabelled": 95,
+        "on_issue": 69,
+        "on_decoy": 10,
+        "on_issue_share": {
+          "count": 69,
+          "total": 174,
+          "rate": 0.3966,
+          "ci95": [
+            0.3269,
+            0.4707
+          ]
+        },
+        "by_origin": {
+          "agent:on_decoy": 9,
+          "agent:on_issue": 45,
+          "agent:unlabelled": 95,
+          "static:on_decoy": 1,
+          "static:on_issue": 24
+        }
+      },
+      "decoys_hit": {
+        "count": 8,
+        "total": 16,
+        "rate": 0.5,
+        "ci95": [
+          0.28,
+          0.72
+        ]
+      },
+      "fixable_issues": {
+        "total": 32,
+        "resolved_by_ready_fixes": {
+          "count": 3,
+          "total": 32,
+          "rate": 0.0938,
+          "ci95": [
+            0.0324,
+            0.2422
+          ]
+        },
+        "resolved_by_some_fix": {
+          "count": 16,
+          "total": 32,
+          "rate": 0.5,
+          "ci95": [
+            0.3363,
+            0.6637
+          ]
+        }
+      },
+      "fixes": {
+        "proposal_ready/no_effect": 1,
+        "proposal_ready/resolves": 3,
+        "rejected/harmful": 32,
+        "rejected/no_effect": 15,
+        "rejected/no_proposal": 8,
+        "rejected/resolves": 2,
+        "uncertain/harmful": 1,
+        "uncertain/no_effect": 12,
+        "uncertain/resolves": 10
+      },
+      "ready_fixes": 4,
+      "ready_harmful": [],
+      "checker": {
+        "dropped": 272,
+        "dropped_on_seeded_issue": 60
+      },
+      "review_s": {
+        "median": 1046.53,
+        "max": 1125.64
+      },
+      "model_calls": 784
+    }
+  },
+  "paired": {
+    "both": 18,
+    "only_first": 0,
+    "only_second": 19,
+    "neither": 16,
+    "mcnemar_p": 4e-06
+  },
+  "paired_judged": null
+}

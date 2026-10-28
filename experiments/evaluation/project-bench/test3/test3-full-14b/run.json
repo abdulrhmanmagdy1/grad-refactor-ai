@@ -1,0 +1,56 @@
+{
+  "protocol": "project-bench-v3",
+  "split": "test3",
+  "arm": "full-14b",
+  "started_at": "2026-10-27T19:23:07+00:00",
+  "projects": {
+    "crm": "0c655887f21c41729ed10245e4c6fcce303b31a44cac0dc92512d4c9bc252f2a",
+    "delivery": "b4cffd20a4360aa1c17fd7834cee49253999d3de6c1de5a9c52264fcc12838bb",
+    "gym": "68eb02f069f90ede4b2a5267b0f8e93f5618dcc8de245c7a29a380228ae279c6",
+    "helpdesk": "567512a4157d21ffbf557d592259091e5e7a98ac8f74f4265a4674874b26db8a",
+    "orders": "32094afeb1f7c69ce9b6c1d00af9f0721bcd6df18b9f9138ce4f68ec203d3f0c",
+    "pharmacy": "c114a150630a277e92cf9e6595984d4adaf12498f2b097e131f3c72b1fe275e6",
+    "rental": "c4b936106b3fc9dddc52a5dc6968761c473879872a9edaf66218518b30641c2d",
+    "voting": "09e5ec1f3c4cca231f0ad0f64345f5407f486b0da7ce13500a49691c257fa01a"
+  },
+  "settings": {
+    "max_calls": 110,
+    "time_limit_s": 2700,
+    "bug_functions": 12,
+    "quality_windows": 6,
+    "window_lines": 160,
+    "max_fixes": 20,
+    "max_findings_checked": 30,
+    "fix_steps": 4,
+    "run_tests": true,
+    "finder_tokens": 512,
+    "architecture_tokens": 700,
+    "checker_tokens": 160,
+    "fixer_tokens": 1200,
+    "reviewer_tokens": 256,
+    "spec_functions": 8,
+    "spec_tokens": 700,
+    "spec_checks": 2,
+    "max_input_tokens": 6000,
+    "call_timeout_s": 240.0,
+    "seed": 42
+  },
+  "model": {
+    "model_id": "bartowski/Qwen2.5-Coder-14B-Instruct-GGUF",
+    "model_revision": "5b379ec4bf71bafecb5f9081ad28b19939128988",
+    "gguf_file": "Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf",
+    "gguf_sha256": "2946d28c9e1bb2bcae6d42e8678863a31775df6f740315c7d7e6d6b6411f5937",
+    "context_tokens": 8192
+  },
+  "frozen": false,
+  "freeze_problems": [],
+  "git": {
+    "commit": "",
+    "dirty": false
+  },
+  "python": "3.11.15",
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "finished_at": "2026-10-27T21:44:40+00:00",
+  "model_arm": "14b",
+  "frozen_except_model": true
+}
