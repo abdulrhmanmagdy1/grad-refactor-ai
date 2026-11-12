@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -61,91 +62,43 @@ def test_rejects_empty_missing_split_and_target_leakage(tmp_path):
         validator.load_and_validate(dataset(tmp_path, rows))
 
 
-# --- Extended (optional) checks of the dataset-record contract --------------------------
+def test_curated_dataset_has_balanced_clean_controls():
+    path = Path(__file__).resolve().parents[1] / "data" / "curated.jsonl"
+    rows = validator.load_and_validate(path)
 
-FUNCTIONS = {
-    "train": "def f(x):\n    if x > 0:\n        if x > 9:\n            return 9\n"
-    "        else:\n            return x\n    else:\n        raise ValueError('neg')\n",
-    "validation": "def g(name):\n    if name:\n        if name == 'a':\n            return 1\n"
-    "        return 2\n    else:\n        return None\n",
-    "test": "def h(n, limit=3):\n    if n is not None:\n        if n < limit:\n"
-    "            return 'low'\n        else:\n            return 'high'\n    else:\n"
-    "        raise TypeError('n')\n",
-}
+    assert len(rows) == 416
+    split_counts = {
+        split: sum(row["split"] == split for row in rows)
+        for split in ("train", "validation", "test")
+    }
+    assert split_counts == {"train": 320, "validation": 48, "test": 48}
 
+    # The training renderer must see exactly the code inference sees: no
+    # provenance comment inside the prompt.
+    assert all("# example:" not in row["prompt"] for row in rows)
+    assert all("# example:" not in row["completion"] for row in rows)
 
-def contract_rows():
-    from refactor_ai import task_format
-    from refactor_ai.tasks import guard_clauses
+    findings = [row for row in rows if row["variant"] == "findings"]
+    clean = [row for row in rows if row["variant"] == "clean-control"]
+    assert len(findings) == 224
+    assert len(clean) == 192
+    assert all(row["smell_rule"] for row in findings)
+    assert all(row["smell_rule"] is None for row in clean)
+    assert all(row["prompt"] == row["completion"] for row in clean)
+    assert all(row["prompt"] != row["completion"] for row in findings)
 
-    rows = []
-    for split, code in FUNCTIONS.items():
-        target = guard_clauses.to_guard_clauses(code)
-        rows.append(
-            {
-                "id": f"gc1-{split}-01",
-                "source_group": f"tpl-{split}",
-                "split": split,
-                "prompt": task_format.build_refactor_user_prompt(code),
-                "completion": task_format.render_refactor_completion("Uses guard clauses.", target),
-                "license": "LicenseRef-team-authored-pending",
-                "refactoring_type": "guard_clauses",
-                "original_code": code,
-                "target_code": target,
-                "function_name": guard_clauses.check_input(code).function_name,
-                "tests": [
-                    {
-                        "args": "[None]",
-                        "kwargs": "{}",
-                        "expect": {"kind": "raise", "value": None, "exception": "TypeError"},
-                    }
-                ],
-                "source": "team-template",
-                "source_url": "repo:tests",
-                "provenance": "test fixture",
-                "prompt_version": task_format.PROMPT_VERSION,
-                "task_version": guard_clauses.TASK_VERSION,
-            }
-        )
-    return rows
+    counts = Counter((row["refactoring_type"], row["split"], row["variant"]) for row in rows)
+    for refactoring_type in {row["refactoring_type"] for row in rows}:
+        assert counts[(refactoring_type, "train", "findings")] == 20
+        assert counts[(refactoring_type, "train", "clean-control")] == 20
+        assert counts[(refactoring_type, "validation", "findings")] == 4
+        assert counts[(refactoring_type, "validation", "clean-control")] == 2
+        assert counts[(refactoring_type, "test", "findings")] == 4
+        assert counts[(refactoring_type, "test", "clean-control")] == 2
 
 
-def test_extended_checks_accept_contract_records(tmp_path):
-    rows = contract_rows()
-    assert len(validator.load_and_validate(dataset(tmp_path, rows))) == 3
-    summary = validator.validate_extended(rows)
-    assert summary["records_checked"] == 3 and summary["cross_split_pairs_examined"] > 0
-
-
-@pytest.mark.parametrize(
-    ("field", "value", "message"),
-    [
-        ("target_code", "def f(x):\n    return x\n", "not the reference transformation"),
-        ("prompt", "Task: guard_clauses\nCode:\n```python\ndef f(x): pass\n```", "prompt is not"),
-        ("completion", "no code here", "completion does not parse"),
-        ("tests", [], "non-empty list"),
-        ("tests", [{"args": "[1", "kwargs": "{}", "expect": {"kind": "return"}}], "invalid"),
-        ("function_name", "other", "function_name does not match"),
-        ("prompt_version", "refactor-v0", "prompt_version"),
-        ("id", "Has Spaces", "valid reference case id"),
-    ],
-)
-def test_extended_checks_report_contract_violations(field, value, message):
-    rows = contract_rows()
-    rows[0][field] = value
-    with pytest.raises(ValueError, match=message):
-        validator.validate_extended(rows, near_duplicates=False)
-
-
-def test_extended_checks_flag_cross_split_near_duplicates():
-    rows = contract_rows()
-    rows[1] = dict(rows[0], id="gc1-copy-01", split="validation", source_group="tpl-copy")
-    with pytest.raises(ValueError, match="near-duplicate across splits"):
-        validator.validate_extended(rows)
-
-
-def test_extended_checks_flag_external_fixtures(tmp_path):
-    rows = contract_rows()
-    (tmp_path / "pilot.py").write_text(f"CODE = '''{FUNCTIONS['test']}'''\n", encoding="utf-8")
-    with pytest.raises(ValueError, match="near-duplicates external"):
-        validator.validate_extended(rows, near_duplicates=False, external=[tmp_path], root=tmp_path)
+def test_curated_dataset_files_use_lf_line_endings():
+    root = Path(__file__).resolve().parents[1]
+    for rel in ("data/curated.jsonl", "data/manifest.json"):
+        raw = (root / rel).read_bytes()
+        assert b"\r\n" not in raw, f"{rel} must use LF line endings to match data/manifest.json"

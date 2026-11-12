@@ -1,5 +1,15 @@
-*.pdf binary
-datasets/** text eol=lf
-experiments/data/*.json text eol=lf
-src/refactor_ai/fixtures/*.json text eol=lf
-experiments/evaluation/** text eol=lf
+# Normalize text files to LF in the repository and in every checkout, so the
+# committed artifacts (dataset, experiments, frontend/dist bundle) hash
+# identically on every machine — RELEASE_MANIFEST.json checksums depend on it.
+* text=auto eol=lf
+
+# Binary assets that must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.gguf binary
+*.safetensors binary

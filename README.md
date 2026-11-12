@@ -1,162 +1,294 @@
 # Multi-Agent Refactoring for Python
 
-A graduation project that asks whether coordinating analysis, refactoring and review roles, and fine-tuning a small open code model, make behavior-preserving refactoring proposals for Python more reliable than a single call to the original model.
+A local, modular, and fully tested multi-agent Python refactoring system with deterministic AST analysis, bounded multi-agent coordination, isolated sandbox verification, a curated 416-record dataset (findings + clean controls), a native fp16 LoRA fine-tuning path (the 4-bit QLoRA example remains experimental), an academic evaluation harness, and a professional single-page web interface (dark/light themes, Monaco editor, live diff/verification/metrics/trace/AST-graph inspection).
 
-The product is a local web application and HTTP API. A person pastes one small Python function; analysis, refactoring and review roles backed by one local model (Qwen2.5-Coder-0.5B-Instruct, with the refactoring role optionally fine-tuned with LoRA) propose a guard-clause refactoring: nested conditionals are replaced with early returns or raises. The proposal is checked in four dimensions that are reported separately and never merged: syntax, a structural task rubric, trusted reference tests run in an isolated process, and the model's own review. The person reads the diff and the evidence, then downloads the proposal and records an accept or reject decision; the service never changes their files.
+Built strictly according to graduation project architectural specifications (Python 3.11, FastAPI, Pydantic v2, SQLite, and React 19 + TypeScript + Vite + Tailwind v4 + Monaco for the UI).
 
-The research part compares four arms on a frozen test split: the original model and the fine-tuned adapter, each in a single-role and a multi-role workflow.
+### Implementation status
 
-| Arm | Refactoring role | Workflow |
+| Capability | State |
+|---|---|
+| Static AST analysis, structural metrics, AST constellation graph | Implemented and tested |
+| Multi-agent workflow (Analysis → Refactoring → Review) with bounded correction | Implemented and tested |
+| Provider registry (`mock`, `smart_ast`, `ollama`, `local_lora`) with live availability | Implemented (`GET /api/v1/providers`) |
+| Isolated sandbox runner + auto-synthesized golden equivalence tests | Implemented and tested |
+| Curated dataset (416 authored records, 320/48/48 splits, 224 findings + 192 clean controls, sha256 manifest) | Implemented (`data/curated.jsonl`, `data/manifest.json`) |
+| Evaluation harness A–D with CodeBLEU / AST-similarity / MI + `refactor_success` / `smell_resolution_rate` | Implemented; Groups A/B executed on the built-in suite and the dataset test split |
+| Web UI (React/TypeScript, dark + light themes, Monaco editor, run inspector, AST graph) | Implemented, built, and served by FastAPI |
+| LoRA training path (`training/train_lora.py`, shared chat template, token audit) | Implemented & executed on Kaggle T4 as **native fp16 LoRA** (`load_in_4bit=false`, `optim=adamw_torch`; 4-bit QLoRA path remains unproven on that image); `eval_loss=0.005797` (`experiments/training/lora-fp16/run-manifest.json`, tracked copy; the adapter itself is not committed) |
+| Fine-tuned adapter and Groups C/D results | Executed on frozen 48-case test split vs real untuned 3B base (`experiments/dataset_test_finetuned_summary.json`): Group D `refactor_success_rate=0.9167` (44/48; findings `0.8750`, clean `1.0000`, `test_pass_rate=1.0000` on 44 testable cases; `execution_pass_at_1=0.9773` on those 44, i.e. `43/48 = 0.8958` over all 48) vs Group A `0.6042` / Group B `0.7500` |
+
+Measured artifacts: the 4-page report is tracked at `docs/report/Grad_Refactor_AI_Accuracy_Report.pdf`; the training manifest is tracked at `experiments/training/lora-fp16/run-manifest.json`; the adapter (`runs/lora-fp16/adapter`) is a private Kaggle dataset and is not committed; the blind-review answer key is excluded from Git until every rating is collected.
+
+---
+
+## Architecture Overview
+
+```
+                      +-----------------------------+
+                      |     Web UI / FastAPI API    |
+                      +--------------+--------------+
+                                     |
+                                     v
+                      +-----------------------------+
+                      |    Workflow Orchestrator    |
+                      +--------------+--------------+
+                                     |
+     +-------------------------------+-------------------------------+
+     |                               |                               |
+     v                               v                               v
++----+---------+              +------+-------+              +--------+-----+
+|   Analysis   |              |  Refactoring |              |    Review    |
+|    Agent     |              |    Agent     |              |     Agent    |
++----+---------+              +------+-------+              +--------+-----+
+     |                               |                               |
+     v                               v                               v
+[Static AST]                 [Provider registry]             [Deterministic]
+- Long Functions             - Mock (deterministic)          - Syntax Checks
+- Deep Nesting               - Smart AST (CPU-safe)          - Symbol Integrity
+- Complexity                 - Ollama / Local LoRA           - Isolated Sandbox
+- AST constellation graph    - Live availability catalog     - Auto golden tests
+```
+
+### Separation of Concerns & Agent Roles
+1. **Analysis Role (`src/agents/analysis_agent.py`)**:
+   - Parses code statically with `ast.parse` (never executes input code).
+   - Detects code smells: long functions (>30 lines), async routines, deeply nested control blocks (>3 levels), and cyclomatic complexity (>10).
+2. **Refactoring Role (`src/agents/refactoring_agent.py`)**:
+   - Proposes targeted transformations using a decoupled model provider interface.
+   - Enforces token boundaries and responds to feedback in correction loops.
+3. **Review Role (`src/agents/review_agent.py`)**:
+   - Performs deterministic syntax checks.
+   - Verifies symbol preservation (ensures required functions and classes are not deleted).
+   - Generates unified diffs with line statistics.
+   - Executes optional verification tests in an isolated sandbox runner.
+4. **Workflow Orchestrator (`src/agents/orchestrator.py`)**:
+   - Coordinates the 5-step pipeline: Ingestion -> Analysis -> Generation -> Verification -> Completion.
+   - **Bounded Correction Loop**: allows at most **1 retry** with error diagnostics if syntax or review fails.
+   - Enforces timeout boundaries and records state transitions in SQLite.
+
+---
+
+## Trust & Security Boundaries (NFR01, NFR02)
+- **Zero API Code Execution (NFR01)**: The main FastAPI process and agent engine **never execute** submitted or candidate code directly. All code inspection is strictly performed via Python AST parsing.
+- **Isolated Sandbox Runner (NFR02)**: User-provided tests, or golden equivalence tests auto-synthesized by the Review Agent (`src/runner/test_generator.py`), run in a strictly isolated subprocess (`src/runner/sandbox.py`) with:
+  - 5-second execution timeout.
+  - Memory limit (256 MB) and CPU limits via OS `setrlimit`.
+  - Sanitized environment variables (stripping host tokens, keys, and paths).
+  - Isolated temporary directory with automated cleanup.
+
+---
+
+## Model Layer (ADR08, ADR10, ADR12)
+- **`BaseModelProvider` (`src/models/base.py`)**: Abstract interface defining `generate_refactoring` and `explain_changes`.
+- **`MockModelProvider` (`src/models/mock_provider.py`)**: Deterministic, reproducible transformations for offline execution without GPUs or paid cloud APIs. Includes simulation knobs for testing retry loops.
+- **`SmartASTProvider` (`src/models/smart_ast_provider.py`)**: Provably safe AST-to-AST transformations on CPU (mutable defaults, nesting merges, long-function extraction).
+- **`OllamaModelProvider` (`src/models/ollama_provider.py`)**: Local Ollama daemon HTTP provider (default `qwen2.5-coder:1.5b`).
+- **`LocalModelProvider` (`src/models/local_provider.py`)**: HuggingFace Transformers + PEFT/LoRA adapters with CPU fallback and timeout controls. When an explicit fine-tuned adapter is requested but cannot be loaded, it raises `ProviderUnavailableError` — a base model is **never** silently substituted for a fine-tuned one (NFR06 honesty rule).
+- **`src/models/registry.py`**: name resolution plus the availability catalog behind `GET /api/v1/providers` (15-second probe cache; Ollama availability and HuggingFace stack status are probed live).
+
+---
+
+## Storage & Audit Trail (FR07, FR10, ADR09)
+SQLite persistence (`src/core/db.py`) storing runs in table `runs`:
+- `id` (UUID), `created_at` (ISO 8601), `status` (`queued`, `analyzing`, `generating`, `verifying`, `completed`, `failed`).
+- `input_code`, `output_code`, `diff`, `metrics`, `errors`, `user_feedback`, and `verification`.
+- Configured with Write-Ahead Logging (WAL) and ACID transactions.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
 |---|---|---|
-| A | Original model | Single role: one refactoring call |
-| B | Original model | Multi-role: analysis, refactoring, review, at most one correction |
-| C | LoRA adapter | Single role |
-| D | LoRA adapter (analysis and review on the original model) | Multi-role |
+| `GET` | `/health` | Service health, version, and `production` mode |
+| `POST` | `/api/v1/analyze` | Run static AST heuristics (NFR01) |
+| `GET` | `/api/v1/providers` | Live provider availability catalog for the UI selector |
+| `POST` | `/runs` | Initiate refactoring workflow (returns run ID; supports `?sync=true`) |
+| `GET` | `/runs/{id}` | Poll run status, metrics, diff, graphs, agent traces, and verification |
+| `GET` | `/runs/{id}/report` | Markdown report rendered from the stored run record (inline or `?download=true`) |
+| `GET` | `/runs` | List history of previous runs (FR10) |
+| `GET` | `/api/v1/stats` | Measured aggregates over the stored runs (status, verdicts, mean/median duration, tokens) |
+| `GET` | `/metrics` | The same aggregates in Prometheus text format (NFR07), plus in-flight runs and provider availability |
+| `POST` | `/runs/{id}/feedback` | Record user acceptance or rejection (FR06); `/decision` is an alias |
+| `GET` | `/` | Web UI (single-page React app) — built from `frontend/` |
 
-## Current status (2026-10-21)
+`POST /runs` answers `429` with an explicit message when
+`REFACTOR_AI_MAX_CONCURRENT_RUNS` (default 2) workflows are already executing. Service logs are
+one JSON object per line (`REFACTOR_AI_LOG_FORMAT=text` for a human-readable line) and carry the
+`X-Request-ID` echoed by every response.
 
-**Implemented and tested.** The automated tests use a deterministic fake provider that stands in for the model; refactoring quality is measured only by the recorded evaluation below.
+---
 
-| Part | What exists | Evidence |
-|---|---|---|
-| Task | One refactoring, `guard_clauses` (task version 1): input rules with reason codes, a deterministic reference transformation and an eight-check rubric | [Task scope](docs/requirements/task-scope.md) |
-| Workflow | Single-role (exactly one call) and multi-role (at most five calls, one correction) coordination with strict output parsing, budgets and deadlines | [Workflow](docs/architecture/workflow.md), [notes](docs/report/notes/workflow.md) |
-| Verification | Syntax, rubric, reference tests and model review kept separate; the reference runner passed all 19 isolation self-checks on the Windows demonstration laptop, and its tests passed in the Ubuntu CI job as a non-root user | [Runner safety](docs/development/runner-safety.md) |
-| Service | FastAPI run API with a bounded queue, SQLite run history (one service process per database, enforced by a file lock), interruption recovery and a uniform error model | [Contracts](docs/architecture/contracts.md), [backend notes](docs/report/notes/backend.md) |
-| Web interface | React and TypeScript single-page application, redesigned on 2026-10-21: input, progress, diff, the four verification results, decisions, history; 26 screenshots taken in fake mode | [Frontend notes](docs/report/notes/frontend.md), [screenshots](docs/report/screenshots/) |
-| Local model | Qwen2.5-Coder-0.5B-Instruct at a pinned revision, served by a separate worker process; real-GPU provider tests passed on the laptop | [Model notes](docs/report/notes/model.md) |
-| Dataset | `guard_clauses` v1: 799 records with trusted reference tests, split 627 / 84 / 88 by source group, test split frozen | [Data plan](docs/data-and-training/data-plan.md) |
-| Evaluation harness | Arms A to D with case-level records and paired comparisons; checked only with a stub workflow and the fake provider | [Protocol](docs/evaluation/protocol.md), [notes](docs/report/notes/data-evaluation.md) |
-| Feasibility | A 16-step LoRA pilot on pilot material (saved, reloaded and resumed) and a validation-only choice of the code-first prompt format | [Training records](experiments/training/README.md), [model records](experiments/models/README.md) |
+## Quickstart & Local Setup
 
-**Results (frozen test split, protocol eval-v1).** The fine-tuned refactoring role was trained on Kaggle (Tesla T4, 3 epochs, [training record](experiments/training/full-2026-10-21.json)) and adopted by a rule written before any comparison ([selection record](experiments/training/validation-selection-2026-10-20.json)). The single test-split run compared four arms on 88 held-out cases ([results](experiments/evaluation/test-2026-10-21/targets-report/summary.md)):
+### Requirements
+- Git, Python 3.11, and `uv`
 
-| Arm | Model | Workflow | Accepted (proposal_ready) |
-|---|---|---|---|
-| A | Original | One role | 7/88 (8.0%) |
-| B | Original | Analysis, refactoring, review | 1/88 (1.1%) |
-| C | Fine-tuned refactoring role | One role | 70/88 (79.5%) |
-| D | Fine-tuned refactoring role | Analysis, refactoring, review | 35/88 (39.8%) |
-
-Fine-tuning is the large effect (C vs A: 65 cases accepted only with the adapter, 2 only without it). Adding roles lowered acceptance with both models, mainly because the untuned review role's outputs were cut off and counted as errors. Eleven of the twelve targets set before the test run were met; arm D's acceptance floor was not. Passing reference tests supports behavior preservation on the tested inputs only. The full analysis is in the [report](docs/report/report.md).
-
-**Open items.**
-
-- No supervisor review has been held yet. The team's packs for [R1](docs/supervisor-reviews/r1-scope-and-feasibility.md) to [R5](docs/supervisor-reviews/r5-delivery.md) are prepared, with the feedback fields left empty.
-- The university report template, the official deadline and the presentation format are not yet confirmed ([delivery checklist](docs/delivery/checklist.md)).
-- Each student still has to inspect and accept their workstream ([handover](docs/delivery/implementation-handover.md)).
-- Cross-machine reproduction is untested (a [clean clone](experiments/qa/2026-10-21-clean-clone-reproduction.md) passed on the demonstration laptop only), the redistribution license of the team-authored data is a team decision, and the adapter is not published. The reference runner has no operating-system network, file system or privilege boundary ([runner safety](docs/development/runner-safety.md#honest-limits)).
-
-## Quickstart
-
-Install Git, Python 3.11, [uv](https://docs.astral.sh/uv/getting-started/installation/) and, to build the web interface, Node.js 24.12.0 or a newer 24.x release with npm 11.6 or newer. Then, from a terminal:
-
+### Installation
 ```bash
 git clone https://github.com/abdulrhmanmagdy1/grad-refactor-ai.git
 cd grad-refactor-ai
 uv sync --frozen
-uv run python scripts/doctor.py
-
-cd frontend
-npm ci
-npm run build
-cd ..
-
-uv run uvicorn refactor_ai.api:app --host 127.0.0.1 --port 8000
 ```
 
-Open http://127.0.0.1:8000/ for the web interface or http://127.0.0.1:8000/docs for the interactive API reference. Start the service from the repository root. By default it runs with the deterministic fake provider: the interface shows a permanent warning banner, and the results are fixtures, not model output. If uv was installed as a Python package, run the uv commands as `python -m uv ...`.
+### Running the API and Web UI
+```bash
+uv run uvicorn refactor_ai.api:app --reload --host 127.0.0.1 --port 8000
+```
+Open **http://127.0.0.1:8000** for the web interface (Monaco editor, Monaco diff viewer, run
+comparison, history export,
+verification inspector, metrics table, agent trace timeline, AST structure graph, command
+palette, run history, and a dark/light theme toggle). `Ctrl+Enter` (`Cmd+Enter` on macOS)
+starts a run from anywhere in the app, and the results header exports the current run as
+a Markdown report. Swagger stays at **http://127.0.0.1:8000/docs**.
 
-To use the local model, prepare the training environment and model weights, create `configs/model.local.json` from [configs/model.example.json](configs/model.example.json) and start the service with `REFACTOR_AI_PROVIDER=local`; `REFACTOR_AI_REFACTOR_USE_ADAPTER=true` runs the refactoring role with a configured LoRA adapter. The [user guide](docs/delivery/user-guide.md) explains every step, the results and the errors.
-
-Checks before a pull request ([setup guide](docs/development/setup.md), [frontend guide](docs/development/frontend.md)):
+### Building the web UI (optional — the built bundle is committed)
+The built bundle lives under `frontend/dist/` and is served automatically when present.
+Rebuild after frontend changes:
 
 ```bash
-uv run ruff check .
-uv run ruff format --check .
-uv run pytest
-uv run python scripts/check_docs.py
-
 cd frontend
-npm run typecheck
-npm test
+npm install
+npm run build
 ```
 
-Neither the core tests nor CI download a model or need a GPU; the real-model provider tests run only with `REFACTOR_AI_GPU_TESTS=1`.
+---
 
-## How a run works
+## Verification & Testing Suite
 
-1. **Validate.** The input is checked against the task rules without a model. Unsupported input completes as `no_change` with reason codes and no model call.
-2. **Analyze** (multi-role only). The analysis role reports the nested conditionals to flatten; unusable output falls back to the static findings.
-3. **Generate.** The refactoring role writes the complete new function and a one-line explanation.
-4. **Verify.** Syntax, the rubric and, for the six server-owned demonstration cases, trusted reference tests in an isolated process. The API itself never executes code.
-5. **Review and correct** (multi-role only). The review role gives a verdict; a failed check or a rejection triggers one correction, never more.
-6. **Decide.** The outcome is `proposal_ready`, `rejected`, `uncertain`, `no_change` or `failed`. Missing tests never count as a pass, a model verdict never overrides a failed check, and passing tests are never presented as proof of equal behavior for every input.
+Run all checks and automated test suites:
 
-## Repository layout
+```bash
+# One command for every gate below (cross-platform, stops at the first failure)
+python scripts/tasks.py all
 
-| Path | Contents |
-|---|---|
-| `src/refactor_ai/` | The service: `api.py`, `config.py` and `contracts.py`; `tasks/` (task definition and rubric), `agents/` (coordinator, prompts, parsing), `verification/` (checks, disposition, reference runner), `providers/` (fake and local model), `runs/` (queue and storage), `data/` (dataset curation), `evaluation/` (harness), `fixtures/demo_cases.json` |
-| `tests/` | Python tests for the core environment |
-| `frontend/` | React and TypeScript web interface built with Vite; FastAPI serves the build from `frontend/dist` |
-| `datasets/` | The curated `guard_clauses` v1 dataset with its manifest, metadata and attribution notice |
-| `training/` | Model download, benchmark, LoRA training and adapter checks, pilot material, the training-environment lock and the private Kaggle lane (`training/kaggle/`) |
-| `configs/` | Example model and training configurations; `*.local.json` files stay local |
-| `experiments/` | Committed records: hardware, data curation and the test-split freeze, model benchmarks, training, evaluation |
-| `scripts/` | Dataset curation and validation, evaluation and reporting, contract examples, documentation link check and PDF export, environment report (`doctor.py`) |
-| `docs/` | Documentation; start at the [index](docs/README.md) |
-| `planning/` | Initial task and assignment data |
-| `.github/` | CI for Linux and Windows, Issue and pull request templates |
-| `pyproject.toml`, `uv.lock` | The core Python environment (CPU only, no model libraries) |
-| `CONTRIBUTING.md`, `AGENTS.md`, `NOTICE.md` | Contribution workflow, instructions for coding agents, licensing notice |
-| `models/`, `runs/`, `data/` | Local only and ignored by Git: model weights, run history and training outputs, raw downloads |
+# Run system doctor (toolchain, built bundle freshness, SQLite integrity)
+uv run python scripts/doctor.py
 
-## Key documents
+# Run complete pytest suite (unit, integration, sandbox, API, operations)
+uv run pytest
 
-| Document | Use |
-|---|---|
-| [User guide](docs/delivery/user-guide.md) | Start the service and use the web interface and the API |
-| [Environment setup](docs/development/setup.md) and [frontend development](docs/development/frontend.md) | Reproduce the development environment |
-| [Component contracts](docs/architecture/contracts.md) and [example JSON](docs/architecture/examples/README.md) | Authoritative behavior, fields, error codes and settings, with real request, response and run-record examples |
-| [Workflow and verification](docs/architecture/workflow.md) | Sequence, budgets, dispositions and token budgets |
-| [Task scope](docs/requirements/task-scope.md) and [requirements](docs/requirements/srs.md) | What the release supports and must do |
-| [Runner safety](docs/development/runner-safety.md) | How reference tests are isolated and what the isolation does not cover |
-| [Data plan](docs/data-and-training/data-plan.md), [training plan](docs/data-and-training/training-plan.md) and [model card](docs/data-and-training/model-card.md) | Dataset, fine-tuning and model provenance |
-| [Evaluation protocol](docs/evaluation/protocol.md) | Arms, measures and the freezing procedure |
-| Report notes: [backend](docs/report/notes/backend.md), [workflow](docs/report/notes/workflow.md), [model](docs/report/notes/model.md), [data and evaluation](docs/report/notes/data-evaluation.md), [frontend](docs/report/notes/frontend.md) | Each workstream's technical notes and evidence |
-| [Report](docs/report/report.md), [slides](docs/delivery/slides/grad-refactor-ai-presentation.pptx) and [demonstration script](docs/delivery/demo-script.md) | The graduation report, the presentation and the live demonstration |
-| [Implementation handover](docs/delivery/implementation-handover.md) | What was built, how to run it, results, known defects and what each owner inspects |
-| [Delivery checklist](docs/delivery/checklist.md) and [acceptance and handover](docs/agent-execution/06-acceptance-and-handover.md) | What delivery requires |
-| [Supervisor reviews](docs/supervisor-reviews/README.md) | How reviews are held and recorded; the R1 to R5 packs are prepared |
-| [Experiment records](experiments/README.md) | Hardware, data, model, training and evaluation records; for example the [model records](experiments/models/README.md) and [training records](experiments/training/README.md) |
-| [Documentation index](docs/README.md) | Every document |
+# Run linting and formatting checks
+uv run ruff check .
+uv run ruff format --check .
 
-The [project documentation](docs/pdf/01-project-documentation.pdf) and [team delivery plan](docs/pdf/02-team-delivery-plan.pdf) PDFs are version 0.3 planning snapshots written before the implementation. The source documents, Issues and the Project board are the current references.
+# Validate documentation links
+uv run python scripts/check_docs.py
 
-## Team and workstreams
+# Fail if the API models and the web client contract drifted apart
+uv run python scripts/check_contract.py
 
-| Member | GitHub | Workstream | Owns |
-|---|---|---|---|
-| Abdelrahman Magdy | @abdulrhmanmagdy1 | Backend, integration and coordination | API, configuration, run storage, contracts and examples, releases, supervisor meetings |
-| Abdullah Tarek | @abdallah414 | Agent workflow and verification | Task scope, roles and coordinator, verification checks, reference runner |
-| Abdelrahman Adel | @abdelrhmanadel200 | Models and training | Model choice and benchmark, local model provider, LoRA training, model card |
-| Shahd Abdelhay | @shahd-abdelhay | Data, research and evaluation | Related work, dataset and splits, demonstration cases, evaluation protocol and harness |
-| Dania El-Walily | @d5ania | Frontend and delivery materials | Web interface, user guide, report assembly, slides and demonstration |
+# Validate dataset splits
+uv run python scripts/validate_dataset.py data/curated.jsonl
 
-Each task has one accountable owner, and there is no assigned peer-review role. The implementation added on 2026-10-20 was produced on the demonstration laptop with the optional [agent execution pack](docs/agent-execution/README.md), one coding agent per workstream ([allocation](docs/agent-execution/team-allocation.md)). Each student owns their workstream and inspects and explains it before the delivery is accepted.
+# Release smoke test: boots the app, serves the built UI, completes one run (8 checks)
+uv run python scripts/smoke_ui.py
 
-## Team workspace
+# Retention for the local run history (dry run by default; --yes to delete)
+uv run python scripts/prune_runs.py --keep 500
 
-- [Project board](https://github.com/users/abdulrhmanmagdy1/projects/1)
-- [By Owner: live Project view](https://github.com/users/abdulrhmanmagdy1/projects/1/views/3), grouped by GitHub assignee
-- [Issues](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues)
-- [Milestones](https://github.com/abdulrhmanmagdy1/grad-refactor-ai/milestones)
-- [First-day guide](docs/development/first-day.md) and [contribution workflow](CONTRIBUTING.md)
-- [21-day roadmap](docs/planning/roadmap.md), [tasks by owner](docs/planning/by-owner.md) and [team delivery plan](docs/planning/assignments.md)
+# Build the release checksum manifest and verify the working tree against it
+uv run python scripts/make_release.py
+uv run python scripts/verify_release.py
+```
 
-The repository and the Project board are private. Team members publish work through linked pull requests; owners run the acceptance checks before merging, and a second-person approval is not required. Supervisor reviews are planned after each of the five phases.
+Web client gates (run inside `frontend/`):
 
-## Licensing and data
+```bash
+npm ci
+npm run verify   # eslint + tsc --noEmit + vitest + production build
+```
 
-No open-source license has been selected for the project ([NOTICE](NOTICE.md)). The base model is Apache-2.0; its weights and any adapters are never committed. Dataset sources and attribution are in the [dataset notice](datasets/guard_clauses/v1/NOTICE.md); the redistribution license of the team-authored records is still pending a team decision. The project uses no paid services.
+---
+
+## Curated Dataset (FR09, NFR05)
+
+`data/curated.jsonl` holds 416 authored/synthetic records: 8 refactoring types × 52 records
+(28 findings records + 24 clean-control records). Splits: train 320 / validation 48 / test 48;
+each type has 20 findings + 20 clean controls in train and 4 findings + 2 clean controls in
+validation/test. Every findings record is machine-verified before being written: prompts must
+trigger their declared detector rule, and completions are accepted as behaviour-preserving only
+after a real isolated-sandbox equivalence run (golden-baseline pytest with sampled inputs) or,
+for signature-changing refactorings such as long-parameter-list, an authored smoke test. Clean
+controls are identity pairs whose prompt the analyzer reports as finding-free; they teach the
+model not to rewrite clean code. `data/manifest.json` records the sha256 of the file, template
+counts, split/type counts and per-record verification method. License: CC0-1.0 (authored, not
+scraped). Prompts contain no `# example:` provenance comment, so training and inference see the
+same code.
+
+```bash
+# Regenerate (re-runs the full verification pipeline) and validate the splits
+uv run python scripts/generate_curated_dataset.py
+uv run python scripts/validate_dataset.py data/curated.jsonl
+
+# Audit prompt+completion lengths against the training context window
+uv run python scripts/audit_tokens.py data/curated.jsonl --max-length 2048
+```
+
+## Fine-Tuning (LoRA / QLoRA)
+
+`training/train_lora.py` supports both 4-bit NF4 QLoRA and native fp16 LoRA for
+`Qwen/Qwen2.5-Coder-3B-Instruct` (1.5B local fallback, 7B optional on Colab): rank 16 / alpha 32 over all linear layers, `max_length=2048`, three epochs, cosine schedule, gradient checkpointing and best-validation checkpoint selection. Training and inference both render the prompt with `models/prompting.py` and use the Qwen assistant end token, so the adapter is not trained on a different input distribution than it is evaluated on.
+
+```bash
+# In the separate CUDA environment: config, token audit, then training
+python training/train_lora.py --config configs/training.example.json --dry-run
+python training/train_lora.py --config configs/training.local.json
+```
+
+The Kaggle Tesla T4 training run completed 60/60 steps (`1:57:24` training loop / `7157.5s` manifest) using **native fp16 LoRA** (`load_in_4bit=false`, `optim=adamw_torch`) because 4-bit loading remained unproven on that container image. Final validation loss on `48/48` records was `0.005797` (`29,933,568 / 3,115,872,256` trainable parameters = `0.9607%`), with `adapter_model.safetensors` SHA-256 `42ae18e5eb26976143077051824e97719222103d4352ca70a24ef1089bb8405f`. Real A–D evaluation results live in `experiments/dataset_test_finetuned_summary.json` (`Group-D-FineTunedMultiAgent`: `refactor_success_rate = 0.9167` vs untuned 3B `Group-A = 0.6042`, `Group-B = 0.7500`).
+
+---
+
+## Comparative Evaluation Harness (FR09, UC04)
+
+Evaluate Groups A–D on the built-in benchmark suite and/or any dataset split:
+
+```bash
+# Built-in suite (4 cases: long function, deep nesting, async, complexity)
+uv run python -m evaluation.harness --groups A B C D --output-dir experiments
+
+# Dataset test split (--include-code also exports the source for blind human review)
+uv run python -m evaluation.harness --dataset data/curated.jsonl --split test \
+  --name dataset_test --include-code --output-dir experiments
+
+# Optional: compare against the real base model and use best-of-N AST-only selection
+uv run python -m evaluation.harness --baseline base --base-model Qwen/Qwen2.5-Coder-3B-Instruct \
+  --candidates 4 --adapter-path runs/lora-first/adapter --groups C D --output-dir experiments
+
+# Blinded review packet -> humans fill score_sheet.csv -> aggregate (refuses to invent ratings)
+uv run python scripts/prepare_blind_review.py --results experiments/dataset_test_results.csv \
+  --output-dir experiments/review
+uv run python scripts/aggregate_blind_review.py --review-dir experiments/review
+```
+
+Outputs (per run name):
+- `experiments/<name>_results.csv`: case-level records — status/failure type, review verdict,
+  syntax/test outcomes, latency, tokens, LOC and complexity deltas, CodeBLEU, AST similarity,
+  maintainability-index before/after (plus `original_code`/`refactored_code` with `--include-code`).
+- `experiments/<name>_summary.json`: per-group aggregates (acceptance, syntax validity,
+  test-pass rate, `smell_resolution_rate`, `refactor_success_rate` with separate findings and
+  clean-control breakdowns, execution pass@1, mean CodeBLEU, mean AST similarity, MI
+  improvement, complexity reduction, retries, tokens).
+
+Honesty rules (NFR06): groups whose provider/adapter is unavailable emit
+`status=provider_unavailable` failure rows with the raw reason and `null` aggregate rates —
+never fabricated zeros or 1.0s. CodeBLEU and AST similarity are documented Python variants
+(equal-weight CodeBLEU formulation; LCS ratio over annotated preorder nodes); they are
+reference-based and reported as measured, not as proof of semantic equivalence.
+
+---
+
+## Documentation Index
+- [System Design](docs/architecture/system-design.md)
+- [Technical Decisions (ADRs)](docs/architecture/decisions.md)
+- [Software Requirements (SRS)](docs/requirements/srs.md)
+- [Requirements Traceability](docs/requirements/traceability.md)
+- [Evaluation Protocol](docs/evaluation/protocol.md)
+- [Team & Workstreams](docs/planning/team.md)
+- [Delivery Roadmap](docs/planning/roadmap.md)
+- [Setup Guide](docs/development/setup.md)
+- [Single-laptop Agent Execution Pack](docs/agent-execution/README.md)
+- [Contributing](CONTRIBUTING.md)
+- [Agent guidance (AGENTS.md)](AGENTS.md)

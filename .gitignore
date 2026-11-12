@@ -1,5 +1,4 @@
 .venv/
-.venv-train/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -8,9 +7,17 @@ __pycache__/
 .env
 .env.*
 !.env.example
-/data/
-/models/
-/runs/
+# Local run database (history + user-submitted code stays local).
+runs.sqlite3*
+# Generated/raw data stays local, but the authored curated dataset and its
+# manifest are deliverables and are tracked (validated by CI, hashed by
+# RELEASE_MANIFEST.json).
+data/*
+!data/curated.jsonl
+!data/manifest.json
+models/
+runs/
+*.log
 *.safetensors
 *.pt
 *.pth
@@ -20,3 +27,8 @@ __pycache__/
 configs/*.local.json
 node_modules/
 dist/
+# Keep the built web UI bundle in the repository: FastAPI serves it from /
+!frontend/dist/
+!frontend/dist/**
+# Blind-review answer key stays private until every rating is collected.
+experiments/review/review_key.csv

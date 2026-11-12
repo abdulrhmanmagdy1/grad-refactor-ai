@@ -1,14 +1,25 @@
 # Optional single-laptop agent execution pack
 
-This folder is a contingency implementation brief for Codex or Claude working in this repository on one laptop. It prepares the work; it does not claim the implementation is complete. The five students retain the workstream ownership in [the team plan](../planning/assignments.md), even when one coding agent implements several components. Humans inspect the final system and explain its work to the supervisor.
+This folder is a contingency implementation brief for a coding agent (for example Codex or
+Claude) working in this repository on a single laptop. It prepares the work; it does **not**
+claim the implementation is complete.
+
+The five students retain the workstream ownership defined in the team plan, even when one
+coding agent implements several components. Humans inspect the final system and explain its
+work to the supervisor.
 
 ## Start here
 
-1. Clone the private repository using the laptop owner's normal GitHub authentication. Never paste credentials into a prompt or commit them.
-2. Open the repository root in the coding tool. Read root AGENTS.md and this folder in the order below.
-3. Paste [START-PROMPT.md](START-PROMPT.md). Start with repository inspection and the hardware gate, not a new scaffold.
-4. Work through the ordered steps, keeping actual evidence and checkpoints. Resume from state, not memory.
-5. Deliver the final handover for team inspection. Supervisor meetings and human feedback are recorded only when they occur.
+1. Clone the private repository using the laptop owner's normal GitHub authentication. Never
+   paste credentials into a prompt or commit them.
+2. Open the repository root in the coding tool. Read root [`AGENTS.md`](../../AGENTS.md) and
+   this folder in the order below.
+3. Paste [`START-PROMPT.md`](START-PROMPT.md). Start with repository inspection and the
+   hardware gate, not a new scaffold.
+4. Work through the ordered steps, keeping actual evidence and checkpoints. Resume from state,
+   not memory.
+5. Deliver the final handover for team inspection. Supervisor meetings and human feedback are
+   recorded only when they occur.
 
 ## Reading order
 
@@ -25,6 +36,16 @@ This folder is a contingency implementation brief for Codex or Claude working in
 
 ## Source of truth
 
-Use the actual repository and tests for implementation status. Use [requirements](../requirements/srs.md), [architecture](../architecture/system-design.md), [data plan](../data-and-training/data-plan.md), [training plan](../data-and-training/training-plan.md) and [evaluation protocol](../evaluation/protocol.md) for the full specification. Use [planning/backlog.json](../../planning/backlog.json) and [planning/assignments.json](../../planning/assignments.json) for task dependencies and owners. This folder proposes concrete defaults where a decision is still open; log changes in the architecture decisions before implementation.
+- Use the actual repository and tests for **implementation status**.
+- Use [requirements](../requirements/srs.md), [system design](../architecture/system-design.md),
+  [data plan](../data-and-training/data-plan.md), [training plan](../data-and-training/training-plan.md)
+  and the [evaluation protocol](../evaluation/protocol.md) for the **full specification**.
+- Use [`planning/backlog.json`](../../planning/backlog.json) and
+  [`planning/assignments.json`](../../planning/assignments.json) for task dependencies and owners.
 
-Three weeks means Days 1-21 from agreed kickoff, with phase gates on Days 2, 5, 10, 15 and 21. Agent execution does not remove hardware limits, genuine research work, or the supervisor discussions. Do not invent datasets, training runs, successful tests, approvals or citations.
+This folder proposes concrete defaults where a decision is still open; log changes in the
+[architecture decisions](../architecture/decisions.md) before implementation.
+
+Three weeks means Days 1–21 from agreed kickoff, with phase gates on Days 2, 5, 10, 15 and 21.
+Agent execution does not remove hardware limits, genuine research work, or the supervisor
+discussions. **Do not invent datasets, training runs, successful tests, approvals or citations.**

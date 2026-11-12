@@ -1,64 +1,113 @@
-# System design
+# تصميم منصة Refactoring
 
-The system separates the interface, workflow coordination, model inference and verification. All components below are implemented and tested; the exact interfaces are in the [component contracts](contracts.md) and the workflow details in the [workflow design](workflow.md).
+يفصل التصميم العرض وتنسيق الأدوار واستدلال الموديل والتحقق. الحالة المنفذة الآن: Workflow
+متعدد الأدوار كامل، واجهة ويب واحدة احترافية (React/TypeScript مع ثيمين فاتح وداكن على `/`)،
+سجل تشغيل SQLite، Runner معزول مع توليد اختبارات تكافؤ، وحزمة تقييم A–D بمقاييس أكاديمية.
+مسار QLoRA منفذ في `training/train_lora.py` بعقد prompt مشترك مع الاستدلال، لكن التدريب الفعلي
+ونتائج المجموعتين C وD ما زالا معلقين على عتاد CUDA، ويُعلن غيابهم صراحة بدل عرض موديل أساسي
+كأنه مخصص.
 
-## System context
+## سياق النظام
 
 ```mermaid
 flowchart LR
-    U[Developer or student] --> S[Local refactoring service and web interface]
-    T[Project team] --> E[Curation, training and evaluation]
-    E --> W[Pinned base model and LoRA adapter]
+    U[مطور أو طالب] --> S[منصة Refactoring محلية]
+    T[التيم] --> E[التدريب والتقييم]
+    E --> W[أوزان أساسية وAdapters]
     W --> S
-    S --> R[Diff, explanation and separate verification results]
+    S --> R[Diff وتفسير ونتائج تحقق]
     R --> U
 ```
 
-## Components
+## المكونات المنفذة
 
 ```mermaid
 flowchart TD
-    UI[React web interface] --> API[FastAPI service]
-    API --> Q[Bounded queue, one worker thread]
-    Q --> O[Workflow coordinator]
-    Q --> DB[(SQLite run history)]
-    O --> T[Task scope check, deterministic]
-    O --> A[Analysis role]
-    O --> G[Refactoring role]
-    O --> V[Review role]
-    A --> M[LocalProvider]
-    G --> M
-    V --> M
-    M --> K[Model worker process: pinned Qwen2.5-Coder-0.5B-Instruct, optional LoRA adapter]
-    O --> C[Syntax and task rubric checks]
-    O --> X[Reference runner: separate limited process]
+    UI["واجهة ويب React على / بثيمين فاتح وداكن"] --> API[FastAPI]
+    API --> O[منسق Workflow]
+    O --> A[دور التحليل]
+    O --> G[دور التعديل]
+    O --> V[دور المراجعة]
+    G --> M["سجل المزودات: mock, smart_ast, ollama, local_lora"]
+    V --> C[فحص ثابت: syntax ورموز وتكافؤ AST]
+    V --> X[Runner معزول مع اختبارات ذهبية مولدة]
+    O --> DB[(SQLite: سجل التشغيلات والآثار)]
+    API --> P[GET /api/v1/providers]
 ```
 
-| Component | Code | Role |
-|---|---|---|
-| Web interface | `frontend/` | Input, demonstration cases, progress, outcome, diff, four verification results, decision, history |
-| Service | `src/refactor_ai/api.py`, `runs/` | HTTP contract, bounded queue, serialized runs, SQLite records, restart recovery |
-| Coordinator | `src/refactor_ai/agents/` | Scope check, roles, budgets, deadline, one correction, disposition |
-| Task definition | `src/refactor_ai/tasks/guard_clauses.py`, `task_format.py` | Scope, reference rewrite, rubric, refactor-v2 prompt and parser, shared with curation and training |
-| Model provider | `src/refactor_ai/providers/` | Worker process in the training environment, token and time limits, exact model identity; a labelled fake provider for tests |
-| Verification | `src/refactor_ai/verification/` | Syntax, rubric, trusted reference tests in an isolated process, disposition |
-| Data and evaluation | `src/refactor_ai/data/`, `evaluation/`, `scripts/` | Curation, splits and leakage checks, the A/B/C/D harness and reports |
-| Training | `training/` | LoRA training script, pinned CUDA environment, the private Kaggle lane |
+- **دور التحليل** (`src/agents/analysis_agent.py`): محلل AST استرشادي (FR02) يعيد `findings`
+  ومقاييس بنيوية و`ast_graph` (عقد المشهد ثلاثي الأبعاد)، ثم خطة مهيكلة: الـsmell الأساسي
+  والاستراتيجية والرموز الهدف ومستوى المخاطر وخطوات تنفيذ مرتبة.
+- **دور التعديل** (`src/agents/refactoring_agent.py`): Prompt نظام صريح بعقود الناتج، واختيار
+  تحويل حتمي آمن عند توفر مزود `smart_ast`، مع نقل critique المراجعة عند إعادة المحاولة.
+- **دور المراجعة** (`src/agents/review_agent.py`): تحقق ثلاث طبقات — syntax، ثم حفظ الرموز
+  (مقارنة أسماء فقط)، ثم تكافؤ سلوكي عبر Runner (اختبارات المستخدم أو اختبارات ذهبية مولدة)
+  وحارس انحدار Maintainability Index (نقاط ونسَب معًا). الحكم ثلاثة: `approved` أو `rejected`
+  أو `uncertain`، وكل حكم غير معتمد يرفق critique قابلًا للتنفيذ (FR04، NFR06).
+- **المنسق** (`src/agents/orchestrator.py`): خطوات Ingestion → Analysis → Generation →
+  Verification → Completion؛ يخزن `agent_traces` ولقطات المقاييس `metrics_before/after/delta`
+  والاختبارات المولدة و`ast_graph_before/after`، وحد محاولة تصحيح واحدة، وحدود FR08
+  (استدعاءات، توكنز، زمن) كما هي. عند بدء العملية تُعلَّم أي تشغيلات بقيت غير منتهية من عملية سابقة
+  كـ`failed` برسالة صريحة (لا تشغيل «حيّ» بلا عامل).
+- **سجل المزودات** (`src/models/registry.py`): `mock` (حتمي للاختبار)، `smart_ast` (تحويلات AST
+  آمنة على CPU)، `ollama` (خادم محلي عبر HTTP)، `local_lora` (يتطلب Adapter فعليًا؛ يرفع
+  `ProviderUnavailableError` بدل تقديم موديل أساسي كأنه مخصص). الكتالوج خلف
+  `GET /api/v1/providers` بذاكرة فحص قصيرة (15 ثانية).
+- **Runner المعزول** (`src/runner/sandbox.py`) و**مولّد اختبارات التكافؤ**
+  (`src/runner/test_generator.py`): عزل subprocess بحدود زمن وذاكرة ومعالج وبيئة منقاة ومنع
+  شبكة الخروج، وتوليد حالات ذهبية من عينات مدخلة ثابتة ومقارنة نتائج الأصل والمرشح.
+- **حزمة التقييم** (`src/evaluation/`): مجموعتا مقارنة A–D على مجموعة مدمجة أو أي split من
+  البيانات، مع CodeBLEU وتشابه AST وانحدار MI وpass@1، و`smell_resolution_rate` و
+  `refactor_success_rate` مفصولة بين findings وclean-control، وتصدير CSV وJSON إلى
+  `experiments/`. المجموعة A تتلقى نفس findings التي تتلقاها B، و`--baseline base` يقارن مع
+  الموديل الأساسي الحقيقي.
+- **مسار QLoRA** (`training/train_lora.py`): 4-bit NF4، rank 16/alpha 32/all-linear،
+  `max_length=2048`، 3 epochs، cosine، gradient checkpointing، أفضل checkpoint حسب validation
+  loss. يستخدم `src/models/prompting.py` نفسه للتدريب والاستدلال ويكتب `run-manifest.json`
+  بالبصمات والعتاد ونتيجة smoke generation بفحص AST فقط.
 
-## Runtime sequence
+## دورة التشغيل
 
-1. The service validates the request (size, UTF-8, Python syntax, reference-case match) and queues the run.
-2. The coordinator checks the task scope deterministically; unsupported input completes as `no_change` with no model call.
-3. Multi-role runs call the analysis role, then the refactoring role (with the findings as notes), verify the candidate, call the review role and allow at most one correction; single-role runs make exactly one refactoring call.
-4. Syntax, the task rubric, the reference tests and the model review are reported separately, and the disposition follows the fixed order in the contracts. Missing tests never count as a pass.
-5. The record keeps the run identifier, settings, model and adapter identity, every attempt, stage timings, the stop reason and any error. The person downloads, accepts or rejects the proposal; the service never writes to the person's files.
+التحقق من حجم المدخل وصيغته، ثم جمع المؤشرات الثابتة، ثم تحليل وخطة، ثم توليد مرشح، ثم مراجعة
+ثلاثية الطبقات. عند `rejected` تُجرى محاولة تصحيح واحدة بحد أقصى وتُسجل أثرها؛ وعند `uncertain`
+يكتمل التشغيل مع علامة تحذير بدل إعلان نجاح نظيف. يحفظ المنسق معرف التشغيل والإعدادات ومدة كل
+خطوة، ويُخزن السجل في SQLite مع ترحيل أعمدة idempotent (`_ensure_columns`). الواجهة تعرض
+الكود والـDiff والآثار ورسوم AST قبل اعتماد المستخدم النهائي (FR06).
 
-Run states are `queued`, `analyzing`, `generating`, `verifying`, `completed` and `failed`; changing the correction limit or the budgets requires a new evaluation protocol version.
+## العقود المنفذة الآن
 
-## Storage and deployment
+- `GET /health`: الحالة وإصدار الخدمة والوضع `production`.
+- `POST /api/v1/analyze`: يحلل بلا تنفيذ ويعيد `syntax_valid` و`findings` و`metrics` و`ast_graph`.
+- `GET /api/v1/providers`: كتالوج المزودات مع توفّر حي ونصيحة إصلاح عند الغياب.
+- `POST /runs` (يدعم `?sync=true`)، `GET /runs/{id}`، `GET /runs`: تشغيل ومتابعة وسجل (FR03، FR07، FR10). عند بلوغ حد التزامن يرد `429` برسالة صريحة.
+- `GET /runs/{id}/report`: تقرير Markdown من سجل التشغيل المخزَّن (inline أو `?download=true`) بلا أي قيمة غير مقيسة (FR07، NFR06).
+- `POST /runs/{id}/feedback` و`/runs/{id}/decision`: قرار المستخدم بقبول أو رفض (FR06) — الثانية alias للواجهة.
+- `GET /api/v1/stats`: مجاميع مقيسة (حالات، أحكام، متوسط ووسيط المدة، متوسط التوكنز، نسبة الاعتماد) مع `truncated` عند تجاوز العينة (NFR06).
+- `GET /metrics`: نفس المجاميع بصيغة Prometheus نصية بلا مكتبة، مع `refactor_runs_in_flight` و`refactor_provider_available` (NFR07).
+- كل استجابة تحمل `X-Request-ID` و`X-Process-Time-Ms`، ومسارات API تُسجَّل بهما، وسجلات الخدمة تُكتب JSON سطرًا لكل حدث (ADR19).
+- `/` واجهة الويب المبنية، و`/docs` و`/openapi.json` مرجع API المولد.
 
-The first release runs locally on one machine: one FastAPI process serves the API and the built interface, SQLite stores run history, and the model worker runs in a separate process with the training environment's interpreter, so the core environment never imports PyTorch. GPU training and the evaluation runs used a private Kaggle lane because the demonstration laptop has 4 GB of VRAM and 8 GB of RAM ([lane](../../training/kaggle/README.md)). Microservices, multi-user access, authentication and public hosting are outside this release.
+## التخزين والنشر
 
-## Trust boundaries
+التشغيل محلي دون قاعدة بيانات خارجية؛ SQLite بوضع WAL هو سجل الجهاز الواحد، وكل اتصال يطبّق
+`busy_timeout` و`synchronous=NORMAL` كي لا يتحول تزامن الواجهة مع عامل الخلفية إلى
+«database is locked» (ADR19)، وننتقل إلى PostgreSQL فقط عند حاجة فعلية للتزامن. واجهة الويب
+(`frontend/`) تبني بـVite إلى `frontend/dist` وتقدَّم من نفس عملية FastAPI مع تراجع آمن عند غياب
+البناء (صفحة placeholder بتعليمة البناء بدل الفشل). لا Microservices ولا Kubernetes في نطاق
+الثمانية أسابيع (ADR04).
 
-Submitted code is data: the service only parses it and never executes it. Model output is also untrusted: it reaches execution only through the reference runner, only for server-owned demonstration or dataset cases, and only after static admission checks. The runner uses a separate interpreter in isolated mode with an empty environment, a temporary directory, operating-system limits (a Job Object on Windows, resource limits and an unprivileged user under root on Linux) and an audit hook that blocks network access, process creation, native code and file writes. It is not a sandbox for arbitrary untrusted code; the limits are listed in [runner safety](../development/runner-safety.md).
+## الملاحظة والتشغيل
+
+كل طلب API يُسجَّل كسطر JSON واحد (المسار، الحالة، المدة، `request_id`) فيُطابَق سطر السجل مع
+ترويسة الاستجابة عند تشخيص عطل (ADR16، ADR19). السجلات نصية للقراءة البشرية عند
+`REFACTOR_AI_LOG_FORMAT=text`. `GET /api/v1/stats` يجمع المقاييس من السجل نفسه، و`GET /metrics`
+يعرضها بصيغة Prometheus بلا مكتبة خارجية، و`scripts/check_contract.py` يمنع انحراف العقد بين
+نماذج Pydantic وعقد Zod في الواجهة قبل الوصول إلى المتصفح. `scripts/smoke_ui.py` يثبت أن الإصدار
+يبوت ويخدم الواجهة وينفّذ تشغيلًا كاملًا على قاعدة مؤقتة.
+
+## حدود الثقة
+
+لا يقرأ التحليل ملفات الجهاز ولا ينفذ Python المرسل (NFR01). اختبارات الكود المُدخل تجري فقط في
+Runner منفصل بدون أسرار أو شبكة خارجة وبمستخدم غير root وموارد محدودة (NFR02)، وتُقبل فيه
+أمثلة موثوقة أو اختبارات ذهبية مولدة آليًا. حاوية Docker وحدها ليست مبررًا لفتح تنفيذ كود مجهول
+للعامة. [خطة التحقق](../development/testing.md) تفصل الأدلة المطلوبة.

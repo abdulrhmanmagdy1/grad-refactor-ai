@@ -1,13 +1,13 @@
-# Supervisor review record
+# مراجعة مرحلة المشروع
 
-Status: blank template; this does not represent a meeting that has taken place.
+الحالة: نموذج غير مكتمل؛ لا يمثل اجتماعًا حدث.
 
-- Phase, date, and attendees:
-- Release or code SHA and links to the demonstration and results:
-- Completed and incomplete outcomes:
-- Problems and alternatives:
-- Questions requiring a decision:
-- Supervisor feedback:
-- Agreed and pending decisions:
-- Follow-up Issues, owners:
-- Conditions for moving to the next phase:
+- المرحلة والتاريخ والحضور:
+- الإصدار أو SHA وروابط الديمو والنتائج:
+- ما اكتمل وما لم يكتمل:
+- المشاكل والبدائل:
+- الأسئلة المطلوب حسمها:
+- ملاحظات الدكتورة:
+- القرارات المعتمدة والمعلقة:
+- Issues التعديلات والمسؤول والمراجع:
+- شروط الانتقال للمرحلة التالية:

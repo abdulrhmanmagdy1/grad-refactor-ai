@@ -1,35 +1,37 @@
-# Three-week delivery plan
+# خطة النسخة الأولى خلال ثمانية أسابيع
 
-The first delivery is planned for 21 calendar days from the team's agreed kickoff. Calendar dates and the official university deadline remain unconfirmed. This replaces the previous schedule. Repository setup is complete; the product phases are planned work, not completed milestones.
+التوقيت نسبي من يوم انطلاق التيم؛ لا يوجد موعد رسمي معتمد. الخطة تفترض توافرًا أسبوعيًا يُحسم في اجتماع الانطلاق. نفصل أعمال التأسيس المنفذة عن جاهزية المنتج التي تتطلب المراحل التالية.
 
-| Phase | Window | Required outcome | Supervisor review |
+| المرحلة | التوقيت | المخرجات وشروط الخروج | مراجعة الدكتورة |
 |---|---|---|---|
-| P1 Scope and feasibility | Days 1-2 (Week 1) | Hardware inventory, one supported refactoring type, measured local inference, tiny LoRA save/reload smoke test or a recorded blocker | R1 on Day 2: scope and resource decision |
-| P2 Data and baseline | Days 3-5 (Week 1) | Small licensed dataset, source-separated splits, base-model baseline, shared API/role contracts, frozen comparison protocol | R2 on Day 5: data, baseline and contracts |
-| P3 Integration and first training run | Days 6-10 (Weeks 1-2) | One real-model input-to-result case, initial frontend, adapter training and validation evidence if resources permit | R3 on Day 10: demo, actual training status and failures |
-| P4 First-release integration | Days 11-15 (Weeks 2-3) | Three bounded roles, trusted-example verification path, honest status display, acceptance checks and feature freeze | R4 on Day 15: readiness for final evaluation |
-| P5 Evaluation and initial delivery | Days 16-21 (Week 3) | Frozen-test comparison, critical fixes, clean setup, report, presentation, demo and release | R5 by Day 21: delivery and next priorities |
+| P1 النطاق والجدوى | الأسبوع 1 | حصر عتاد وساعات التيم، اختيار حالات صغيرة، تجربة inference وتدريب مصغر، اعتماد النطاق والميزانية | المشكلة والمساهمة والموارد وقالب الكلية |
+| P2 البيانات وخط الأساس | الأسبوع 2 | مصادر مرخصة، بيانات منظفة مقسمة حسب المصدر، خط أساس وسيناريوهات قبول، تثبيت بروتوكول التقييم | البيانات والمقاييس وأنواع Refactoring |
+| P3 الربط والتدريب الأول | الأسبوعان 3 و4 | مسار كامل بموديل أساسي وواجهة أولية، أول Adapter محفوظ، عقود واختبارات | ديمو ونتائج قبل وبعد التدريب |
+| P4 تكامل النسخة الأساسية | الأسبوعان 5 و6 | أدوار مترابطة، Diff، تحقق محدود وآمن، سجل تشغيل وحدود محاولات، معالجة فشل | تجربة المتطلبات وتحديد ما يلزم حذفه أو إصلاحه |
+| P5 التقييم والتسليم الأول | الأسبوعان 7 و8 | نتائج مستقلة، إصلاحات، تشغيل من جهاز ثانٍ، تقرير وعرض وديمو وRelease | مراجعة النسخة وخطة التطوير اللاحقة |
 
-## Scope that fits the window
+## حالة التنفيذ (تحديث P5)
 
-Start with one Python file/function and one refactoring type selected using real examples on Day 2. One local web interface, one FastAPI process, one local model shared by three logical roles, and at most one correction attempt are sufficient. Use local files or SQLite for run records. Authentication, public hosting, repository-wide edits, extra languages, multiple model services and optional orchestration frameworks are deferred.
+| المرحلة | الحالة المنفذة الآن |
+|---|---|
+| P1 النطاق والجدوى | `doctor` يسجل العتاد؛ GPU واحد جزئي (GTX 1650 Ti، 4 GiB)؛ المفاضلات موثقة |
+| P2 البيانات وخط الأساس | 416 سجلًا مؤلفًا متحققًا آليًا (224 findings + 192 clean-control) + `data/manifest.json` + بوابة `validate_dataset.py` و`audit_tokens.py`؛ تقييم A/B مع `refactor_success` و`smell_resolution_rate` على suite المدمج وعلى split الاختبار |
+| P3 الربط والتدريب الأول | مسار كامل بمزودات حتمية ومحلية (mock/smart_ast/ollama/local_lora) وواجهة ويب واحدة React؛ تم تدريب Adapter **native fp16 LoRA** (`Qwen/Qwen2.5-Coder-3B-Instruct`, `eval_loss=0.005797`) على Kaggle Tesla T4 مع توثيق SHA-256 في `run-manifest.json` (بينما 4-bit QLoRA غير مثبت بعد) |
+| P4 تكامل النسخة الأساسية | أدوار مترابطة بآثار، Diff، تحقق ثلاثي (syntax/رموز/تكافؤ)، سجل SQLite، إعادة محاولة واحدة بحد أقصى |
+| P5 التقييم والتسليم الأول | التقييم الحقيقي A–D مكتمل على Kaggle T4 (`experiments/dataset_test_finetuned_*`: Group D `0.9167` مقابل Base B `0.7500` وBase A `0.6042`؛ 0 `provider_unavailable`)؛ أدوات التسليم جاهزة (تقرير Markdown، عبوة مراجعة عمياء محدثة لـ 4 مرشحين بانتظار التقييم البشري، `RELEASE_MANIFEST.json` + LF normalization، وتقرير الدقة PDF)؛ بقي استكمال التقييم البشري والتحقق على جهاز ثانٍ ومراجعة الدكتورة |
 
-Fine-tuning an existing open-weight model remains a research objective. The plan cannot guarantee its completion before checking hardware. By Day 2, measure inference and a tiny adapter run, including save and reload. If the laptop cannot support training, reduce model/context/batch size or obtain confirmed free university GPU access. Record the blocker and discuss it at R1. A base-model demonstration is useful but does not satisfy the fine-tuning deliverable. Never report it as trained.
+## بوابات القرار
 
-## Critical path and daily rhythm
+نهاية الأسبوع الأول: إذا لم نجد موارد تكفي للتخصيص، نصغّر الموديل أو المهمة ونبحث عن GPU بالكلية مع الدكتورة. لا نؤجل حسم الجدوى إلى الأسبوع السادس. نهاية الأسبوع الثاني: تثبيت مجموعة الاختبار؛ لا نستخدمها لاختيار إعدادات التدريب. نهاية الأسبوع الرابع: يجب عرض حالة واحدة كاملة؛ عند التأخر نوقف المزايا الإضافية. بداية الأسبوع السابع: تجميد المزايا الأساسية والتركيز على القياس والإصلاح والتسليم.
 
-Days 1-2: resources and scope. Days 3-5: data/splits, baseline and contracts. Days 6-10: provider, roles, API and UI converge on a real-model demonstration. Days 11-15: verification and model selection. Days 16-21: final evaluation and delivery.
+## إيقاع العمل
 
-Use a short daily update in Issues: completed output, next action, blocker and evidence link. Keep one primary implementation task active per person. Reserve Day 21 for final checks and the supervisor discussion, not new features. A phase ending does not automatically complete its tasks.
+تخطيط كل أسبوعين مع مراجعة أسبوعية قصيرة وديمو نهاية الدورة. تحديثات مكتوبة عند الإنجاز أو التعطيل. يُحدد موعد الدكتورة قبل نهاية المرحلة؛ بعد المراجعة تُسجل القرارات وتُربط بالتاسكات. لا ندعي حدوث موافقة لم تُسجل.
 
-Schedule the five supervisor discussions at kickoff. Record real feedback after each phase; never mark a review approved before it happens. Independent work can continue while feedback is pending. Scope, data-split and evaluation changes awaiting a decision remain pending.
+## أول أسبوعين
 
-## Resource and delivery gates
+القائمة التنفيذية في `planning/backlog.json` وتُنشر كـGitHub Issues. الأسبوع الأول يشمل حصر الأجهزة، تشغيل البيئة على الأجهزة الخمسة، مراجعة المقترح، استطلاع المصادر، وتجربة تشغيل وتخصيص صغيرة. الأسبوع الثاني يشمل تنظيف وتقسيم البيانات، قياس خط الأساس، تثبيت العقود، اعتماد التقييم ومراجعة P2.
 
-Freeze the test split by Day 5 and never use it for tuning. Demonstrate a real model by Day 10. Freeze core features and model choice by Day 15. Use Days 16-20 for test evaluation, failure analysis, critical fixes and report assembly. If a gate is missed, reduce optional scope and explicitly record incomplete requirements with the supervisor; do not silently change acceptance criteria.
+## التطوير بعد النسخة الأولى
 
-A clean clone and new environment on the same laptop proves clean setup only. Record whether a second physical machine was actually tested. The optional agent execution pack follows the same gates and evidence requirements.
-
-## Ownership and follow-up
-
-See [the person-by-week matrix](assignments.md) and [tasks grouped by owner](by-owner.md). Each task has one accountable owner and no assigned peer reviewer. Each member supplies notes for their work; Dania assembles delivery materials. The optional [agent execution pack](../agent-execution/README.md) does not change human ownership. Improvements after Day 21 require a separate plan based on evaluation and supervisor feedback.
+يتحدد حسب القياس: أنواع Refactoring إضافية، مدخلات أكبر، تحسين البيانات والموديل، تكامل GitHub أو نشر داخلي. دعم لغة جديدة ونشر عام يحتاجان نطاقًا وتقييمًا جديدين؛ ليسا التزامًا لنسخة الثمانية أسابيع.

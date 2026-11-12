@@ -1,58 +1,99 @@
-# Technical decision log
+# سجل القرارات التقنية
 
-Record context, alternatives, consequences, and evidence for significant decisions. Python input, fine-tuning, GitHub collaboration, and a zero paid-services budget were agreed by the team owner. Other choices remain subject to feasibility and supervisor review; "Implemented" means built and tested in the repository, not approved by the supervisor.
+كل قرار كبير يسجل السياق والبدائل والنتائج. المستخدم اعتمد Python وFine-tuning وGitHub فقط والميزانية صفر؛ الخيارات الأخرى قابلة للمراجعة.
 
-| ID | Decision | Status | Rationale |
-|---|---|---|---|
-| ADR01 | Python as the input language | Agreed | Limits the task and simplifies verification |
-| ADR02 | Fine-tune an existing model | Agreed | Avoids training a code language model from scratch |
-| ADR03 | GitHub for shared code, documentation, and tasks | Agreed | Keeps changes and review together |
-| ADR04 | Local operation and no paid services | Agreed | Matches the budget |
-| ADR05 | Private repository owned by abdulrhmanmagdy1 | Implemented | Preserves the requested ownership and access |
-| ADR06 | Python 3.11, uv, and FastAPI | Foundation choice | Provides a locked core environment and inspectable API |
-| ADR07 | Fine-tune the modification role first | Implemented in plan | Keeps the first training task bounded |
-| ADR08 | Small open-weight model with LoRA | Proposed, measuring | Model size and precision depend on the measured hardware limits (4 GB VRAM) |
-| ADR09 | SQLite for local run history | Implemented in contract | Avoids an external database before one is needed |
-| ADR10 | Explicit workflow before a dedicated agent framework | Implemented in contract | Establishes behavior before adding framework complexity |
-| ADR11 | GitHub storage for distributable artifacts | Feasibility check | Confirm size, quota, and licensing before uploading weights or data |
-| ADR12 | Single task: replace nested conditionals with guard clauses | Proposed for R1 | See below |
-| ADR13 | One shared task module and one refactoring prompt format | Implemented | See below |
-| ADR14 | Model inference in a separate worker process | Implemented in contract | See below |
-| ADR15 | Deterministic validation before any model call | Implemented in contract | See below |
-| ADR16 | Agent team execution on one laptop | In progress | See below |
+| القرار | الحالة | السبب والأثر |
+|---|---|---|
+| ADR01 لغة المدخل Python | معتمد من التيم | يقلل النطاق ويسهل أدوات التحقق |
+| ADR02 تخصيص موديل موجود | معتمد من التيم | يلائم الهدف والوقت؛ لا تدريب LLM من الصفر |
+| ADR03 GitHub للكود والتوثيق والتاسكات | معتمد من التيم | مرجع واحد للتغيير والمراجعات |
+| ADR04 ميزانية صفر وتشغيل محلي أولًا | معتمد من التيم | لا خدمة مدفوعة أو نشر عام مطلوب |
+| ADR05 مستودع خاص تحت حساب المالك | تأسيس | يحفظ التحكم بيد abdulrhmanmagdy1؛ لا Organization جديدة مطلوبة |
+| ADR06 Python 3.11 وuv وFastAPI | اختيار تأسيس | بيئة مقفلة وAPI قابلة للفحص؛ يمكن تعديلها بمبرر |
+| ADR07 تدريب دور التعديل أولًا | مقترح | تقليل عبء البيانات والتدريب؛ موافقة الدكتورة وتجربة الجدوى تحسمه |
+| ADR08 موديل صغير مفتوح الأوزان وLoRA/QLoRA | منفذ (fp16 LoRA) | دُرّب Adapter **fp16 LoRA** (`Qwen/Qwen2.5-Coder-3B-Instruct`, rank 16/alpha 32) على Kaggle T4؛ مسار 4-bit QLoRA ما زال غير مثبت، وتم التقييم A–D الحقيقي (`Group D = 0.9167` مقابل `Group B = 0.7500`) |
+| ADR09 SQLite للتشغيل المحلي | مقترح | نتجنب إدارة خادم DB قبل وجود حاجة |
+| ADR10 Workflow صريح قبل إطار Agents | مقترح | نثبت السلوك أولًا؛ نقارن LangGraph إذا احتجنا حالة واستئنافًا متقدمًا |
+| ADR11 أوزان وبيانات كبيرة على GitHub | قيد التحقق | نراجع سعة Git LFS/Releases والحصص والتراخيص؛ لا نرفع ملفات ضخمة إلى Git العادي |
+| ADR12 سلم مزودات محلية بأمانة | منفذ | mock → smart_ast → ollama → local_lora مع كتالوج توفّر حي؛ رفض صريح بدل استبدال صامت بموديل أساسي |
+| ADR13 تحقق آلي مزدوج للبيانات والنتائج | منفذ | كل سجل بيانات وكل مرشح يمران عبر Runner معزول باختبارات ذهبية مولدة؛ لا ادعاء تكافؤ بلا تنفيذ |
+| ADR14 واجهة ويب واحدة React هي الافتراضية | منفذ | SPA بـReact/TypeScript على `/` (Monaco، Diff، تحقق، مقاييس، آثار، رسم AST) مربوطة ببيانات API حقيقية مع ثيمي داكن/فاتح وتراجع آمن عند غياب البناء |
+| ADR15 مانيفست إصدار ببصمات sha256 وسياسة LF | منفذ | `RELEASE_MANIFEST.json` + `verify_release.py` يجعلان «تشغيل جهازين» فحصًا قابلًا للتكرار؛ `.gitattributes` يثبت نهايات الأسطر حتى تصح البصمات عبر الأنظمة |
+| ADR16 تقرير Markdown ووسوم تتبع للطلبات | منفذ | `GET /runs/{id}/report` يعيّن التقرير من السجل المخزَّن حرفيًا، والميدلوير يضيف `X-Request-ID` وزمن المعالجة لكل استجابة |
+| ADR17 واجهة ويب بطبقات وعقود مُتحقَّق منها | منفذ | `app → features → entities → shared` مع Zod لكل استجابة وTanStack Query لكل حالة خادم؛ الواجهة تعرض فقط ما قاسه الـAPI |
+| ADR18 تشديد الحماية وشفافية الميزانيات والمقارنات | منفذ | CSP صارمة `script-src 'self'`، وميزانيات FR08 قابلة للضبط من الواجهة، ومقارنة تشغيلين وتصدير سجل التشغيلات من نفس السجل المخزَّن |
 
-## ADR12 - Single supported task: guard clauses
+## تفاصيل القرارات الجديدة
 
-- Status: proposed for the P1 supervisor review. Date: 2026-10-20. Owner: Abdullah Tarek (task scope), recorded by the coordinator.
-- Context: the first release supports one narrow refactoring type with explicit inclusion and exclusion rules and reference tests, chosen with measured model examples (T06).
-- Alternatives: loop-to-comprehension rewrites; boolean-return simplification; extract-function.
-- Decision: Fowler's "Replace Nested Conditional with Guard Clauses" on one small pure function. The rubric is structural and deterministic (nesting depth, signature, docstring, guard present, no new calls), and behavior is checkable with differential reference tests on pure functions. A deterministic AST transformation supplies curated targets.
-- Consequences: comments are not preserved in curated targets; ordering comparisons are inverted only against numeric literals (NaN out of scope); conditionals inside loops are not rewritten.
-- Evidence: [contracts](contracts.md), tests/test_guard_clauses.py. Measured base-model examples are recorded by the models workstream under experiments/models/.
-- Revisit if: the base model cannot produce any valid output on pilot examples, or the supervisor prefers another task.
+- **ADR08 (الموديل الصغير وQLoRA):** البديل كان نموذجًا أكبر بلا تدريب أو ضبط كامل الأوزان، ورُفض
+  لأنه يخالف ميزانية الصفر والعتاد المتاح. القرار: Qwen2.5-Coder-3B-Instruct هدفًا أساسيًا مع
+  1.5B بديلًا محليًا و7B اختياريًا على Colab، وتدريب QLoRA 4-bit NF4 (rank 16، alpha 32،
+  all-linear، `max_length=2048`، 3 epochs، cosine، gradient checkpointing). التدريب والاستدلال
+  يستخدمان `src/models/prompting.py` نفسه (system prompt، صياغة findings، chat template،
+  `<|im_end|>`) ويُدرَّب completion فقط. `--dry-run` يفحص الأطوال بالـtokenizer الحقيقي قبل حجز
+  GPU، و`scripts/audit_tokens.py` يقدم فحصًا سريعًا بلا tokenizer مع تصريح أنه proxy. الأثر: لا
+  فجوة بين توزيع التدريب والاستدلال، ولا يُدَّعى وجود Adapter قبل تشغيل تدريب فعلي.
+- **ADR12 (سلم المزودات):** البديل كان الرجوع الصامت إلى موديل أساسي عند غياب Adapter LoRA أو
+  خادم Ollama، ورُفض لأنه يضلل المقارنة البحثية (NFR06). القرار: `create_provider` يحل الأسماء
+  صراحة، و`LocalModelProvider` يقرأ الموديل الأساس من `adapter_config.json` عند وجود Adapter،
+  ويدعم تحميل 4-bit وBest-of-N باختيار AST فقط، ويرفع `ProviderUnavailableError` عند طلب Adapter
+  صريح لا يُحمَّل، و`GET /api/v1/providers` يعرض التوفّر الحي ونصيحة الإصلاح. الأثر: مجموعات
+  التقييم C/D تصدر صفوفًا صريحة بدل نتائج ملفقة، والواجهة تمنع اختيار المزود غير المتاح.
+- **ADR13 (التحقق الآلي المزدوج):** البديل كان الاعتماد على اختبارات يدوية محدودة، ورُفض لأن
+  مجموعة البيانات الكبيرة والمقارنة A–D تحتاجان دليلًا قابلًا لإعادة الإنتاج. القرار: مولّد
+  اختبارات ذهبية من عينات ثابتة يُقارن الأصل والمرشح داخل Runner معزول، ويُشترط لكل سجل بيانات
+  اجتياز تحقق آلي (تكافؤ أو smoke authoring صريح للأنواع المتغيرة التوقيع). الأثر: بوابة
+  `validate_dataset.py` + وجود أساليب التحقق في `data/manifest.json`.
+- **ADR14 (واجهة الويب):** جُرِّبت أولًا واجهة مكانية ثلاثية الأبعاد (React/Three.js) وواجهة
+  كلاسيكية بسيطة، ثم قُرر استبدالهما بواجهة واحدة احترافية من الصفر: React 19 + TypeScript +
+  Vite + Tailwind v4 مع Monaco مبندل محليًا (تعمل دون إنترنت) وثيمي داكن/فاتح، تُبنى إلى
+  `frontend/dist` وتُقدَّم على `/`، مع صفحة placeholder آمنة عند غياب البناء. الأثر: لا بيانات
+  وهمية في الواجهة — كل عقدة AST وكل مؤشر مصدره استجابة API الفعلية، والرسم البياني يعيد استخدام
+  بيانات `ast_graph_before/after` الحقيقية بتخطيط 2D حتمي، والاختيار من كتالوج المزودات الحي
+  يمنع تشغيل مزود غير متاح.
+- **ADR15 (مانيفست الإصدار):** البديل كان اكتفاء release notes بسرد الملفات بلا checksums،
+  ورُفض لأن قائمة التسليم تطلب بصمات ودليل تشغيل نظيف على جهازين. القرار: `scripts/make_release.py`
+  يبني `RELEASE_MANIFEST.json` ببصمة sha256 لكل ملف في ثلاث مجموعات (dataset،
+  experiments العلوية، `frontend/dist`) مع digest لكل مجموعة وdigest إجمالي، و
+  `scripts/verify_release.py` يعيد الحساب ويفشل عند أي اختلاف أو نقص أو زيادة، و`.gitattributes`
+  يفرض LF عبر الأنظمة حتى لا تتغير البصمات بين ويندوز وLinux. الأثر: التحقق على الجهاز الثاني يصبح
+  أمرًا واحدًا موثقًا بدل ادعاء شفهي.
+- **ADR16 (تقرير التشغيل والتتبع):** البديل كان نقل أرقام التقرير الأكاديمي يدويًا من الواجهة،
+  ورُفض لأنه يفتح باب الخطأ والادعاء (NFR06). القرار: `GET /runs/{id}/report` يعيّن تقرير Markdown
+  من `RunRecord` المخزَّن فقط (وكل قسم غائب يُعلن صراحة مثل «لا توجد مراجعة محفوظة»)، وواجهة
+  الملف الواحد تصدّره بزر واحد، وميدلوير الطلبات يضيف `X-Request-ID` و`X-Process-Time-Ms` ويسجّل
+  سطرًا لكل مسار API — فيمكن ربط رقم تشغيل في الواجهة بسطر السجل الذي أنتجه. الأثر: تقرير التسليم
+  يُنسخ من مخرجات حقيقية قابلة للتتبع.
+- **ADR17 (إعادة بناء الواجهة بطبقات):** البديل كان توسيع الواجهة القديمة (مكوّنات مسطّحة + `store`
+  واحد + `fetch` مباشرة)، ورُفض لأنه كلّما زادت الميزات تزاكت الحالة وصعب التحقق منها. القرار:
+  إعادة البناء من الصفر بطبقات `app → features → entities → shared`، وحالة الخادم كلها في
+  TanStack Query، وحالة الواجهة في متاجر Zustand صغيرة، و**كل استجابة API تُتحقَّق بـZod** مقابل
+  عقد مطابق لـ`src/core/schemas.py`، وطبقة HTTP unique تحفظ `X-Request-ID` والمهل والإلغاء، وبوابات
+  جودة (`eslint` flat مع `jsx-a11y`، `tsc --noEmit`، `vitest`) تدخل CI مع بناء الواجهة. الأثر:
+  انحراف العقد بين الخادم والواجهة يظهر كخطأ صريح بدل `undefined` متسرب، والواجهة صارت قابلة
+  للاختبار آليًا بدل الاعتماد على الفحص اليدوي.
+- **ADR18 (التشديد والشفافية):** البديل كان الاكتفاء بترويسات الأمان العامة وترك الميزانيات
+  (FR08) مخفية في الـAPI وتصدير البيانات يدويًا، ورُفض لأن الواجهة آنذاك لا تُظهر حدود التشغيل ولا
+  تتيح مقارنة موثوقة بين تشغيلين. القرار: سياسة `Content-Security-Policy` صارمة
+  (`default-src 'self'` و`script-src 'self'` و`object-src 'none'` و`frame-ancestors 'none'`) مع
+  استثناءين موثقين فقط (`style-src 'unsafe-inline'` لحقن أنماط Monaco، و`worker-src blob:` للـ
+  workers المرفقة محليًا) — تم التحقق من عمل Monaco والـworkers تحت السياسة في المتصفح؛ وميزانيات
+  FR08 (عدد الاستدعاءات، التوكنز، المدة، المحاولات) قابلة للضبط من الواجهة وتظهر في شريط
+  النتائج؛ وشاشة «مقارنة تشغيلين» وتصدير السجل (JSON/CSV) تقرآن من نفس سجل التشغيل المخزَّن بلا
+  أي اشتقاق جديد. الأثر: حدود التشغيل صارت ظاهرة داخل المنتج، وأدلة المقارنة قابلة لإعادة الإنتاج.
+- **ADR19 (السطح التشغيلي والعقد الملزم):** البديل كان الاكتفاء بسجلات نصية على الطرفية وحدود غير
+  معلنة، ورُفض لثلاثة أسباب مقيسة: واجهة تستعلم بينما عامل الخلفية يكتب إلى SQLite يمكن أن تصطدم
+  بـ«database is locked»؛ تكرار النقر على Run يكدّس أعمالًا في الخلفية بلا حد؛ وأي تغيير في حقول
+  Pydantic كان يظهر كانحراف عقد في المتصفح وقت التشغيل بدل خطأ بناء. القرار: (أ) كل اتصال SQLite
+  يطبّق `PRAGMA busy_timeout=5000` و`synchronous=NORMAL` فوق WAL القائم؛ (ب) سجلات الخدمة تُكتب
+  JSON سطرًا لكل حدث مع `request_id` و`status` و`duration_ms` و`path` (`REFACTOR_AI_LOG_FORMAT=text`
+  للقراءة البشرية)؛ (ج) `GET /api/v1/stats` يعيد مجاميع مقيسة من السجل مع `truncated` عند تجاوز
+  عينة القراءة، و`GET /metrics` يعرض الأرقام نفسها بصيغة Prometheus بلا مكتبة إضافية؛ (د) حد
+  تزامن `REFACTOR_AI_MAX_CONCURRENT_RUNS` (افتراضي 2) يرد بـ429 ورسالة صريحة بدل التكديس؛
+  (هـ) `scripts/check_contract.py` يفشل عند أي انحراف بين نماذج Pydantic وعقد Zod في الواجهة،
+  ويعمل في CI وpre-commit. الأثر: العطل يُشخَّص من رقم طلب واحد، والحدود معلنة، وانحراف العقد
+  يصبح خطأ بناء لا خطأ وقت تشغيل.
 
-## ADR13 - Shared task module and refactor-v1 prompt format
+## نموذج قرار جديد
 
-- Status: implemented. Date: 2026-10-20. Owner: coordination.
-- Decision: src/refactor_ai/tasks/guard_clauses.py and src/refactor_ai/task_format.py are standard-library modules imported by the service, curation, training and evaluation, so the fine-tuned prompt equals the inference prompt. The refactoring role answers with an explanation line and one fenced Python block rather than JSON, which small models produce more reliably. Analysis and review roles use JSON.
-- Consequences: changing the prompt requires a new prompt version, regenerated data and a new evaluation protocol version.
-
-## ADR14 - Local model in a worker process
-
-- Status: implemented in contract; implementation owned by the models workstream. Date: 2026-10-20.
-- Decision: the API stays in the core environment without PyTorch. A worker process started with the training environment's interpreter loads the pinned model once and serves generation requests over JSON lines. A timeout kills and restarts the worker, which also bounds a generation that cannot be cancelled.
-- Consequences: core CI never downloads weights; the first request pays the model load time.
-
-## ADR15 - Deterministic validation first
-
-- Status: implemented in contract. Date: 2026-10-20.
-- Decision: the workflow checks the task scope deterministically before any model call; unsupported inputs complete as no_change with zero calls. Model verdicts never override failed deterministic checks.
-
-## ADR16 - Agent team execution
-
-- Status: in progress. Date: 2026-10-20.
-- Decision: one coding agent per workstream works in parallel on the agreed contracts on the single laptop (see [team allocation](../agent-execution/team-allocation.md)); the coordinator integrates, and an independent review checks the result. Student ownership is unchanged and every owner inspects their workstream before acceptance.
-
-## New decision record
-
-Include a title, status, date, owner, context, alternatives, decision, consequences, evidence, affected requirements, and a condition for revisiting the choice.
+العنوان؛ الحالة؛ التاريخ؛ صاحب الاقتراح والمراجع؛ السياق؛ البدائل؛ القرار؛ المزايا والتكاليف؛ دليل التجربة؛ أثر القرار على المتطلبات؛ موعد إعادة النظر.

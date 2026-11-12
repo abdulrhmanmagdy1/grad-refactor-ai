@@ -1,0 +1,164 @@
+@import 'tailwindcss';
+@import './styles/tokens.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Semantic utility names generated from the design tokens.
+ * `bg-surface`, `text-fg-muted`, `border-edge`, `rounded-md`, ... all resolve
+ * to the CSS variables in styles/tokens.css and therefore follow the theme.
+ */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-overlay: var(--c-overlay);
+
+  --color-edge: var(--c-border);
+  --color-edge-strong: var(--c-border-strong);
+
+  --color-fg: var(--c-fg);
+  --color-fg-muted: var(--c-fg-muted);
+  --color-fg-subtle: var(--c-fg-subtle);
+
+  --color-accent: var(--c-accent);
+  --color-accent-strong: var(--c-accent-strong);
+  --color-on-accent: var(--c-on-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-success: var(--c-success);
+  --color-success-soft: var(--c-success-soft);
+  --color-warning: var(--c-warning);
+  --color-warning-soft: var(--c-warning-soft);
+  --color-danger: var(--c-danger);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-info: var(--c-info);
+  --color-info-soft: var(--c-info-soft);
+
+  --color-code-bg: var(--c-code-bg);
+  --color-diff-add: var(--c-diff-add);
+  --color-diff-del: var(--c-diff-del);
+
+  --radius-xs: var(--r-xs);
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r-md);
+  --radius-lg: var(--r-lg);
+  --radius-xl: var(--r-xl);
+
+  --shadow-sm: var(--sh-sm);
+  --shadow-md: var(--sh-md);
+  --shadow-lg: var(--sh-lg);
+
+  --font-sans: var(--f-sans);
+  --font-mono: var(--f-mono);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* A visible, consistent focus ring for keyboard users (WCAG 2.4.7). */
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+    border-radius: var(--r-xs);
+  }
+
+  ::selection {
+    background-color: var(--c-accent-soft);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--c-border-strong);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-fg-subtle);
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+}
+
+@layer utilities {
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: 0.75rem;
+    top: -3rem;
+    z-index: 100;
+    border-radius: var(--r-sm);
+    background: var(--c-accent);
+    color: var(--c-on-accent);
+    padding: 0.5rem 0.875rem;
+    font-weight: 600;
+    transition: top var(--dur-base) var(--ease-out);
+  }
+
+  .skip-link:focus {
+    top: 0.75rem;
+  }
+
+  .scroll-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* Respect the user's motion preference (WCAG 2.3.3). */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

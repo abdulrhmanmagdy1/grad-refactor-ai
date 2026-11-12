@@ -1,85 +1,377 @@
 {
-  "schema_version": 1,
-  "status": "pending_human",
-  "last_verified_commit": "74daf25 (clean clone from GitHub: experiments/qa/2026-10-21-clean-clone-reproduction.md; per-commit checks and CI runs: experiments/qa/2026-10-21-clean-worktree-verification.md)",
-  "branch": "main",
-  "hardware_report": "experiments/hardware/2026-10-20-demonstration-laptop.json",
-  "environment_records": [
-    "Core: Python 3.11.9, uv, uv sync --frozen (uv.lock)",
-    "Training: experiments/hardware/2026-10-20-training-environment.json and training/requirements-cuda.txt (CUDA 12.6, laptop)",
-    "Kaggle: Tesla T4, Python 3.13.15, torch 2.11.0+cu128, pinned Hugging Face packages (experiments/evaluation/test-2026-10-21/provenance.json)",
-    "Frontend: Node 24.12.0, frontend/package-lock.json"
-  ],
+  "template": false,
+  "note": "Real checkpoint after the heavy architecture upgrade (P5 evaluation, P6 UI), the single-UI rebuild, the delivery-readiness tooling pass, and the accuracy upgrade (shared prompt contract, QLoRA path, best-of-N, 416-record dataset with clean controls, honest refactor_success metrics). Update after every step. Resume from state, not memory. Never fill a field without evidence.",
+  "updated_at": "2026-11-11",
+  "phase": "P5",
+  "current_step": 30,
+  "code_sha": null,
+  "hardware": {
+    "cpu": null,
+    "ram_gb": null,
+    "gpu": "NVIDIA GeForce GTX 1650 Ti",
+    "vram_gb": 4,
+    "os": "Windows AMD64",
+    "cuda": null,
+    "weekly_hours": null,
+    "hardware_gate_passed": false
+  },
   "steps": [
     {
       "id": 0,
-      "status": "completed",
-      "evidence": ["experiments/hardware/2026-10-20-demonstration-laptop.json"],
-      "blockers": []
+      "name": "inspect-and-baseline",
+      "status": "done",
+      "evidence": [
+        "44 tests passing (pytest -q)",
+        "ruff check + format clean",
+        "doctor records OS/GPU"
+      ]
     },
     {
       "id": 1,
-      "status": "completed",
+      "name": "hardware-gate",
+      "status": "partial",
       "evidence": [
-        "docs/requirements/task-scope.md",
-        "experiments/models/ (benchmark, prompt-format selection, second candidate not measured)",
-        "experiments/training/pilot-2026-10-20*.json (save, reload, resume)"
-      ],
-      "blockers": ["R1 supervisor review not held"]
+        "GTX 1650 Ti with 4096 MiB reported by scripts/doctor.py",
+        "no CUDA training run performed; training/requirements.in not installed"
+      ]
     },
     {
       "id": 2,
-      "status": "completed",
+      "name": "contracts-and-data-records",
+      "status": "done",
       "evidence": [
-        "datasets/guard_clauses/v1/ and experiments/data/ (curation, splits, leakage checks, test freeze)",
-        "docs/architecture/contracts.md and docs/architecture/examples/",
-        "experiments/evaluation/validation-2026-10-21/ (baseline), experiments/evaluation/protocol-freeze.json"
-      ],
-      "blockers": ["R2 supervisor review not held"]
+        "src/core/schemas.py: ASTGraph, AgentTrace, AnalysisPlan, extended VerificationResult/RunRecord/ProviderInfo",
+        "contracts: POST /runs, GET /runs/{id}, GET /runs, feedback + /decision, GET /api/v1/providers"
+      ]
     },
     {
       "id": 3,
-      "status": "completed",
+      "name": "data-and-frozen-split",
+      "status": "done",
       "evidence": [
-        "experiments/training/full-2026-10-21.json (adapter trained on Kaggle)",
-        "experiments/integration/2026-10-21-first-real-model-run.json (browser path to result with the real model)",
-        "frontend/ and the run API"
-      ],
-      "blockers": ["R3 supervisor review not held"]
+        "data/curated.jsonl 416 records, splits 320/48/48 (validate_dataset.py)",
+        "224 findings records + 192 clean-control identity pairs; every authored record machine-verified before write (196 golden equivalence, 28 authored smoke tests, 192 clean-control AST checks)",
+        "data/manifest.json with sha256 e5b782bf584b331cfe11daeca2356041fcd79de3db61f5f4205ba50c73805756, per-record verification method, split/type/findings/clean counts"
+      ]
     },
     {
       "id": 4,
-      "status": "completed",
+      "name": "provider-and-roles",
+      "status": "done",
       "evidence": [
-        "docs/delivery/acceptance-matrix.md and acceptance-status.md",
-        "experiments/training/validation-selection-2026-10-20.json (adapter adopted on validation)",
-        "independent review fixes: commits f187b63, e4d6f31, c3f0709"
-      ],
-      "blockers": ["R4 supervisor review not held"]
+        "models/registry.py: mock, smart_ast, ollama, local_lora with live availability catalog",
+        "agents: analysis plan, refactoring system prompt, 3-layer review with approved/rejected/uncertain",
+        "orchestrator persists agent_traces, metrics snapshots, auto tests, AST graphs; FR08 limits intact"
+      ]
     },
     {
       "id": 5,
-      "status": "pending_human",
+      "name": "verification-ui-failure",
+      "status": "done",
       "evidence": [
-        "experiments/evaluation/test-2026-10-21/ (single frozen test-split run, eval-v1)",
-        "docs/report/report.md, docs/report/screenshots/",
-        "docs/delivery/implementation-handover.md, demo-script.md, presentation-outline.md"
-      ],
-      "blockers": [
-        "Owners' inspection and acceptance of their workstreams",
-        "R5 supervisor review, university template and dates",
-        "Second-machine reproduction untested (a same-laptop clean clone passed)",
-        "Data license and adapter publication are team decisions"
+        "runner/sandbox.py reference mode + outbound-network denial; runner/test_generator.py golden equivalence",
+        "honest failure rows: Groups C/D export provider_unavailable with null aggregates"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "fine-tuning",
+      "status": "partial",
+      "evidence": [
+        "training/train_lora.py implements the QLoRA 4-bit NF4 path (rank 16/alpha 32/all-linear, max_length=2048, 3 epochs, cosine, gradient checkpointing, best validation checkpoint)",
+        "training and inference share src/models/prompting.py (system prompt, findings format, chat template, <|im_end|>) with completion-only loss",
+        "exact-tokenizer audit passed on Kaggle for all 416 records: max 1623 tokens, mean 663.5, p95 1591, prompt_max 934, completion_max 700, over_limit empty",
+        "Kaggle private dataset abdallahtarek123/grad-refactor-ai-training and kernel abdallahtarek123/grad-refactor-ai-qlora-training created; the 3B fp16 LoRA run (load_in_4bit=false, optim=adamw_torch) is RUNNING",
+        "live training evidence at 2026-11-10 13:45 local: epoch 1/3 completed, validation 48/48 in 1:48, checkpoint-20 saved; global step 24/60 at 45:11, GPU 10,743 MiB / 100 %, ETA about one hour; no adapter exists yet and this is not QLoRA",
+        "the earlier checkpoint-load stall was a Hub/Xet download stall, not a bitsandbytes hang: snapshot_download with HF_HUB_DISABLE_XET=1 followed by HF_HUB_OFFLINE=1 reduced Loading checkpoint shards to 2/2 in under one second; the 4-bit path remains unproven"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "independent-evaluation",
+      "status": "partial",
+      "evidence": [
+        "experiments/evaluation_results.csv + evaluation_summary.json (built-in suite, A/B executed, C/D provider_unavailable)",
+        "experiments/dataset_test_results.csv + dataset_test_summary.json (48-case test split: 32 findings + 16 clean controls; A/B executed)",
+        "summary separates smell_resolution_rate, findings_refactor_success_rate and clean_control_success_rate; test_pass_rate is null when no case is testable",
+        "Group A receives the same AST findings as Group B; --baseline base compares against the real base model, --candidates N uses AST-only selection",
+        "harness now caches one baseline and one adapter provider per run instead of reloading the model per case, and --timeout (default 900s) bounds each local generation call; generation timeouts are executed failures (generation_timeout), not provider_unavailable",
+        "Groups C/D and blind human review remain pending the trained adapter",
+        "harness now runs groups A/B first, releases the cached baseline model via _release_baseline_provider, then runs C/D with the adapter so two 3B fp16 models never share a 15 GB T4",
+        "local_provider places fp16 checkpoints on the GPU with device_map=auto instead of loading on CPU and relying on pipeline(device=...), and the sandbox disables third-party pytest plugin autoload (PYTEST_DISABLE_PLUGIN_AUTOLOAD=1, NFR02)",
+        "tests/test_evaluation.py::test_run_all_releases_baseline_before_loading_adapter covers the sequencing; Kaggle eval notebook regenerated with source gates and kernel_sources -> training output"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "delivery",
+      "status": "pending",
+      "evidence": []
+    },
+    {
+      "id": 9,
+      "name": "single-ui-rebuild",
+      "status": "done",
+      "evidence": [
+        "frontend/ rebuilt from scratch in React 19 + TypeScript + Vite 8 + Tailwind v4 with locally bundled Monaco (offline) and dark/light themes",
+        "old frontend/ (vanilla JS) and frontend-3d/ (Three.js) removed; src/api/app.py serves frontend/dist at / with an asset mount, favicon route and graceful placeholder fallback",
+        "live browser verification: analyze markers in the editor, approved mock run, diff/verification/metrics/trace/graph tabs, theme toggle with localStorage persistence, zero console errors",
+        "tests/test_runs_api.py::test_frontend_served updated; full gate green (44 passed, ruff, check_docs, validate_dataset)"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "delivery-readiness-tooling",
+      "status": "done",
+      "evidence": [
+        "GET /runs/{id}/report (src/api/reports.py) renders Markdown from the stored record only; UI export button + Ctrl/Cmd+Enter shortcut verified live (browser: synthetic keydown started a real completed run; report fetch returned text/markdown with all sections)",
+        "blind-review toolkit: harness --include-code re-exported experiments/*.csv with original_code/refactored_code; scripts/prepare_blind_review.py produced experiments/review/ (12 blinded cases, 120 blank rating rows, no 'Group-' leakage); scripts/aggregate_blind_review.py refuses to summarise before humans rate",
+        "release checksums: scripts/make_release.py -> RELEASE_MANIFEST.json (104 artifacts, 3 groups, aggregate fa328e70...); scripts/verify_release.py verifies the tree exactly; .gitattributes pins LF so hashes hold across machines",
+        "middleware adds X-Request-ID + X-Process-Time-Ms and logs API paths; CI now runs dataset validation, a frontend build job and release-manifest verification on Linux",
+        "full gate green: 69 passed, ruff check + format, check_docs, validate_dataset (120 records), make_release + verify_release OK"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "frontend-v2-rebuild",
+      "status": "done",
+      "evidence": [
+        "frontend/ rebuilt from scratch as a layered app: app -> features -> entities -> shared, with every server response validated by Zod against src/core/schemas.py (ADR17)",
+        "new toolchain: ESLint 9 flat config (react-hooks + jsx-a11y), Prettier, Vitest 5 + Testing Library, tsconfig strict with the @/ alias; npm audit reports 0 vulnerabilities (dompurify override, vitest 5)",
+        "server state moved to TanStack Query (caching, retries, 700ms polling of a running run), UI state to small Zustand stores, HTTP layer keeps timeouts, abort and the server X-Request-ID",
+        "new product surface: Monaco diff editor (side-by-side/inline), command palette (Ctrl+K), shortcuts sheet (Ctrl+/), history drawer with filters, live run phases, responsive source/results switch, dark/light theme persisted without CDN fonts",
+        "backend fixes found by the rebuild: src/core/db.py create_run is now an upsert so the background worker can claim a queued run (async runs previously stayed 'queued' forever) and src/api/app.py serves the whole frontend/dist at /",
+        "live browser verification: 0 console errors, preset run completed with verdict approved (tests passed, symbols preserved, 3 agent traces), all six result tabs render, metrics table 16 rows",
+        "frontend gates green: eslint clean, tsc --noEmit clean, 13 vitest tests pass, production build OK (app chunk 418 kB / 126 kB gzip, Monaco split into lazy chunks)"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "loop-01-component-tests",
+      "status": "done",
+      "evidence": [
+        "frontend/src/test/render.tsx renders components inside the production query provider; frontend/src/test/fixtures.ts holds a full run record",
+        "component tests: ResultsPanel (verdict, six tabs, measured deltas, decision POST, failed-run diagnostic), Tabs (ARIA wiring + arrow/Home/End navigation), Dialog (labelled, focus moved inside, Escape and close button)",
+        "frontend test count 13 -> 24, all green under vitest"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "loop-02-run-comparison",
+      "status": "done",
+      "evidence": [
+        "frontend/src/features/compare/CompareDialog.tsx compares two stored runs side by side (verdict, provider/model, duration, tokens, retries, metrics before/after/delta, user decision)",
+        "every cell is a measured value of that run: the comparison reads the same records the history list already returned, no new endpoint and no derived claim",
+        "wired into the history drawer: a Compare button per run opens the dialog with that run as column A"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "loop-03-content-security-policy",
+      "status": "done",
+      "evidence": [
+        "src/api/middleware.py now sends a strict Content-Security-Policy (default-src 'self', script-src 'self', object-src 'none', frame-ancestors 'none') plus Permissions-Policy; the only exceptions are the two the bundled Monaco needs (style-src 'unsafe-inline', worker-src blob:)",
+        "tests/test_middleware.py::test_responses_carry_a_strict_content_security_policy asserts every directive",
+        "verified live in the browser after the change: Monaco mounted, a run completed approved with a diff, zero console violations"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "loop-04-provider-transparency",
+      "status": "done",
+      "evidence": [
+        "the workspace panel now shows the selected provider's engine and, when it is unavailable, the server's remediation hint from GET /api/v1/providers (previously only the label was visible)",
+        "the availability dot is driven by the live catalog, so the interface never implies a provider can serve a run when it cannot (NFR06)"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "loop-05-fr08-budget-composer",
+      "status": "done",
+      "evidence": [
+        "the FR08 budgets (max model calls 1-4, max total tokens, max duration, max retries 0-1) are editable in the workspace panel and sent with every run; the effective budget is shown in the results meta strip from metrics.limits",
+        "the limits live in the persisted workspace store, so a budget choice survives a reload"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "loop-06-analysis-to-run-continuity",
+      "status": "done",
+      "evidence": [
+        "after an analysis the dominant detected rule is offered as the requested refactoring type ('request this type'), and the requested type is sent as refactoring_type with the run and displayed in the workspace panel",
+        "covered by frontend/src/features/workspace/WorkspacePanel.test.tsx"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "loop-07-reconnect-affordance",
+      "status": "done",
+      "evidence": [
+        "the API-down banner now carries a Reconnect button that refetches the health query, and the status bar keeps showing the live service mode",
+        "the banner distinguishes an unreachable server from a browser that is offline"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "loop-08-history-export",
+      "status": "done",
+      "evidence": [
+        "the history drawer exports the currently filtered runs as CSV (measured columns) and as JSON (the raw records); both are produced by frontend/src/features/history/historyExport.ts with no derived values (NFR06)",
+        "covered by frontend/src/features/history/historyExport.test.ts (escaping, empty history, header order)"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "loop-09-workspace-accessibility-tests",
+      "status": "done",
+      "evidence": [
+        "the workspace panel is now covered by component tests with the editor mocked: both buffers expose accessible names, the analyzer posts to /api/v1/analyze, findings are listed, the detected rule can be requested, and the budget fields are editable and typed into the store",
+        "frontend test count 24 -> 32, all green"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "loop-10-docs-and-release",
+      "status": "done",
+      "evidence": [
+        "ADR18 records the hardening and transparency decisions; traceability maps FR07, FR08 and NFR02 to the new evidence; the user guide and the frontend README describe the budgets, comparison, exports and command palette",
+        "full gate green: python tests + ruff + check_docs + validate_dataset, frontend eslint + tsc + 32 vitest tests + production build, release manifest regenerated and verified"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "loop-11-operational-hardening",
+      "status": "done",
+      "evidence": [
+        "scripts/check_contract.py compares each Pydantic model in app.openapi() with the matching Zod object in frontend/src/shared/api/contract.ts in both directions; tests/test_contract.py proves it fails when a field is removed or invented (7 models, 0 drift)",
+        "src/core/db.py applies PRAGMA busy_timeout=5000 and synchronous=NORMAL on every connection (shared in-memory and per-call file connections) on top of WAL; tests/test_logging_and_db.py asserts the pragmas and the journal mode",
+        "src/core/logging_config.py writes one JSON object per log line with request_id/status/duration_ms/method/path (TextFormatter for REFACTOR_AI_LOG_FORMAT=text); api/app.py configures it once and api/middleware.py attaches the extras"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "loop-12-operations-surface",
+      "status": "done",
+      "evidence": [
+        "GET /api/v1/stats aggregates only stored runs (status, verdict, mean/median duration, mean tokens, acceptance rate, in-flight count) and reports truncated/sampled_runs instead of implying full coverage",
+        "GET /metrics renders the same numbers in the Prometheus text format with no extra dependency, including refactor_runs_in_flight and refactor_provider_available",
+        "the orchestrator enforces REFACTOR_AI_MAX_CONCURRENT_RUNS (default 2) and POST /runs answers 429 with an explicit message; capacity is released in a finally block; tests/test_operations.py covers all of it (5 tests)"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "loop-13-product-continuity",
+      "status": "done",
+      "evidence": [
+        "frontend/src/features/insights/InsightsPanel.tsx shows the measured aggregates and recent-run duration bars at the top of the History drawer; a truncated sample is labelled 'sampled'",
+        "frontend/src/features/results/useUrlSync.ts keeps the run and tab in the URL (?run=&tab=) and a link button copies an absolute permalink; 4 vitest cases cover restore, unknown tab, write-back and link building",
+        "the workspace store records analyzedCode; a changed buffer shows a stale-findings warning, Run refreshes the analysis first and a syntax-invalid buffer stops with an explicit message"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "loop-14-delivery-tooling",
+      "status": "done",
+      "evidence": [
+        "scripts/smoke_ui.py boots the real app on a throwaway database and asserts 8 release facts (health, built client, referenced assets, security headers, approved end-to-end run with diff and passing tests, Markdown report, aggregates, Prometheus metrics)",
+        "scripts/tasks.py runs every gate in order on Windows and Linux (check, test, docs, dataset, contract, web, smoke, release); scripts/doctor.py now reports the toolchain, bundle freshness and SQLite integrity",
+        ".pre-commit-config.yaml adds ruff plus the contract drift hook; CI gained the contract check and a separate smoke job that builds the client and runs the smoke test",
+        "docs/delivery/report-outline.md maps every academic-report section to its evidence file and docs/delivery/demo-script.md is a timed demo with expected results and an honest fallback"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "loop-15-history-paging-and-retention",
+      "status": "done",
+      "evidence": [
+        "GET /runs now accepts offset with a limit up to 500 and returns X-Total-Count; db.count_runs() supplies the total so the interface never guesses whether the history ended",
+        "the history drawer pages honestly ('Showing N of M stored run(s)', Load 50 more, capped at 500) with a 2-case component test; the insights panel and exports keep reading the same loaded records",
+        "scripts/prune_runs.py keeps the newest --keep runs, is a dry run unless --yes is passed, and is covered by 3 tests (dry run, applied delete keeps exactly the newest window, nothing to do)",
+        "OpenAPI documentation grouped by tags (Analysis, Runs, Feedback, Operations) with the 429 response declared; a test asserts the tags and the documented paths"
+      ]
+    },
+    {
+      "id": 27,
+      "name": "loop-16-recovery-and-token-aggregates",
+      "status": "done",
+      "evidence": [
+        "startup lifespan calls db.recover_interrupted_runs(): any run left non-terminal (queued/analyzing/generating/verifying) by a previous process becomes failed with the explicit diagnostic 'Run interrupted by a service restart…', so the history never shows a run that can no longer progress (FR07, UC03)",
+        "run_statistics now reads total tokens from metrics.tokens.total_tokens with generated_tokens_total and total_tokens fallbacks; the live /api/v1/stats went from mean_total_tokens=null to a measured mean over the stored runs",
+        "tests/test_operations.py covers both: recovery (keeps completed runs, preserves a previous diagnostic) and nested token aggregation; 89 -> 91 backend tests"
+      ]
+    },
+    {
+      "id": 28,
+      "name": "accuracy-upgrade",
+      "status": "done",
+      "evidence": [
+        "shared prompt contract src/models/prompting.py used by both training and LocalModelProvider inference; Qwen assistant end token and findings format aligned, fixing the train/eval distribution gap",
+        "LocalModelProvider resolves the adapter base from adapter_config.json, supports 4-bit loading and best-of-N; src/core/candidate_selection.py scores candidates with AST only (NFR01); ReviewAgent rejects AST-identical no-ops",
+        "training/train_lora.py rewritten for QLoRA with completion-only loss, token audit, gradient checkpointing, best checkpoint, run manifest and AST-only smoke generation; --dry-run audits lengths on CPU",
+        "scripts/audit_tokens.py added (regex proxy by default, explicit --tokenizer for exact counts); dataset regenerated to 416 records with 2-3 template styles/type, 224 findings + 192 clean controls and no '# example:' prompt markers",
+        "evaluation harness reports smell_rule_resolved, refactor_success, findings/clean breakdowns, variant and candidate counts; Group A now receives the same findings as Group B; --baseline {mock,base}, --base-model, --candidates, --load-in-4bit wired",
+        "results regenerated: dataset test A/B refactor_success_rate=0.4583 (findings 0.1875, clean controls 1.0, smell_resolution 0.1875); C/D remain provider_unavailable",
+        "docs updated (README, data/training/model card, evaluation protocol, traceability, ADR08/ADR12, roadmap, report outline, user guide, setup, experiments README, execution briefs); RELEASE_MANIFEST.json regenerated and verified (111 artifacts)",
+        "full backend gate green: 104 pytest passed, ruff check + format, check_docs, check_contract (7 models), validate_dataset 416, audit_tokens pass, doctor, smoke_ui 8 checks; frontend npm run verify pass"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "kaggle-training-and-eval-readiness",
+      "status": "done",
+      "evidence": [
+        "Kaggle training kernel abdallahtarek123/grad-refactor-ai-qlora-training reached COMPLETE: 60/60 steps in 1:57:24 on one T4 (10,743 MiB / 100 %), final validation 48/48 with eval_loss 0.005797240417450666",
+        "the run manifest records trainable 29,933,568 / 3,115,872,256 parameters (0.9607 %), adapter_model.safetensors sha256 42ae18e5eb26976143077051824e97719222103d4352ca70a24ef1089bb8405f and adapter_config sha256 dd09bc613a1aaa0a9ad2d5f40021fc6caa59e97cde02f3090ef9c3f884ed329e",
+        "AST-only smoke generation on validation record long-function-validation-01 produced syntax-valid code with no remaining findings; executed_generated_code is false (NFR01/NFR02)",
+        "the run is fp16 LoRA (load_in_4bit=false, optim=adamw_torch), not QLoRA; the 4-bit path remains unproven",
+        "adapter verified locally against run-manifest.json and uploaded as private dataset abdallahtarek123/grad-refactor-ai-adapter"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "real-a-d-evaluation-and-pdf-report",
+      "status": "done",
+      "evidence": [
+        "Kaggle eval kernel abdallahtarek123/grad-refactor-ai-evaluation v3 COMPLETE: fixed HuggingFace cache refs/main resolution for HF_HUB_OFFLINE=1, passed 2-case pilot, and completed all 192 evaluations (48 cases x 4 groups A/B/C/D, 0 provider_unavailable) with --baseline base --base-model Qwen/Qwen2.5-Coder-3B-Instruct --candidates 3",
+        "measured results in experiments/dataset_test_finetuned_summary.json: Group-A refactor_success_rate=0.6042 (findings 0.5312, clean 0.7500); Group-B=0.7500 (findings 0.6875, clean 0.8750); Group-C=0.4583 (findings 0.1875, clean 1.0000); Group-D=0.9167 (findings 0.8750, clean 1.0000, test_pass_rate=1.0000, execution_pass_at_1=0.9773)",
+        "per-smell error diagnosis: Group D achieved 28/28 (100.00%) on the 7 signature-preserving types and 16/16 (100.00%) on clean controls; the 4 rejected rows are long-parameter-list-test-01..04 where the adapter produced the trained @dataclass parameter-object refactor rejected by ReviewAgent._signature_violations()",
+        "LF line-ending mismatch fixed in scripts/generate_curated_dataset.py and src/evaluation/harness.py; data/curated.jsonl sha256 matches data/manifest.json e5b782bf584b331cfe11daeca2356041fcd79de3db61f5f4205ba50c73805756",
+        "blind review packet regenerated for all 4 candidates (A/B/C/D) in experiments/review/; docs/evaluation/protocol.md UTF-8 fixed; all gates and RELEASE_MANIFEST.json regenerated and verified; PDF report exported"
       ]
     }
   ],
-  "supervisor_reviews": [
-    {"phase": "P1", "status": "pending_human", "record": "docs/supervisor-reviews/r1-scope-and-feasibility.md (prepared)"},
-    {"phase": "P2", "status": "pending_human", "record": "docs/supervisor-reviews/r2-data-and-baseline.md (prepared)"},
-    {"phase": "P3", "status": "pending_human", "record": "docs/supervisor-reviews/r3-integration-and-training.md (prepared)"},
-    {"phase": "P4", "status": "pending_human", "record": "docs/supervisor-reviews/r4-first-release.md (prepared)"},
-    {"phase": "P5", "status": "pending_human", "record": "docs/supervisor-reviews/r5-delivery.md (prepared)"}
+  "checks": {
+    "doctor": "pass (toolchain, bundle fresh, SQLite integrity ok)",
+    "pytest": "110 passed",
+    "ruff": "check + format pass",
+    "check_docs": "pass",
+    "check_contract": "7 models, no drift",
+    "validate_dataset": "416 records, 320/48/48, 224 findings + 192 clean controls",
+    "audit_tokens": "exact tokenizer on Kaggle: pass, max 1623 < 2048, 416 records, over_limit empty",
+    "frontend": "npm run verify (eslint + tsc --noEmit + 38 vitest + production build) pass",
+    "smoke": "8 checks pass",
+    "release_manifest": "regenerated and verified via scripts/tasks.py all"
+  },
+  "artifacts": {
+    "dataset_sha256": "e5b782bf584b331cfe11daeca2356041fcd79de3db61f5f4205ba50c73805756",
+    "split_manifest": "data/manifest.json",
+    "adapter_path": "runs/lora-fp16/adapter",
+    "adapter_sha256": "42ae18e5eb26976143077051824e97719222103d4352ca70a24ef1089bb8405f",
+    "evaluation_csv": "experiments/dataset_test_finetuned_results.csv",
+    "evaluation_summary": "experiments/dataset_test_finetuned_summary.json",
+    "mock_evaluation_csv": "experiments/dataset_test_results.csv",
+    "mock_evaluation_summary": "experiments/dataset_test_summary.json",
+    "ui_dist": "frontend/dist (Vite build of frontend/, served at /)",
+    "blind_review_packet": "experiments/review/packet.md (48 blinded cases x 4 candidates A/B/C/D, coordinator review_key.csv)",
+    "release_manifest": "RELEASE_MANIFEST.json",
+    "accuracy_report_pdf": "docs/report/Grad_Refactor_AI_Accuracy_Report.pdf"
+  },
+  "blockers": [
+    "4-bit QLoRA remains unproven in the Kaggle image (completed training/evaluation used native fp16 LoRA)",
+    "Local environment: .venv has only a lib64 symlink and no Scripts; uv run fails with 'Access is denied' on .venv/lib64. Gates run with system Python 3.11.9.",
+    "Blind human review: 4-candidate packet regenerated under experiments/review/, awaiting human ratings in score_sheet.csv",
+    "Second-machine clean-clone verification: run scripts/verify_release.py against the regenerated RELEASE_MANIFEST.json on a second machine",
+    "Kaggle API token rotation is an operational follow-up; no token value is stored in this repository"
   ],
-  "next_action": "Each owner inspects their workstream (docs/delivery/implementation-handover.md); hold the supervisor reviews; decide the data license and adapter publication.",
-  "notes": "Implementation by AI coding agents on 2026-10-20 and 2026-10-21. No supervisor review has taken place and no approval is implied."
+  "next_action": "Rotate the exposed Kaggle token in Kaggle Settings, collect human ratings in experiments/review/score_sheet.csv then run aggregate_blind_review.py, and run scripts/verify_release.py on the second machine for thesis delivery."
 }

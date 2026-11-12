@@ -1,0 +1,95 @@
+{
+  "config": {
+    "dataset": "data/curated.jsonl",
+    "output_dir": "/kaggle/working/runs/lora-fp16",
+    "seed": 42,
+    "max_length": 2048,
+    "load_in_4bit": false,
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": true,
+    "bnb_4bit_compute_dtype": "bfloat16",
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": "all-linear",
+    "learning_rate": 0.0001,
+    "epochs": 3,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "gradient_checkpointing": true,
+    "warmup_ratio": 0.03,
+    "lr_scheduler_type": "cosine",
+    "optim": "adamw_torch",
+    "logging_steps": 5,
+    "save_total_limit": 2,
+    "report_to": "none",
+    "max_new_tokens": 1024,
+    "smoke_max_new_tokens": 512,
+    "model_id": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "model_revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5"
+  },
+  "code_sha": null,
+  "code_sha_error": "fatal: not a git repository (or any parent up to mount point /kaggle)\nStopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).",
+  "dataset": {
+    "path": "/kaggle/working/project/data/curated.jsonl",
+    "sha256": "c6c8101004110019cb12b5da4b6ac8ce4b1a486868425679af260d1cc568e479",
+    "records": 416,
+    "splits": {
+      "train": 320,
+      "validation": 48,
+      "test": 48
+    }
+  },
+  "model": {
+    "model_id": "Qwen/Qwen2.5-Coder-3B-Instruct",
+    "requested_revision": "488639f1ff808d1d3d0ba301aef8c11461451ec5",
+    "resolved_commit": "488639f1ff808d1d3d0ba301aef8c11461451ec5"
+  },
+  "hardware": {
+    "device": "Tesla T4",
+    "device_count": 1,
+    "total_memory_bytes": 15636037632
+  },
+  "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "cuda": "13.0",
+  "packages": {
+    "torch": "2.11.0+cu130",
+    "transformers": "4.57.6",
+    "peft": "0.21.2",
+    "datasets": "4.8.5",
+    "accelerate": "1.15.0",
+    "bitsandbytes": "0.50.2"
+  },
+  "trainable_parameters": {
+    "trainable": 29933568,
+    "total": 3115872256,
+    "ratio": 0.009607
+  },
+  "duration_seconds": 7157.5,
+  "peak_gpu_memory_bytes": 9997977600,
+  "best_checkpoint": "/kaggle/working/runs/lora-fp16/checkpoint-60",
+  "resume": null,
+  "validation_metrics": {
+    "eval_loss": 0.005797240417450666,
+    "eval_runtime": 111.9043,
+    "eval_samples_per_second": 0.429,
+    "eval_steps_per_second": 0.429,
+    "epoch": 3.0
+  },
+  "smoke_generation": {
+    "record_id": "long-function-validation-01",
+    "syntax_valid": true,
+    "findings_after": [],
+    "raw_text": "def _aggregate_long_function_21_first(seed):\n    total = seed\n    total = total * 1 + 1\n    total = total * 2 + 2\n    total = total * 3 + 3\n    total = total * 4 + 4\n    total = total * 5 + 5\n    total = total * 6 + 6\n    total = total * 7 + 7\n    total = total * 8 + 8\n    total = total * 9 + 9\n    total = total * 10 + 10\n    total = total * 11 + 11\n    total = total * 12 + 12\n    total = total * 13 + 13\n    total = total * 14 + 14\n    total = total * 15 + 15\n    total = total * 16 + 16\n    return total\n\ndef _aggregate_long_function_21_second(total):\n    total = total * 17 + 17\n    total = total * 18 + 18\n    total = total * 19 + 19\n    total = total * 20 + 20\n    total = total * 21 + 21\n    total = total * 22 + 22\n    total = total * 23 + 23\n    total = total * 24 + 24\n    total = total * 25 + 25\n    total = total * 26 + 26\n    total = total * 27 + 27\n    total = total * 28 + 28\n    total = total * 29 + 29\n    total = total * 30 + 30\n    total = total * 31 + 31\n    total = total * 32 + 32\n    return total\n\ndef aggregate_long_function_21(seed):\n    \"\"\"Split the chained fold into two cohesive helpers (behaviour preserved).\"\"\"\n    return _aggregate_long_function_21_second(_aggregate_long_function_21_first(seed))",
+    "generated_code": "def _aggregate_long_function_21_first(seed):\n    total = seed\n    total = total * 1 + 1\n    total = total * 2 + 2\n    total = total * 3 + 3\n    total = total * 4 + 4\n    total = total * 5 + 5\n    total = total * 6 + 6\n    total = total * 7 + 7\n    total = total * 8 + 8\n    total = total * 9 + 9\n    total = total * 10 + 10\n    total = total * 11 + 11\n    total = total * 12 + 12\n    total = total * 13 + 13\n    total = total * 14 + 14\n    total = total * 15 + 15\n    total = total * 16 + 16\n    return total\n\ndef _aggregate_long_function_21_second(total):\n    total = total * 17 + 17\n    total = total * 18 + 18\n    total = total * 19 + 19\n    total = total * 20 + 20\n    total = total * 21 + 21\n    total = total * 22 + 22\n    total = total * 23 + 23\n    total = total * 24 + 24\n    total = total * 25 + 25\n    total = total * 26 + 26\n    total = total * 27 + 27\n    total = total * 28 + 28\n    total = total * 29 + 29\n    total = total * 30 + 30\n    total = total * 31 + 31\n    total = total * 32 + 32\n    return total\n\ndef aggregate_long_function_21(seed):\n    \"\"\"Split the chained fold into two cohesive helpers (behaviour preserved).\"\"\"\n    return _aggregate_long_function_21_second(_aggregate_long_function_21_first(seed))\n",
+    "executed": false
+  },
+  "adapter": {
+    "path": "/kaggle/working/runs/lora-fp16/adapter",
+    "model_sha256": "42ae18e5eb26976143077051824e97719222103d4352ca70a24ef1089bb8405f",
+    "config_sha256": "dd09bc613a1aaa0a9ad2d5f40021fc6caa59e97cde02f3090ef9c3f884ed329e"
+  },
+  "executed_generated_code": false
+}

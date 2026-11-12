@@ -1,45 +1,15 @@
-# Methodology and tool references
+# مراجع المنهج والأدوات
 
-These references support project organization and candidate tooling. The related-work review is a separate research task.
+اطلاع التأسيس في 15 أكتوبر 2026. هذه مراجع تنظيم وتقنيات؛ قائمة الدراسات السابقة تُبنى بصورة مستقلة.
 
-- [arc42 overview](https://arc42.org/overview/): architecture goals, constraints, decisions, and risks.
-- [C4 diagrams](https://c4model.com/diagrams): system context and component views.
-- [Diataxis](https://diataxis.fr/start-here/): explanation, tutorials, procedures, and reference material.
-- [GitHub planning](https://docs.github.com/en/issues/tracking-your-work-with-issues/learning-about-issues/planning-and-tracking-work-for-your-team-or-project): Issues and Projects.
-- [Protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches): review controls and plan availability.
-- [Large files on GitHub](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github): Git storage limits.
-- [FastAPI](https://fastapi.tiangolo.com/tutorial/first-steps/): the API and generated reference.
-- [uv installation](https://docs.astral.sh/uv/getting-started/installation/): the core environment.
-- [PEFT LoRA](https://huggingface.co/docs/peft/main/en/conceptual_guides/lora): parameter-efficient adaptation.
-- [Colab FAQ](https://research.google.com/colaboratory/faq.html): free-compute limitations.
-- [LangGraph](https://reference.langchain.com/python/langgraph/overview): a candidate for workflow state and coordination.
-
-## Research references
-
-Verified on 2026-10-20 against the linked official page (arXiv abstract page, conference page, or the publisher DOI record through Crossref). The reading table with methods, findings and limitations is in [related work](research/related-work.md).
-
-1. Fowler, M. Replace Nested Conditional with Guard Clauses. Refactoring catalog. <https://refactoring.com/catalog/replaceNestedConditionalWithGuardClauses.html>
-2. Shirafuji, A., Oda, Y., Suzuki, J., Morishita, M., Watanobe, Y. (2023). Refactoring Programs Using Large Language Models with Few-Shot Examples. 30th Asia-Pacific Software Engineering Conference (APSEC), 151-160. doi:10.1109/APSEC60848.2023.00025. <https://arxiv.org/abs/2311.11690>
-3. Liu, B., Jiang, Y., Zhang, Y., Niu, N., Li, G., Liu, H. (2025). Exploring the potential of general purpose LLMs in automated software refactoring: an empirical study. Automated Software Engineering 32(1). doi:10.1007/s10515-025-00500-0. Preprint title: An Empirical Study on the Potential of LLMs in Automated Software Refactoring. <https://arxiv.org/abs/2411.04444>
-4. Zhang, Z., Xing, Z., Ren, X., Lu, Q., Xu, X. (2024). Refactoring to Pythonic Idioms: A Hybrid Knowledge-Driven Approach Leveraging Large Language Models. Proceedings of the ACM on Software Engineering 1(FSE), 1107-1128. doi:10.1145/3643776. <https://arxiv.org/abs/2406.03660>
-5. Xu, Y., Lin, F., Yang, J., Chen, T.-H., Tsantalis, N. (2025). MANTRA: Enhancing Automated Method-Level Refactoring with Contextual RAG and Multi-Agent LLM Collaboration. arXiv:2503.14340. <https://arxiv.org/abs/2503.14340>
-6. Dong, Y., Jiang, X., Jin, Z., Li, G. (2023, revised 2024). Self-collaboration Code Generation via ChatGPT. Accepted to ACM TOSEM (arXiv comment). <https://arxiv.org/abs/2304.07590>
-7. Huang, D., Zhang, J. M., Luck, M., Bu, Q., Qing, Y., Cui, H. (2023). AgentCoder: Multi-Agent-based Code Generation with Iterative Testing and Optimisation. arXiv:2312.13010. <https://arxiv.org/abs/2312.13010>
-8. Olausson, T. X., Inala, J. P., Wang, C., Gao, J., Solar-Lezama, A. (2024). Is Self-Repair a Silver Bullet for Code Generation? ICLR 2024 (arXiv comment). <https://arxiv.org/abs/2306.09896>
-9. Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W. (2022). LoRA: Low-Rank Adaptation of Large Language Models. ICLR 2022. <https://arxiv.org/abs/2106.09685>, <https://iclr.cc/virtual/2022/poster/6319>
-10. Weyssow, M., Zhou, X., Kim, K., Lo, D., Sahraoui, H. (2025). Exploring Parameter-Efficient Fine-Tuning Techniques for Code Generation with Large Language Models. ACM Transactions on Software Engineering and Methodology 34(7), 1-25. doi:10.1145/3714461. <https://arxiv.org/abs/2308.10462>
-11. Hui, B., Yang, J., Cui, Z., Yang, J., Liu, D., et al. (2024). Qwen2.5-Coder Technical Report. arXiv:2409.12186. <https://arxiv.org/abs/2409.12186>
-12. Chen, M., Tworek, J., Jun, H., Yuan, Q., Pinto, H. P. de O., Kaplan, J., et al. (2021). Evaluating Large Language Models Trained on Code. arXiv:2107.03374. <https://arxiv.org/abs/2107.03374>
-13. Austin, J., Odena, A., Nye, M., Bosma, M., Michalewski, H., Dohan, D., Jiang, E., Cai, C., Terry, M., Le, Q., Sutton, C. (2021). Program Synthesis with Large Language Models. arXiv:2108.07732. <https://arxiv.org/abs/2108.07732>
-14. Liu, J., Xia, C. S., Wang, Y., Zhang, L. (2023). Is Your Code Generated by ChatGPT Really Correct? Rigorous Evaluation of Large Language Models for Code Generation. NeurIPS 2023. <https://arxiv.org/abs/2305.01210>, <https://neurips.cc/virtual/2023/poster/72990>
-15. Allamanis, M. (2019). The Adverse Effects of Code Duplication in Machine Learning Models of Code. SPLASH Onward! 2019 (arXiv comment). <https://arxiv.org/abs/1812.06469>
-
-Method reference (bibliographic record verified through Crossref; used for the mutation-based selection of reference tests):
-
-16. DeMillo, R. A., Lipton, R. J., Sayward, F. G. (1978). Hints on Test Data Selection: Help for the Practicing Programmer. Computer 11(4), 34-41. doi:10.1109/C-M.1978.218136
-
-## Data sources
-
-- MBPP, google-research-datasets/mbpp on Hugging Face, license CC-BY-4.0: <https://huggingface.co/datasets/google-research-datasets/mbpp>. File used: `mbpp/mbpp.jsonl` at google-research/google-research commit f82046ba5aabbbb427dbfd38a254d26bff08b533.
-- HumanEval, openai/human-eval, MIT License, Copyright (c) OpenAI: <https://github.com/openai/human-eval/blob/master/LICENSE>. File used: `data/HumanEval.jsonl.gz` at commit 463c980b59e818ace59f6f9803cd92c749ceae61.
-- TheAlgorithms/Python (MIT) was surveyed for yield only and is not used: <https://github.com/TheAlgorithms/Python>.
+- [arc42](https://arc42.org/overview/) لتنظيم وصف المعمارية والقيود والقرارات.
+- [C4 diagrams](https://c4model.com/diagrams) لرسومات السياق والمكونات الرئيسية.
+- [Diátaxis](https://diataxis.fr/start-here/) لفصل الشرح وأدلة العمل والمراجع.
+- [GitHub planning](https://docs.github.com/en/issues/tracking-your-work-with-issues/learning-about-issues/planning-and-tracking-work-for-your-team-or-project) للـIssues والمشاريع.
+- [GitHub protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches) لحماية الفروع وإتاحة الخطة.
+- [GitHub large files](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github) لحدود ملفات Git والتخزين.
+- [FastAPI](https://fastapi.tiangolo.com/tutorial/first-steps/) للـAPI والتوثيق المولد.
+- [uv installation](https://docs.astral.sh/uv/getting-started/installation/) للبيئة.
+- [PEFT LoRA](https://huggingface.co/docs/peft/main/en/conceptual_guides/lora) لتخصيص جزء من الأوزان.
+- [Colab FAQ](https://research.google.com/colaboratory/faq.html) لحدود موارد التدريب المجانية.
+- [LangGraph](https://reference.langchain.com/python/langgraph/overview) مرشح لتنسيق الأدوار عند الحاجة.
