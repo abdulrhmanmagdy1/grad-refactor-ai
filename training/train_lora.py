@@ -1,578 +1,602 @@
-"""LoRA fine-tuning of the refactoring role (T05 pilot, T17 training run).
+"""QLoRA fine-tuning for the refactoring adapter (ADR08, NFR04, NFR05).
 
-The training text equals the inference text token for token. The masked prefix is the
-refactoring-role chat, task_format.messages_from_prompt(record["prompt"]), rendered by
-model_worker.chat_prompt_text (the chat template with the assistant turn opened, the
-same function the LocalProvider worker uses) and tokenized without extra special
-tokens. The target is record["completion"] followed by the token that closes an
-assistant turn in the chat template (<|im_end|> for Qwen2.5 instruct models), which is
-one of the model's end-of-sequence ids, so generation stops there. Before training,
-every record is compared with the template's own rendering of the full conversation.
+The training text is rendered by :mod:`models.prompting`, the same renderer the
+inference provider uses. This is deliberate: before this change, training used
+``row["prompt"] + "\n"`` (a raw code block) while inference used a chat template
+with system instructions and findings, so the adapter was trained on a
+different input distribution than it was evaluated on.
 
-Protections: unknown keys or unresolved CHOOSE values in the config stop the run; the
-dataset must pass scripts/validate_dataset.py, contain only guard_clauses records and
-match the current prompt version; only split "train" is trained on and "validation"
-evaluated, "test" records never reach the Trainer; records longer than max_length stop
-the run (curate them, never truncate silently); a CUDA GPU is required.
+Defaults target ``Qwen/Qwen2.5-Coder-3B-Instruct`` with 4-bit NF4 QLoRA, rank
+16 / alpha 32 over all linear layers, ``max_length=2048`` and three epochs.
+All values are configuration-driven; the example file is
+``configs/training.example.json``. A 1.5B fallback and a 7B Colab option use
+the same script and only change ``model_id`` / batch settings.
 
-Run with the training environment from the repository root:
+Commands::
 
-    .venv-train/Scripts/python.exe -X utf8 training/train_lora.py --config CONFIG
-        [--max-steps N] [--resume-from-checkpoint DIR] [--check-data] [--record PATH]
+    python training/train_lora.py --config configs/training.local.json --dry-run
+    python training/train_lora.py --config configs/training.local.json
+    python training/train_lora.py --config configs/training.local.json \
+        --resume-from-checkpoint runs/lora-first/checkpoint-42
 
-Relative paths in the config resolve against the config file's directory. The run
-manifest (experiments/run-template.json fields plus details) is written to
-<output_dir>/run-manifest.json and, with --record, to that path as well.
+``--dry-run`` tokenizes every record with the real tokenizer and reports the
+length distribution without loading the model or requiring CUDA. The run
+manifest records the dataset hash, resolved model commit, package versions,
+hardware, seed, adapter checksum and a syntax-only generation smoke test. It
+never executes generated code (NFR01); the smoke test only parses it.
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.metadata
+import importlib.util
 import json
 import platform
+import statistics
+import subprocess
 import sys
 import time
-import traceback
-from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
-from common import (
-    ROOT,
-    GpuSampler,
-    git_state,
-    gpu_used_mib,
-    load_worker_module,
-    nvidia_smi,
-    package_versions,
-    require_free_disk,
-    sha256_file,
-)
-
-from refactor_ai import task_format
-from refactor_ai.tasks import guard_clauses
-
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
+
 from validate_dataset import load_and_validate  # noqa: E402
 
-REQUIRED = {
-    "model_id": str,
-    "model_revision": str,
-    "model_path": str,
-    "dataset": str,
-    "output_dir": str,
-    "seed": int,
-    "max_length": int,
-    "lora_rank": int,
-    "lora_alpha": int,
-    "lora_dropout": float,
-    "target_modules": list,
-    "learning_rate": float,
-    "epochs": (int, float),
-    "gradient_accumulation_steps": int,
+from core.ast_analyzer import analyze  # noqa: E402
+from models.prompting import (  # noqa: E402
+    assistant_end_token,
+    build_messages,
+    extract_refactored_code,
+    render_prompt,
+)
+
+DEFAULTS: dict[str, Any] = {
+    "dataset": "data/curated.jsonl",
+    "output_dir": "runs/lora-first",
+    "seed": 42,
+    "max_length": 2048,
+    "load_in_4bit": True,
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": True,
+    "bnb_4bit_compute_dtype": "bfloat16",
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": "all-linear",
+    "learning_rate": 0.0001,
+    "epochs": 3,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 16,
+    "gradient_checkpointing": True,
+    "warmup_ratio": 0.03,
+    "lr_scheduler_type": "cosine",
+    "optim": "paged_adamw_8bit",
+    "logging_steps": 5,
+    "save_total_limit": 2,
+    "report_to": "none",
+    "max_new_tokens": 1024,
+    "smoke_max_new_tokens": 512,
 }
-OPTIONAL = {
-    "run_id": (str, None),
-    "per_device_train_batch_size": (int, 1),
-    "warmup_steps": (int, 0),
-    "lr_scheduler_type": (str, "linear"),
-    "weight_decay": (float, 0.0),
-    "logging_steps": (int, 1),
-    "eval_steps": (int, None),
-    "save_steps": (int, None),
-    "save_total_limit": (int, 1),
-    "max_steps": (int, -1),
-    "gradient_checkpointing": (bool, False),
-    "precision": (str, "auto"),
-    "load_best_model_at_end": (bool, False),
-    "max_runtime_minutes": (float, None),
-}
-MIN_FREE_MB = 1500
 
 
-def load_config(path: Path) -> dict:
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        raise SystemExit("The config must be a JSON object")
-    config = {key: value for key, value in raw.items() if not key.startswith("_")}
-    unknown = sorted(set(config) - set(REQUIRED) - set(OPTIONAL))
-    if unknown:
-        raise SystemExit(f"Unknown config keys: {unknown}")
-    for key, kind in REQUIRED.items():
-        value = config.get(key)
-        if value is None or value == "" or (isinstance(value, bool) and kind is not bool):
-            raise SystemExit(f"Choose {key} after the hardware and license review")
-        if kind is float and isinstance(value, int):
-            value = config[key] = float(value)
-        if not isinstance(value, kind):
-            raise SystemExit(f"{key} has the wrong type")
-    for key, (kind, default) in OPTIONAL.items():
-        value = config.setdefault(key, default)
-        if value is not None and kind is float and isinstance(value, int):
-            value = config[key] = float(value)
-        if value is not None and (
-            not isinstance(value, kind) or (isinstance(value, bool) and kind is not bool)
-        ):
-            raise SystemExit(f"{key} has the wrong type")
-    unresolved = [k for k, v in config.items() if isinstance(v, str) and "CHOOSE" in v]
-    if unresolved:
-        raise SystemExit(f"Choose {', '.join(unresolved)} after the hardware and license review")
-    if len(config["model_revision"]) != 40:
-        raise SystemExit("model_revision must be the exact 40-character commit")
-    if config["precision"] not in ("auto", "bf16", "fp16", "fp32"):
-        raise SystemExit("precision must be auto, bf16, fp16 or fp32")
-    modules = config["target_modules"]
-    if not modules or not all(isinstance(m, str) and m for m in modules):
-        raise SystemExit("target_modules must be a non-empty list of module names")
+def _module_available(name: str) -> bool:
+    try:
+        return importlib.util.find_spec(name) is not None
+    except (ImportError, ValueError):
+        return False
+
+
+def _load_config(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise SystemExit(f"Cannot read training config {path}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise SystemExit(f"Training config {path} must be a JSON object")
+
+    config = {**DEFAULTS, **payload}
+    for field in ("model_id", "model_revision"):
+        value = config.get(field)
+        if not isinstance(value, str) or not value.strip() or "CHOOSE" in value:
+            raise SystemExit(f"Choose {field} in {path} after the hardware and license review")
+
+    if int(config["max_length"]) < 256:
+        raise SystemExit("max_length must be at least 256")
+    if int(config["lora_rank"]) <= 0:
+        raise SystemExit("lora_rank must be positive")
+    if int(config["epochs"]) <= 0:
+        raise SystemExit("epochs must be positive")
+    if int(config["gradient_accumulation_steps"]) <= 0:
+        raise SystemExit("gradient_accumulation_steps must be positive")
+    if int(config["max_new_tokens"]) <= 0:
+        raise SystemExit("max_new_tokens must be positive")
+
+    if str(config["model_revision"]).strip().lower() in {"main", "master"}:
+        print(
+            "Warning: model_revision is a mutable branch; the run manifest records "
+            "the resolved commit hash for reproducibility.",
+            file=sys.stderr,
+        )
     return config
 
 
-def end_of_turn(tokenizer, eos_ids: list[int]) -> tuple[int, str]:
-    """The token that closes an assistant turn, read from the chat template itself."""
-    worker = load_worker_module()
-    probe = [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
-    prefix = worker.chat_prompt_text(tokenizer, probe)
-    marker = "MARKER_9f2c"
-    full = tokenizer.apply_chat_template(
-        probe + [{"role": "assistant", "content": marker}], tokenize=False
+def _load_rows(config: dict[str, Any]) -> tuple[list[dict[str, Any]], Path]:
+    dataset_path = Path(str(config["dataset"]))
+    if not dataset_path.is_absolute():
+        dataset_path = ROOT / dataset_path
+    return load_and_validate(dataset_path), dataset_path
+
+
+# --------------------------------------------------------------------------- #
+# Tokenization: one renderer for training and inference
+# --------------------------------------------------------------------------- #
+def _load_tokenizer(config: dict[str, Any]):
+    from transformers import AutoTokenizer
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        str(config["model_id"]),
+        revision=str(config["model_revision"]),
+        trust_remote_code=False,
     )
-    if not full.startswith(prefix + marker):
-        raise SystemExit("The chat template does not place the assistant text after the prompt")
-    suffix = full[len(prefix + marker) :]
-    suffix_ids = tokenizer(suffix, add_special_tokens=False)["input_ids"]
-    if not suffix_ids or suffix_ids[0] not in eos_ids:
-        raise SystemExit(f"The assistant turn ends with {suffix!r}, not an end-of-sequence token")
-    return suffix_ids[0], suffix
-
-
-def encode(row: dict, tokenizer, eot_id: int) -> dict:
-    """Prefix (masked) plus completion and end-of-turn; checked against the template."""
-    worker = load_worker_module()
-    messages = task_format.messages_from_prompt(row["prompt"])
-    prefix_ids = tokenizer(worker.chat_prompt_text(tokenizer, messages), add_special_tokens=False)[
-        "input_ids"
-    ]
-    target_ids = tokenizer(row["completion"], add_special_tokens=False)["input_ids"] + [eot_id]
-    full_text = tokenizer.apply_chat_template(
-        messages + [{"role": "assistant", "content": row["completion"]}], tokenize=False
-    )
-    full_ids = tokenizer(full_text, add_special_tokens=False)["input_ids"]
-    if full_ids[: len(prefix_ids) + len(target_ids)] != prefix_ids + target_ids:
-        raise SystemExit(f"Record {row['id']}: tokens differ from the chat template's rendering")
-    ids = prefix_ids + target_ids
-    return {
-        "input_ids": ids,
-        "attention_mask": [1] * len(ids),
-        "labels": [-100] * len(prefix_ids) + target_ids,
-        "prefix_tokens": len(prefix_ids),
-        "target_tokens": len(target_ids),
-    }
-
-
-def main() -> int:
-    for stream in (sys.stdout, sys.stderr):
-        stream.reconfigure(encoding="utf-8", errors="replace")
-    parser = argparse.ArgumentParser(description="LoRA training for the refactoring role")
-    parser.add_argument("--config", required=True, type=Path)
-    parser.add_argument("--resume-from-checkpoint", type=Path)
-    parser.add_argument("--max-steps", type=int, help="override max_steps (smoke runs)")
-    parser.add_argument(
-        "--stop-after-steps",
-        type=int,
-        help="simulate an interruption: save a checkpoint and stop after this optimizer step, "
-        "keeping the full learning-rate schedule (for resume tests)",
-    )
-    parser.add_argument("--output-dir", type=Path, help="override output_dir (and run_id)")
-    parser.add_argument("--check-data", action="store_true", help="check records and stop")
-    parser.add_argument("--record", type=Path, help="also write the manifest to this path")
-    args = parser.parse_args()
-    config_path = args.config.resolve()
-    config = load_config(config_path)
-    if args.output_dir is not None:
-        config["output_dir"] = str(args.output_dir.resolve())
-        config["run_id"] = args.output_dir.name
-    if args.max_steps is not None:
-        if args.max_steps < 1:
-            raise SystemExit("--max-steps must be positive")
-        config["max_steps"] = args.max_steps
-    if args.stop_after_steps is not None and args.stop_after_steps < 1:
-        raise SystemExit("--stop-after-steps must be positive")
-
-    def resolve(value: str) -> Path:
-        path = Path(value)
-        return (path if path.is_absolute() else config_path.parent / path).resolve()
-
-    model_path = resolve(config["model_path"])
-    dataset_path = resolve(config["dataset"])
-    output = resolve(config["output_dir"])
-    resume = args.resume_from_checkpoint.resolve() if args.resume_from_checkpoint else None
-    if resume is not None and not resume.is_dir():
-        raise SystemExit("--resume-from-checkpoint must be an existing checkpoint directory")
-
-    rows = load_and_validate(dataset_path)
-    wrong_task = [r["id"] for r in rows if r["refactoring_type"] != guard_clauses.TASK_TYPE]
-    if wrong_task:
-        raise SystemExit(f"Records for another refactoring type: {wrong_task[:10]}")
-    stale = [
-        r["id"]
-        for r in rows
-        if "prompt_version" in r and r["prompt_version"] != task_format.PROMPT_VERSION
-    ]
-    if stale:
-        raise SystemExit(f"Records built for another prompt version: {stale[:10]}")
-    train_rows = [r for r in rows if r["split"] == "train"]
-    validation_rows = [r for r in rows if r["split"] == "validation"]
-    test_count = sum(r["split"] == "test" for r in rows)
-
-    from transformers import AutoTokenizer, GenerationConfig
-
-    worker = load_worker_module()
-    revision_verified = worker.verify_revision(model_path, config["model_revision"])
-    tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
-    eos = GenerationConfig.from_pretrained(model_path, local_files_only=True).eos_token_id
-    eos_ids = list(eos) if isinstance(eos, list) else [eos]
-    if tokenizer.eos_token_id is not None and tokenizer.eos_token_id not in eos_ids:
-        eos_ids.append(tokenizer.eos_token_id)
-    eot_id, eot_suffix = end_of_turn(tokenizer, eos_ids)
     if tokenizer.pad_token_id is None:
-        raise SystemExit("The tokenizer defines no padding token")
-    encoded = {
-        "train": [encode(r, tokenizer, eot_id) for r in train_rows],
-        "validation": [encode(r, tokenizer, eot_id) for r in validation_rows],
-    }
-    lengths = {
-        split: [len(item["input_ids"]) for item in items] for split, items in encoded.items()
-    }
-    too_long = [
-        (row["id"], len(item["input_ids"]))
-        for split, source in (("train", train_rows), ("validation", validation_rows))
-        for row, item in zip(source, encoded[split], strict=True)
-        if len(item["input_ids"]) > config["max_length"]
-    ]
-    data_report = {
-        "dataset": dataset_path.name,
-        "dataset_sha256": sha256_file(dataset_path),
-        "records": {
-            "train": len(train_rows),
-            "validation": len(validation_rows),
-            "test_excluded": test_count,
-        },
-        "end_of_turn_token": tokenizer.convert_ids_to_tokens(eot_id),
-        "end_of_turn_id": eot_id,
-        "template_suffix_after_completion": eot_suffix,
-        "eos_ids": eos_ids,
-        "max_tokens": {split: max(v, default=0) for split, v in lengths.items()},
-        "mean_tokens": {
-            split: round(sum(v) / len(v), 1) if v else 0 for split, v in lengths.items()
-        },
-        "max_length": config["max_length"],
-        "records_over_max_length": too_long,
-        "revision_verified": revision_verified,
-    }
-    if args.check_data:
-        print(json.dumps(data_report, indent=2, ensure_ascii=False))
-        return 1 if too_long else 0
-    if too_long:
-        raise SystemExit(f"Records exceed max_length (curate them, do not truncate): {too_long}")
-    if not train_rows or not validation_rows:
-        raise SystemExit("Training needs non-empty train and validation splits")
-    require_free_disk(MIN_FREE_MB, needed_mb=300)
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.pad_token_id = tokenizer.eos_token_id
+    tokenizer.padding_side = "right"
+    return tokenizer
 
+
+def _tokenize_example(
+    tokenizer: Any,
+    row: dict[str, Any],
+    eos_token_id: int,
+) -> tuple[list[int], list[int]]:
+    """Return ``(input_ids, labels)`` with the completion as the only target.
+
+    The prompt is rendered by the shared :mod:`models.prompting` contract.
+    When the tokenizer has a chat template, the full conversation is rendered
+    and the prefix is checked to be an exact prefix; this captures the
+    assistant header and the ``<|im_end|>`` turn terminator exactly. Otherwise
+    the completion and the assistant end token are appended manually.
+    """
+    code = str(row["prompt"])
+    findings = analyze(code).findings
+    prefix = render_prompt(tokenizer, code, findings)
+    prefix_ids = list(tokenizer(prefix, add_special_tokens=False)["input_ids"])
+    completion = str(row["completion"]).strip()
+
+    apply_template = getattr(tokenizer, "apply_chat_template", None)
+    if callable(apply_template):
+        try:
+            messages = [
+                *build_messages(code, findings),
+                {"role": "assistant", "content": completion},
+            ]
+            full_text = str(apply_template(messages, tokenize=False, add_generation_prompt=False))
+            full_ids = list(tokenizer(full_text, add_special_tokens=False)["input_ids"])
+            if len(full_ids) > len(prefix_ids) and full_ids[: len(prefix_ids)] == prefix_ids:
+                labels = [-100] * len(prefix_ids) + full_ids[len(prefix_ids) :]
+                return full_ids, labels
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+    target_ids = list(tokenizer(completion, add_special_tokens=False)["input_ids"])
+    target_ids.append(eos_token_id)
+    input_ids = prefix_ids + target_ids
+    labels = [-100] * len(prefix_ids) + target_ids
+    return input_ids, labels
+
+
+def _percentile(values: list[int], fraction: float) -> int:
+    ordered = sorted(values)
+    if not ordered:
+        return 0
+    index = min(len(ordered) - 1, max(0, round((len(ordered) - 1) * fraction)))
+    return ordered[index]
+
+
+def _audit_tokens(tokenizer: Any, rows: list[dict[str, Any]], max_length: int) -> int:
+    eos_token_id = assistant_end_token(tokenizer)[1]
+    by_split: dict[str, list[int]] = {"train": [], "validation": [], "test": []}
+    prefix_lengths: list[int] = []
+    completion_lengths: list[int] = []
+    over_limit: list[dict[str, Any]] = []
+
+    for row in rows:
+        input_ids, labels = _tokenize_example(tokenizer, row, eos_token_id)
+        length = len(input_ids)
+        by_split.setdefault(str(row["split"]), []).append(length)
+        prefix_lengths.append(labels.count(-100))
+        completion_lengths.append(length - labels.count(-100))
+        if length > max_length:
+            over_limit.append({"id": row["id"], "tokens": length, "split": row["split"]})
+
+    all_lengths = [length for lengths in by_split.values() for length in lengths]
+    report: dict[str, Any] = {
+        "method": "exact tokenizer (shared chat template)",
+        "max_length": max_length,
+        "records": len(rows),
+        "overall": {
+            "max": max(all_lengths) if all_lengths else 0,
+            "mean": round(statistics.mean(all_lengths), 1) if all_lengths else 0,
+            "p50": _percentile(all_lengths, 0.50),
+            "p90": _percentile(all_lengths, 0.90),
+            "p95": _percentile(all_lengths, 0.95),
+            "p99": _percentile(all_lengths, 0.99),
+            "prompt_max": max(prefix_lengths) if prefix_lengths else 0,
+            "completion_max": max(completion_lengths) if completion_lengths else 0,
+        },
+        "splits": {
+            split: {
+                "records": len(lengths),
+                "max": max(lengths) if lengths else 0,
+                "p95": _percentile(lengths, 0.95),
+            }
+            for split, lengths in by_split.items()
+        },
+        "over_limit": over_limit,
+        "status": "pass" if not over_limit else "fail",
+    }
+    print(json.dumps(report, indent=2))
+    return 0 if not over_limit else 1
+
+
+# --------------------------------------------------------------------------- #
+# Model and adapter
+# --------------------------------------------------------------------------- #
+def _load_model(config: dict[str, Any], tokenizer: Any):
     import torch
-    import transformers
-    from peft import LoraConfig, TaskType, get_peft_model
-    from transformers import (
-        AutoModelForCausalLM,
-        Trainer,
-        TrainerCallback,
-        TrainingArguments,
-    )
+    from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
+    from transformers import AutoModelForCausalLM, BitsAndBytesConfig
 
-    if not torch.cuda.is_available():
-        raise SystemExit("CUDA GPU required by this script; review hardware before training")
-    transformers.set_seed(config["seed"])
-    precision = config["precision"]
-    # Native bf16 needs compute capability 8.0 or newer; recent PyTorch also reports
-    # emulated bf16 as supported on older GPUs, which is slow, so it is not used.
-    native_bf16 = torch.cuda.get_device_capability(0)[0] >= 8
-    if precision == "auto":
-        precision = "bf16" if native_bf16 else "fp16"
-    if precision == "bf16" and not native_bf16:
-        raise SystemExit("This GPU has no native bf16 (compute capability below 8.0)")
-    load_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[precision]
-    gpu_before_load = gpu_used_mib()
+    model_kwargs: dict[str, Any] = {"trust_remote_code": False}
+    if bool(config["load_in_4bit"]):
+        compute_dtype_name = str(config["bnb_4bit_compute_dtype"])
+        if compute_dtype_name == "bfloat16" and not torch.cuda.is_bf16_supported():
+            compute_dtype_name = "float16"
+        model_kwargs["quantization_config"] = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type=str(config["bnb_4bit_quant_type"]),
+            bnb_4bit_use_double_quant=bool(config["bnb_4bit_use_double_quant"]),
+            bnb_4bit_compute_dtype=getattr(torch, compute_dtype_name),
+        )
+        model_kwargs["device_map"] = "auto"
+    else:
+        model_kwargs["torch_dtype"] = (
+            torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+        )
+
     model = AutoModelForCausalLM.from_pretrained(
-        model_path, dtype=load_dtype, local_files_only=True, device_map={"": "cuda:0"}
+        str(config["model_id"]),
+        revision=str(config["model_revision"]),
+        **model_kwargs,
     )
     model.config.use_cache = False
-    if config["gradient_checkpointing"]:
-        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
-        model.enable_input_require_grads()
+
+    if bool(config["gradient_checkpointing"]):
+        model.gradient_checkpointing_enable()
+    if bool(config["load_in_4bit"]):
+        model = prepare_model_for_kbit_training(
+            model,
+            use_gradient_checkpointing=bool(config["gradient_checkpointing"]),
+        )
+
     model = get_peft_model(
         model,
         LoraConfig(
             task_type=TaskType.CAUSAL_LM,
-            r=config["lora_rank"],
-            lora_alpha=config["lora_alpha"],
-            lora_dropout=config["lora_dropout"],
-            target_modules=config["target_modules"],
+            r=int(config["lora_rank"]),
+            lora_alpha=int(config["lora_alpha"]),
+            lora_dropout=float(config["lora_dropout"]),
+            target_modules=config["target_modules"] or "all-linear",
             bias="none",
         ),
     )
-    # LoRA weights train in fp32 under bf16/fp16 autocast (PEFT upcasts; enforce it).
-    for parameter in model.parameters():
-        if parameter.requires_grad and parameter.dtype != torch.float32:
-            parameter.data = parameter.data.float()
-    trainable, total = model.get_nb_trainable_parameters()
-    trainable_dtypes = sorted({str(p.dtype) for p in model.parameters() if p.requires_grad})
+    return model
 
-    class StepMeter(TrainerCallback):
-        def __init__(self) -> None:
-            self.steps: list[dict] = []
-            self._started = 0.0
 
-        def on_step_begin(self, args, state, control, **kwargs):
-            torch.cuda.reset_peak_memory_stats()
-            self._started = time.perf_counter()
+def _training_arguments(config: dict[str, Any], output: Path, torch: Any):
+    from transformers import TrainingArguments
 
-        def on_step_end(self, args, state, control, **kwargs):
-            self.steps.append(
-                {
-                    "step": state.global_step,
-                    "seconds": round(time.perf_counter() - self._started, 3),
-                    "peak_allocated_mib": round(torch.cuda.max_memory_allocated() / 2**20, 1),
-                    "peak_reserved_mib": round(torch.cuda.max_memory_reserved() / 2**20, 1),
-                }
-            )
+    use_bf16 = bool(torch.cuda.is_bf16_supported())
+    optim = str(config["optim"])
+    if optim.startswith("paged_") and not _module_available("bitsandbytes"):
+        print(
+            "Warning: bitsandbytes is missing; falling back from paged optimizers to adamw_torch.",
+            file=sys.stderr,
+        )
+        optim = "adamw_torch"
+    return TrainingArguments(
+        output_dir=str(output),
+        learning_rate=float(config["learning_rate"]),
+        num_train_epochs=float(config["epochs"]),
+        per_device_train_batch_size=int(config["per_device_train_batch_size"]),
+        per_device_eval_batch_size=int(config["per_device_eval_batch_size"]),
+        gradient_accumulation_steps=int(config["gradient_accumulation_steps"]),
+        bf16=use_bf16,
+        fp16=not use_bf16,
+        eval_strategy="epoch",
+        save_strategy="epoch",
+        save_total_limit=int(config["save_total_limit"]),
+        load_best_model_at_end=True,
+        metric_for_best_model="eval_loss",
+        greater_is_better=False,
+        logging_steps=int(config["logging_steps"]),
+        lr_scheduler_type=str(config["lr_scheduler_type"]),
+        warmup_ratio=float(config["warmup_ratio"]),
+        optim=optim,
+        report_to=str(config["report_to"]),
+        seed=int(config["seed"]),
+        data_seed=int(config["seed"]),
+        remove_unused_columns=False,
+    )
 
-    class TimeCap(TrainerCallback):
-        """Hard wall-clock cap: checkpoint and stop once the training time is used up."""
 
-        def __init__(self, minutes: float) -> None:
-            self.seconds = minutes * 60
-            self.started = time.perf_counter()
-            self.hit_at_step: int | None = None
-
-        def on_train_begin(self, args, state, control, **kwargs):
-            self.started = time.perf_counter()
-
-        def on_step_end(self, args, state, control, **kwargs):
-            if time.perf_counter() - self.started > self.seconds and self.hit_at_step is None:
-                self.hit_at_step = state.global_step
-                control.should_save = True
-                control.should_evaluate = True
-                control.should_training_stop = True
-
-    class StopAfter(TrainerCallback):
-        """Simulated interruption: checkpoint and stop at a step, schedule unchanged."""
-
-        def __init__(self, step: int) -> None:
-            self.step = step
-
-        def on_step_end(self, args, state, control, **kwargs):
-            if state.global_step >= self.step:
-                control.should_save = True
-                control.should_training_stop = True
-
-    def as_dataset(items: list[dict]) -> list[dict]:
-        """A plain list is a map-style dataset; only the model inputs reach the Trainer."""
-        keep = ("input_ids", "attention_mask", "labels")
-        return [{key: item[key] for key in keep} for item in items]
-
-    def collate(features):
-        size = max(len(f["input_ids"]) for f in features)
-        batch = {key: [] for key in ("input_ids", "attention_mask", "labels")}
-        for f in features:
-            padding = size - len(f["input_ids"])
-            batch["input_ids"].append(f["input_ids"] + [tokenizer.pad_token_id] * padding)
-            batch["attention_mask"].append(f["attention_mask"] + [0] * padding)
-            batch["labels"].append(f["labels"] + [-100] * padding)
+def _make_collator(torch: Any, pad_token_id: int):
+    def collate(features: list[dict[str, Any]]) -> dict[str, Any]:
+        longest = max(len(feature["input_ids"]) for feature in features)
+        batch: dict[str, list[list[int]]] = {
+            "input_ids": [],
+            "attention_mask": [],
+            "labels": [],
+        }
+        for feature in features:
+            padding = longest - len(feature["input_ids"])
+            batch["input_ids"].append(feature["input_ids"] + [pad_token_id] * padding)
+            batch["attention_mask"].append(feature["attention_mask"] + [0] * padding)
+            batch["labels"].append(feature["labels"] + [-100] * padding)
         return {key: torch.tensor(value) for key, value in batch.items()}
 
-    by_steps = config["eval_steps"] is not None
-    saving_by_steps = config["save_steps"] is not None
-    training_args = TrainingArguments(
-        output_dir=str(output),
-        learning_rate=config["learning_rate"],
-        num_train_epochs=config["epochs"],
-        max_steps=config["max_steps"],
-        per_device_train_batch_size=config["per_device_train_batch_size"],
-        per_device_eval_batch_size=1,
-        gradient_accumulation_steps=config["gradient_accumulation_steps"],
-        warmup_steps=config["warmup_steps"],
-        lr_scheduler_type=config["lr_scheduler_type"],
-        weight_decay=config["weight_decay"],
-        bf16=precision == "bf16",
-        fp16=precision == "fp16",
-        eval_strategy="steps" if by_steps else "epoch",
-        eval_steps=config["eval_steps"],
-        save_strategy="steps" if saving_by_steps else "epoch",
-        save_steps=config["save_steps"],
-        save_total_limit=config["save_total_limit"],
-        logging_steps=config["logging_steps"],
-        logging_first_step=True,
-        report_to="none",
-        seed=config["seed"],
-        data_seed=config["seed"],
-        dataloader_num_workers=0,
-        remove_unused_columns=False,
-        gradient_checkpointing=False,  # enabled on the base model above when configured
-        load_best_model_at_end=config["load_best_model_at_end"],
-        metric_for_best_model="eval_loss" if config["load_best_model_at_end"] else None,
-        greater_is_better=False if config["load_best_model_at_end"] else None,
-    )
-    meter = StepMeter()
-    callbacks = [meter]
-    if args.stop_after_steps is not None:
-        callbacks.append(StopAfter(args.stop_after_steps))
-    time_cap = None
-    if config["max_runtime_minutes"] is not None:
-        time_cap = TimeCap(config["max_runtime_minutes"])
-        callbacks.append(time_cap)
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=as_dataset(encoded["train"]),
-        eval_dataset=as_dataset(encoded["validation"]),
-        data_collator=collate,
-        callbacks=callbacks,
-    )
+    return collate
 
-    run_id = config["run_id"] or output.name
-    manifest = {
-        "status": "running",
-        "run_id": run_id,
-        "code_sha": git_state(),
-        "train_script_sha256": sha256_file(Path(__file__)),
-        "model_id": config["model_id"],
-        "model_revision": config["model_revision"],
-        "dataset_sha256": data_report["dataset_sha256"],
-        "split_manifest": data_report["records"],
-        "hardware": {
-            "gpu": torch.cuda.get_device_name(0),
-            "nvidia_smi": nvidia_smi("name,memory.total,driver_version"),
-            "platform": platform.platform(),
-            "python": sys.version.split()[0],
-        },
-        "dependency_lock": {
-            "file": "training/requirements-cuda.txt",
-            "sha256": sha256_file(ROOT / "training" / "requirements-cuda.txt"),
-            "packages": package_versions(),
-            "cuda": torch.version.cuda,
-        },
-        "config": {**config, "precision_resolved": precision},
-        "seed": config["seed"],
-        "duration_seconds": None,
-        "peak_memory_mb": None,
-        "validation_metrics": None,
-        "test_metrics": None,
-        "failures": [],
-        "artifact_url": None,
-        "artifact_sha256": None,
-        "evaluator": None,
-        "started_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "command": " ".join([Path(sys.executable).name, *sys.argv]),
-        "resumed_from_checkpoint": (
-            None if resume is None else f"{resume.parent.name}/{resume.name}"
-        ),
-        "stop_after_steps": args.stop_after_steps,
-        "data": data_report,
-        "trainable_parameters": trainable,
-        "total_parameters": total,
-        "trainable_parameter_dtypes": trainable_dtypes,
+
+# --------------------------------------------------------------------------- #
+# Evidence
+# --------------------------------------------------------------------------- #
+def _sha256_file(path: Path) -> str | None:
+    if not path.exists():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _code_sha() -> tuple[str | None, str | None]:
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        text=True,
+        capture_output=True,
+        check=False,
+        cwd=ROOT,
+    )
+    if result.returncode == 0:
+        return result.stdout.strip(), None
+    return None, (result.stderr or "git not available").strip()
+
+
+def _package_versions() -> dict[str, str]:
+    versions: dict[str, str] = {}
+    for name in ("torch", "transformers", "peft", "datasets", "accelerate", "bitsandbytes"):
+        try:
+            versions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            versions[name] = "missing"
+    return versions
+
+
+def _smoke_generate(
+    config: dict[str, Any],
+    model: Any,
+    tokenizer: Any,
+    rows: list[dict[str, Any]],
+    eos_token_id: int,
+    torch: Any,
+) -> dict[str, Any]:
+    """Generate once and check syntax (AST only; never execute, NFR01)."""
+    sample = next(
+        (row for row in rows if row["split"] == "validation"),
+        rows[0],
+    )
+    code = str(sample["prompt"])
+    prompt = render_prompt(tokenizer, code, analyze(code).findings)
+    tokenizer.padding_side = "left"
+    inputs = tokenizer(prompt, return_tensors="pt")
+    device = next(model.parameters()).device
+    inputs = {name: value.to(device) for name, value in inputs.items()}
+    model.eval()
+    with torch.no_grad():
+        output = model.generate(
+            **inputs,
+            max_new_tokens=min(int(config["smoke_max_new_tokens"]), int(config["max_new_tokens"])),
+            do_sample=False,
+            eos_token_id=eos_token_id,
+            pad_token_id=int(tokenizer.pad_token_id),
+        )
+    generated = tokenizer.decode(
+        output[0][inputs["input_ids"].shape[1] :],
+        skip_special_tokens=True,
+    )
+    candidate = extract_refactored_code(generated)
+    result = analyze(candidate)
+    return {
+        "record_id": sample["id"],
+        "syntax_valid": bool(result.syntax_valid),
+        "findings_after": [finding.rule for finding in result.findings],
+        "raw_text": generated[:2000],
+        "generated_code": candidate[:4000],
+        "executed": False,
     }
+
+
+def _trainable_parameter_counts(model: Any) -> dict[str, Any]:
+    trainable = sum(
+        parameter.numel() for parameter in model.parameters() if parameter.requires_grad
+    )
+    total = sum(parameter.numel() for parameter in model.parameters())
+    return {
+        "trainable": trainable,
+        "total": total,
+        "ratio": round(trainable / total, 6) if total else 0.0,
+    }
+
+
+# --------------------------------------------------------------------------- #
+# Entry point
+# --------------------------------------------------------------------------- #
+def main() -> int:
+    parser = argparse.ArgumentParser(description="QLoRA fine-tuning for the refactoring adapter")
+    parser.add_argument("--config", required=True, type=Path)
+    parser.add_argument("--resume-from-checkpoint", default=None)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help=(
+            "Tokenize every record with the real tokenizer and report lengths; "
+            "does not load the model or require CUDA."
+        ),
+    )
+    args = parser.parse_args()
+
+    config = _load_config(args.config)
+    rows, dataset_path = _load_rows(config)
+
+    if args.dry_run:
+        if not _module_available("transformers"):
+            raise SystemExit(
+                "--dry-run needs transformers and the tokenizer; install "
+                "training/requirements.txt in the training environment first."
+            )
+        tokenizer = _load_tokenizer(config)
+        return _audit_tokens(tokenizer, rows, int(config["max_length"]))
+
+    import torch
+
+    if not torch.cuda.is_available():
+        raise SystemExit(
+            "CUDA GPU required for QLoRA fine-tuning; run --dry-run on a CPU-only "
+            "machine to audit tokens, then train on the CUDA host."
+        )
+    from datasets import Dataset
+    from transformers import Trainer
+
+    torch.manual_seed(int(config["seed"]))
+    torch.cuda.manual_seed_all(int(config["seed"]))
+    torch.cuda.reset_peak_memory_stats()
+
+    tokenizer = _load_tokenizer(config)
+    eos_token_id = assistant_end_token(tokenizer)[1]
+    examples: dict[str, list[dict[str, Any]]] = {"train": [], "validation": [], "test": []}
+    over_limit: list[dict[str, Any]] = []
+    for row in rows:
+        input_ids, labels = _tokenize_example(tokenizer, row, eos_token_id)
+        if len(input_ids) > int(config["max_length"]):
+            over_limit.append({"id": row["id"], "tokens": len(input_ids)})
+            continue
+        examples.setdefault(str(row["split"]), []).append(
+            {
+                "input_ids": input_ids,
+                "attention_mask": [1] * len(input_ids),
+                "labels": labels,
+            }
+        )
+    if over_limit:
+        raise SystemExit(
+            "Records exceed max_length; shorten them or raise max_length before "
+            f"training: {over_limit[:10]}"
+        )
+    if not examples["train"] or not examples["validation"]:
+        raise SystemExit("Training requires non-empty train and validation splits")
+
+    model = _load_model(config, tokenizer)
+    output = Path(str(config["output_dir"]))
+    if not output.is_absolute():
+        output = ROOT / output
     output.mkdir(parents=True, exist_ok=True)
 
-    def write_manifest() -> None:
-        text = json.dumps(manifest, indent=2, ensure_ascii=False) + "\n"
-        (output / "run-manifest.json").write_text(text, encoding="utf-8")
-        if args.record is not None:
-            args.record.parent.mkdir(parents=True, exist_ok=True)
-            args.record.write_text(text, encoding="utf-8")
+    train_dataset = Dataset.from_list(examples["train"])
+    eval_dataset = Dataset.from_list(examples["validation"])
+    trainer = Trainer(
+        model=model,
+        args=_training_arguments(config, output, torch),
+        train_dataset=train_dataset,
+        eval_dataset=eval_dataset,
+        data_collator=_make_collator(torch, int(tokenizer.pad_token_id)),
+        tokenizer=tokenizer,
+    )
 
-    write_manifest()
+    code_sha, code_sha_error = _code_sha()
+    dataset_sha = hashlib.sha256(dataset_path.read_bytes()).hexdigest()
     started = time.perf_counter()
-    try:
-        with GpuSampler() as sampler:
-            result = trainer.train(resume_from_checkpoint=str(resume) if resume else None)
-            torch.cuda.reset_peak_memory_stats()
-            evaluation = trainer.evaluate()
-            eval_peak = torch.cuda.max_memory_allocated() / 2**20
-    except Exception as exc:
-        manifest["status"] = "failed"
-        manifest["duration_seconds"] = round(time.perf_counter() - started, 1)
-        manifest["failures"].append({"error": f"{type(exc).__name__}: {exc}"[:1000]})
-        manifest["traceback_tail"] = traceback.format_exc().splitlines()[-8:]
-        write_manifest()
-        raise
-    duration = time.perf_counter() - started
+    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    duration_seconds = round(time.perf_counter() - started, 2)
+
     adapter_dir = output / "adapter"
     trainer.save_model(str(adapter_dir))
-    adapter_file = adapter_dir / "adapter_model.safetensors"
-    checkpoints = sorted(p for p in output.glob("checkpoint-*") if p.is_dir())
-    manifest.update(
-        status=(
-            "completed"
-            if args.stop_after_steps is None
-            else "stopped_after_steps (simulated interruption)"
-        ),
-        finished_at=datetime.now(UTC).isoformat(timespec="seconds"),
-        duration_seconds=round(duration, 1),
-        train_runtime_seconds=round(result.metrics.get("train_runtime", 0.0), 1),
-        global_step=trainer.state.global_step,
-        epochs_completed=trainer.state.epoch,
-        time_cap_hit_at_step=None if time_cap is None else time_cap.hit_at_step,
-        best_model_checkpoint=(
-            Path(trainer.state.best_model_checkpoint).name
-            if trainer.state.best_model_checkpoint
-            else None
-        ),
-        best_eval_loss=trainer.state.best_metric,
-        saved_adapter="best checkpoint by eval_loss"
-        if config["load_best_model_at_end"]
-        else "final step",
-        peak_memory_mb={
-            "torch_peak_allocated_per_step_max": max(
-                (s["peak_allocated_mib"] for s in meter.steps), default=None
-            ),
-            "torch_peak_reserved_per_step_max": max(
-                (s["peak_reserved_mib"] for s in meter.steps), default=None
-            ),
-            "torch_peak_allocated_evaluation": round(eval_peak, 1),
-            "gpu_used_all_processes_before_load": gpu_before_load,
-            "gpu_used_all_processes_peak_sampled": sampler.peak,
-        },
-        validation_metrics={k: v for k, v in evaluation.items() if isinstance(v, (int, float))},
-        artifact_url=None,
-        artifact_path=adapter_dir.relative_to(ROOT).as_posix()
-        if adapter_dir.is_relative_to(ROOT)
-        else None,
-        artifact_sha256=sha256_file(adapter_file),
-        adapter_files={
-            p.name: sha256_file(p) for p in sorted(adapter_dir.iterdir()) if p.is_file()
-        },
-        adapter_bytes=adapter_file.stat().st_size,
-        checkpoints={
-            p.name: sha256_file(p / "adapter_model.safetensors")
-            for p in checkpoints
-            if (p / "adapter_model.safetensors").is_file()
-        },
-        step_metrics=meter.steps,
-        log_history=trainer.state.log_history,
+    tokenizer.save_pretrained(str(adapter_dir))
+    validation_metrics = trainer.evaluate()
+    (output / "validation-metrics.json").write_text(
+        json.dumps(validation_metrics, indent=2), encoding="utf-8"
     )
-    write_manifest()
-    print(
-        json.dumps(
-            {
-                "status": manifest["status"],
-                "duration_seconds": manifest["duration_seconds"],
-                "global_step": manifest["global_step"],
-                "validation": manifest["validation_metrics"],
-                "adapter_sha256": manifest["artifact_sha256"],
-                "peak_memory_mb": manifest["peak_memory_mb"],
+    (output / "trainer-log.json").write_text(
+        json.dumps(trainer.state.log_history, indent=2), encoding="utf-8"
+    )
+
+    smoke = _smoke_generate(config, model, tokenizer, rows, eos_token_id, torch)
+    manifest = {
+        "config": config,
+        "code_sha": code_sha,
+        "code_sha_error": code_sha_error,
+        "dataset": {
+            "path": str(dataset_path),
+            "sha256": dataset_sha,
+            "records": len(rows),
+            "splits": {
+                split: sum(row["split"] == split for row in rows)
+                for split in ("train", "validation", "test")
             },
-            indent=2,
-        )
+        },
+        "model": {
+            "model_id": str(config["model_id"]),
+            "requested_revision": str(config["model_revision"]),
+            "resolved_commit": getattr(model.config, "_commit_hash", None),
+        },
+        "hardware": {
+            "device": torch.cuda.get_device_name(0),
+            "device_count": torch.cuda.device_count(),
+            "total_memory_bytes": torch.cuda.get_device_properties(0).total_memory,
+        },
+        "platform": platform.platform(),
+        "python": sys.version,
+        "cuda": torch.version.cuda,
+        "packages": _package_versions(),
+        "trainable_parameters": _trainable_parameter_counts(model),
+        "duration_seconds": duration_seconds,
+        "peak_gpu_memory_bytes": torch.cuda.max_memory_allocated(),
+        "best_checkpoint": trainer.state.best_model_checkpoint,
+        "resume": args.resume_from_checkpoint,
+        "validation_metrics": validation_metrics,
+        "smoke_generation": smoke,
+        "adapter": {
+            "path": str(adapter_dir),
+            "model_sha256": _sha256_file(adapter_dir / "adapter_model.safetensors"),
+            "config_sha256": _sha256_file(adapter_dir / "adapter_config.json"),
+        },
+        "executed_generated_code": False,
+    }
+    (output / "run-manifest.json").write_text(
+        json.dumps(manifest, indent=2, default=str), encoding="utf-8"
     )
+
+    print(f"Adapter: {adapter_dir}")
+    print(f"Manifest: {output / 'run-manifest.json'}")
+    print(json.dumps({"validation": validation_metrics, "smoke": smoke}, indent=2, default=str))
     return 0
 
 

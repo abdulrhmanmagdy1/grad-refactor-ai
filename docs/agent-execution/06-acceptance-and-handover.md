@@ -1,50 +1,52 @@
-# Acceptance evidence and human handover
+# 06 — Acceptance and handover
 
-Check these against the requirements and Issue acceptance criteria. A checkbox is checked only after evidence exists. The implementation agent produces the evidence; students inspect and accept their own workstream. There is no assigned peer-review chain.
+Completion checklist for the coding agent and the team's final inspection. A checkbox is ticked
+only with a linked, verifiable artifact — never on assumption.
 
-## Implementation evidence
+## Requirement acceptance
 
-- [ ] Clean setup from documented commands, pinned core environment and frontend/training locks where applicable.
-- [ ] Foundation API still works or has a documented migration; health indicates actual operating mode.
-- [ ] One supported Python transformation with explicit exclusions, valid examples and reference tests.
-- [ ] Real local model run with pinned model/license, measured limits and typed failures.
-- [ ] Analysis, refactoring and review roles with strict schemas and bounded calls/correction.
-- [ ] Run submission, polling, persistence, interruption recovery and queue saturation checks.
-- [ ] UI input/progress/error/diff/explanation/download behavior, preserved original input and clear model mode.
-- [ ] Syntax, model review and reference-test status displayed independently; missing tests never count as pass.
-- [ ] Runner isolation/cleanup checks before trusted-fixture execution; missing prerequisites clearly disable it.
-- [ ] Relevant backend, frontend and integration checks pass; CI does not download a model or require a GPU.
+| Requirement | Evidence required | Status |
+|---|---|---|
+| FR01 Bounded input | 422 tests for blank/oversized/malformed input | ☐ |
+| FR02 Analyze code | Structured findings with location + reason; async + nesting rules | ☐ |
+| FR03 Propose refactoring | Code + reason + supported type, or explicit failure | ☐ |
+| FR04 Verify proposal | Syntax, tests and verdict shown separately | ☐ |
+| FR05 Show diff | Added/removed lines and affected components | ☐ |
+| FR06 User control | Accept/reject/download without editing the original | ☐ |
+| FR07 Trace each run | id, config/limits, model version, state, durations, failures | ☐ |
+| FR08 Bound execution | Enforced call/retry/token/time limits with clear failure | ☐ |
+| FR09 Compare experiments | Groups A/B/C/D on the same cases with CSV + JSON export | ☐ |
+| FR10 Run history | Previous results retrievable on the demonstration machine | ☐ |
+| NFR01 No code execution in API | AST-only analysis; file-write probe test passes | ☐ |
+| NFR02 Isolated runner | CPU/mem/time limits, sanitized env, cleanup, trusted examples | ☐ |
+| NFR03 No paid services | Core runs with no API key or committed credentials | ☐ |
+| NFR04 Pinned core env | Python 3.11 + lockfile; GPU deps resolved separately | ☐ |
+| NFR05 Experiment record completeness | run-template fields populated from real runs | ☐ |
+| NFR06 No false equivalence claim | Tests never presented as full behavioral proof | ☐ |
+| NFR07 Measured targets | Response-time/memory targets set from measurement | ☐ |
 
-## Research evidence
+## Delivery checklist
 
-- [ ] Licensed source records and source-separated split manifest with duplication checks.
-- [ ] Tiny real training smoke test, adapter save/reload, hardware and dependency evidence.
-- [ ] Real fine-tuning record and artifact checksums, or an explicit unmet requirement and blocker.
-- [ ] Validation-only selection and frozen final test protocol.
-- [ ] A/B/C/D records including failures or explicit infeasible arms, with counts and budgets.
-- [ ] Reproducible plots/tables and honest model card, limitations and negative findings.
+- [ ] Clean clone + fresh environment run reproduced (state whether a second machine was used).
+- [ ] Data licensing, curation, independent splits and versions recorded.
+- [ ] Fine-tuning settings + reloadable adapter recorded within storage/license limits (or a
+      recorded blocker, with the base model never reported as trained).
+- [ ] Original vs adapted model and single-role vs coordinated workflow compared.
+- [ ] Failures, resource use and limitations included in the evaluation.
+- [ ] Developer guide, user guide and model card updated.
+- [ ] Academic report written to the university template (problem, related work, method, design,
+      implementation, experiments, results, limitations, future work).
+- [ ] Presentation, repeatable demo and a small backup recording prepared.
+- [ ] Release tagged with notes, checksums and experiment links.
+- [ ] P5 review recorded and follow-up priorities set.
 
-## Delivery evidence
+## Final team inspection
 
-- [ ] Clean-clone reproduction, labeled same-laptop or second-machine according to actual evidence.
-- [ ] English report, user/developer guides and PDFs agree with actual implementation.
-- [ ] Stable success, unsupported-input and failed-check demonstration cases plus backup recording.
-- [ ] Release candidate/tag plan, artifact retrieval instructions, licensing and checksums.
-- [ ] Five supervisor review records distinguish prepared, pending and actual feedback.
-- [ ] execution-state.json and an evidence index show implemented/tested/blocked/pending work.
+- [ ] Reproduce the demo from the repository instructions alone.
+- [ ] Confirm no result, approval or citation was invented.
+- [ ] Confirm the trust boundary held (no untrusted execution in the API).
+- [ ] Confirm each follow-up task has one accountable owner from
+      [`planning/assignments.json`](../../planning/assignments.json).
 
-## Handover file
-
-Create docs/delivery/implementation-handover.md with: exact commit and branch; commands to install/start/test/train/evaluate; actual hardware and environment versions; component map; chosen task and input limits; model/adapter/data references; results and denominators; known defects; blocked requirements; supervisor decisions still pending; and next steps. Link every substantive claim to retained evidence. Do not create a final release claim if critical requirements remain unmet.
-
-## Team inspection by workstream
-
-| Member | What they inspect and should be able to explain |
-|---|---|
-| Abdelrahman Magdy | Setup, API, storage, integration, recovery and release commands |
-| Abdullah Tarek | Role contracts, coordination, correction limit, verification and failure tests |
-| Abdelrahman Adel | Model choice, actual fine-tuning, adapter reload, versions and resource measurements |
-| Shahd Abdelhay | Provenance, split/leakage evidence, protocol, metrics, denominators and limitations |
-| Dania El-Walily | UI states, diff/download, report consistency, slides and repeatable demonstration |
-
-Human inspection happens after implementation and before accepting the delivery. An agent cannot fabricate those inspections or substitute for students understanding the system.
+Use [`docs/delivery/checklist.md`](../delivery/checklist.md) as the team-facing companion to this
+document. A phase ending does not automatically complete its tasks.

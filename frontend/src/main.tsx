@@ -1,15 +1,17 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import "./styles/tokens.css";
-import "./styles/base.css";
-import "./styles/app.css";
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
-const root = document.getElementById("root");
-if (!root) throw new Error("The page has no #root element.");
+import './index.css';
+import { App } from './app/App';
+import { AppProviders } from './app/providers';
 
-createRoot(root).render(
+const container = document.getElementById('root');
+if (!container) throw new Error('Root container #root is missing from index.html');
+
+createRoot(container).render(
   <StrictMode>
-    <App />
+    <AppProviders>
+      <App />
+    </AppProviders>
   </StrictMode>,
 );

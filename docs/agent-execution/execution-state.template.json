@@ -1,75 +1,46 @@
 {
-  "schema_version": 1,
-  "status": "not_started",
-  "last_verified_commit": null,
-  "branch": null,
-  "hardware_report": null,
-  "environment_records": [],
+  "template": true,
+  "note": "Copy this file to a working path before starting. Update after every step. Resume from state, not memory.",
+  "updated_at": null,
+  "phase": "P0",
+  "current_step": 0,
+  "code_sha": null,
+  "hardware": {
+    "cpu": null,
+    "ram_gb": null,
+    "gpu": null,
+    "vram_gb": null,
+    "os": null,
+    "cuda": null,
+    "weekly_hours": null,
+    "hardware_gate_passed": null
+  },
   "steps": [
-    {
-      "id": 0,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    },
-    {
-      "id": 1,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    },
-    {
-      "id": 2,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    },
-    {
-      "id": 3,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    },
-    {
-      "id": 4,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    },
-    {
-      "id": 5,
-      "status": "not_started",
-      "evidence": [],
-      "blockers": []
-    }
+    { "id": 0, "name": "inspect-and-baseline", "status": "pending", "evidence": [] },
+    { "id": 1, "name": "hardware-gate", "status": "pending", "evidence": [] },
+    { "id": 2, "name": "contracts-and-data-records", "status": "pending", "evidence": [] },
+    { "id": 3, "name": "data-and-frozen-split", "status": "pending", "evidence": [] },
+    { "id": 4, "name": "provider-and-roles", "status": "pending", "evidence": [] },
+    { "id": 5, "name": "verification-ui-failure", "status": "pending", "evidence": [] },
+    { "id": 6, "name": "fine-tuning", "status": "pending", "evidence": [] },
+    { "id": 7, "name": "independent-evaluation", "status": "pending", "evidence": [] },
+    { "id": 8, "name": "delivery", "status": "pending", "evidence": [] }
   ],
-  "supervisor_reviews": [
-    {
-      "phase": "P1",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P2",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P3",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P4",
-      "status": "pending_human",
-      "record": null
-    },
-    {
-      "phase": "P5",
-      "status": "pending_human",
-      "record": null
-    }
-  ],
-  "next_action": "Inspect checkout and run Step 0 foundation checks.",
-  "notes": "Template only. No product implementation, training or review is certified by this file."
+  "checks": {
+    "doctor": null,
+    "pytest": null,
+    "ruff": null,
+    "check_docs": null,
+    "validate_dataset": null
+  },
+  "artifacts": {
+    "dataset_sha256": null,
+    "split_manifest": null,
+    "adapter_path": null,
+    "adapter_sha256": null,
+    "evaluation_csv": null,
+    "evaluation_summary": null
+  },
+  "blockers": [],
+  "next_action": null
 }

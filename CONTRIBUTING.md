@@ -1,8 +1,8 @@
-# Working together
+# المساهمة ومتابعة الشغل
 
-Start from the assigned Issue and confirm its dependencies and acceptance criteria. Each member owns a main workstream and normally keeps one primary implementation task active.
+كل تغيير له Issue ومخرج قابل للمراجعة. قبل البدء تأكد أن التاسك Ready وأن شروط القبول واضحة، ثم اسندها لنفسك بعد الاتفاق مع التيم.
 
-## Publish work
+## من التاسك إلى الدمج
 
 ```bash
 git switch main
@@ -10,16 +10,20 @@ git pull --ff-only
 git switch -c feat/123-short-description
 ```
 
-Keep the change focused, run the relevant checks, and update its documentation. Open a linked pull request using Closes #123 so the team can see the output and automated checks. A second-person approval is not required; the task owner checks the result and merges it when ready. Do not force-push main.
+نفذ تغييرًا محدودًا، وشغّل الفحوصات الموجودة في README، وحدّث التوثيق المتأثر. ارفع الفرع وافتح PR يذكر `Closes #123`، ويشرح الناتج ودليل التحقق، ويطلب مراجعة عضو آخر. لا ترفع إلى main مباشرة ولا تستخدم force-push عليه. لا تدمج PR لنفسك دون مراجعة بشرية في شغل الفريق.
 
-Research and meeting tasks can be completed with a linked record instead of code. Uploading a file alone is not completion: the result must meet the stated acceptance criteria. Training work includes versions, settings, artifacts, and actual results.
+## جاهزية التاسك
 
-## Status
+وصف محدد، متطلبات مرتبطة، شروط قبول قابلة للفحص، اعتماديات، مسؤول ومراجع، وحجم مناسب لأيام قليلة. الأبحاث والتوثيق لها مخرج وروابط ومراجعة مثل الكود.
 
-Backlog is planned work. Ready means dependencies allow it to start. In Progress means work has begun. In Review is optional for a result awaiting a decision or supervisor feedback; it does not create a peer-review assignment. Done means the owner has completed the acceptance checks and published the output.
+## تعريف الاكتمال
 
-Record blockers and the help needed in the Issue. The Project helps update status automatically, but owners keep it accurate. Every phase ends with a supervisor review and recorded decisions.
+الناتج يحقق شروط القبول، والفحوصات المناسبة ناجحة، والمراجع وافق، والتوثيق محدث، والتغيير اندمج، وIssue بها رابط الدليل. تجربة تدريب لا تُغلق بلا إعدادات ونسخ بيانات وموديل وسجل نتائج. رفع ملف أو commit وحده لا يساوي Done.
 
-## Data and execution
+## تحديثات التيم
 
-Do not commit credentials, private contact details, unlicensed data, or large model weights. Record small sanitized experiment logs and checksums. The API must not execute submitted code. Enable a separate runner only after completing its isolation checks on trusted examples.
+عند التعطيل، اكتب السبب والمطلوب ورابط الاعتماد وأضف `blocked`. عند رفع الشغل انقل التاسك إلى In Review. بعد الدمج انقلها Done. إذا لم تتوفر أتمتة اللوحة فالتحديث يدوي. نخطط كل أسبوعين، ونجتمع أسبوعيًا، ونراجع مع الدكتورة عند نهاية كل مرحلة.
+
+## البيانات والأسرار
+
+لا ترفع إيميلات خاصة أو Tokens أو بيانات غير مرخصة أو أوزان كبيرة إلى Git العادي. أضف سجلات التجارب الصغيرة المنقحة وروابط Releases والـchecksums. أوامر تشغيل المدخلات غير الموثوقة ممنوعة في API؛ Runner المستهدف له مراجعة مستقلة.

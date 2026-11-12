@@ -1,0 +1,1 @@
+function e(e){return new Worker(`/assets/editor.worker-BmdWdrHZ.js`,{name:e?.name})}export{e as default};

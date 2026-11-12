@@ -1,43 +1,55 @@
-# Testing and verification
+# خطة التحقق والاختبارات
 
-## Commands
+## الموجود الآن (منفذ ومختبَر)
 
-| Check | Command |
-|---|---|
-| Lint and format | `uv run ruff check .` and `uv run ruff format --check .` |
-| Python tests | `uv run pytest` |
-| Markdown links | `uv run python scripts/check_docs.py` |
-| Dataset rebuild | `uv run python scripts/curate_dataset.py --check` (add `--download` on a fresh clone) |
-| Interface | in `frontend/`: `npm ci`, `npm run typecheck`, `npm test`, `npm run build` |
-| Real GPU provider tests | `REFACTOR_AI_GPU_TESTS=1 uv run pytest tests/test_local_provider_gpu.py` with the training environment and the model ([setup](setup.md)) |
+اختبارات API تتحقق من health (وضع `production`)، رفض المدخلات الفارغة والكبيرة، التعامل مع
+syntax غير صالح بلا تنفيذ، كتالوج المزودات (`GET /api/v1/providers` بتوفّر `mock`)، وتقديم
+الواجهة `/` (بناء Vite مع الجذر وfavicon عند وجوده). اختبارات الوكلاء تغطي الدورة ثلاثية الطبقات (تحليل ← توليد ← مراجعة)،
+حدود FR08، إعادة المحاولة المحدودة، وحفظ الآثار ولقطات المقاييس. اختبارات Runner تغطي عزل
+الشبكة والبيئة وحدود الموارد، ومولّد الاختبارات الذهبية يختبر: دوال متزامنة وغير متزامنة
+ومولدات، القيم الافتراضية المتغيرة، مسارات الأخطاء، kwonly، وتخطي الـAPIs غير الحتمية.
+اختبارات التقييم تغطي مجموعتي A/B وحقول الملخص. أضيفت اختبارات تقرير التشغيل (تقرير Markdown من
+سجل مخزَّن فقط، 404، صف بقرار المستخدم، وفشل صريح بلا مراجعة محفوظة)، والميدلوير
+(`X-Request-ID` مع صد ورأس الطلب السليم، واستبدال غير السليم، وزمن المعالجة، و413 موثّق)، وأدوات
+المراجعة العمياء (حتمية العبوة، منع الكتابة فوق تقييمات بشرية، حساب المتوسطات والمدى، وتخطي
+الصفوف الناقصة)، وأدوات الإصدار (بناء المانيفست والتحقق منه على شجرة اختبار مؤقتة)، ومسار التشغيل
+الخلفية (تشغيل بلا `sync` يصل لحالة نهائية بدل أن يعلق في `queued` — عيب حقيقي كشفته إعادة بناء
+الواجهة وأُصلح بـupsert في `src/core/db.py`). أضيف سطح تشغيلي مختبَر: مجاميع `/api/v1/stats`،
+وصيغة `/metrics`، وحد التزامن (429)، وتطبيق pragmas الاتصال (busy timeout)، وصيغة السجلات JSON،
+وحارس انحراف العقد بين Pydantic وعقد Zod (`tests/test_contract.py` يفشل عند حذف حقل أو اختراعه).
+العدد الحالي **91 اختبارًا**، ويُشغَّل الكل بـ`uv run pytest` أو `python scripts/tasks.py test`؛
+هذه الاختبارات لا تثبت جودة موديل أو جاهزية Refactoring كاملة.
 
-At commit `74daf25` the Python suite collects 1,559 tests: 1,551 pass and 8 are skipped on Windows (the GPU tests); on Ubuntu one more Windows-only test is skipped. The interface has 496 tests in 13 files: 491 pass and the 5 end-to-end tests are skipped unless `REFACTOR_AI_E2E_URL` points to a running service.
+الواجهة لها بواباتها الخاصة داخل `frontend/`: `npm run lint` (ESLint 9 مع `react-hooks` و
+`jsx-a11y`)، و`npm run typecheck` (`tsc --noEmit` صارم)، و`npm run test` (Vitest + Testing
+Library: **38 اختبارًا في 9 ملفات** تغطي العقود والتحويلات ولوحات الواجهة والتبويبات والنوافذ
+وتصدير السجل ومزامنة الرابط وترقيم سجل التشغيل) و`npm run build` (بناء إنتاج). `npm run verify` يشغّل الأربع معًا،
+وتعمل job الواجهة في CI على Linux.
 
-## What the tests cover
+`python scripts/smoke_ui.py` اختبار دخان للإصدار: يشغّل التطبيق الحقيقي على قاعدة مؤقتة ويتحقق
+من ثمانية أشياء — `/health`، تقديم الواجهة المبنية، وجود كل أصل مُشار إليه في `index.html`،
+ترويسات الأمان، تشغيل كامل ينتهي `approved` مع Diff واختبارات ناجحة، تقرير Markdown، المجاميع
+المقيسة، وصيغة Prometheus. `python scripts/tasks.py all` يشغّل كل البوابات بالترتيب نفسه على
+Windows وLinux.
 
-| Area | Files | Covers |
-|---|---|---|
-| Task and format | `test_guard_clauses.py`, `test_task_format.py`, `test_api.py` | Scope rules and reason codes, the deterministic transformation and rubric, the refactor-v2 prompt and parser, the analysis endpoint and health |
-| Roles and coordinator | `test_agents_*.py`, `test_fake_provider.py` | Role prompts, strict parsing with one repair, call and token budgets, the single correction, deadlines, every outcome and failure mapping |
-| Verification | `test_verification_*.py` | The four separate checks, all 450 combinations of the disposition order, the diff, missing tests never counting as a pass |
-| Runner | `test_runner.py`, `test_runner_child.py` | Real child processes: time, CPU, memory and process limits, the audit hook, the admission policy, the 19 isolation self-checks, the privilege drop under root |
-| Service | `test_api*.py`, `test_runs_*.py` | The run API, SQLite history, retention, restart recovery, the bounded queue, error shapes, decisions and downloads |
-| Model provider | `test_local_provider*.py` | The worker process, timeouts, token limits, adapter switching and identity, with a stub; the GPU file runs the real model |
-| Data | `test_data_*.py`, `test_dataset.py` | Curation, executed reference tests, splits, leakage checks, the frozen test split and the committed manifest |
-| Evaluation | `test_evaluation_*.py` | Arms A to D, the test-split guard, records and resume, the report, exact McNemar with Holm, the protocol freeze and targets |
-| Contracts | `test_contract_examples.py` | Every JSON example in `docs/architecture/examples/` matches the contracts |
-| Interface | `frontend/src/**/*.test.*` | Every run state, the diff viewer, the highlighter, polling, the API client, color contrast, rendering of every contract example |
+## المطلوب للنسخة الأساسية
 
-Most tests use the deterministic fake provider or scripted stand-ins. They show that the machinery works, not that the model refactors well; model behavior is measured in the recorded experiments under `experiments/`, above all the [frozen test-split evaluation](../../experiments/evaluation/test-2026-10-21/targets-report/summary.md).
+- Unit tests لعقود الأدوار والتحويلات والأدوات.
+- Integration tests لدورة التشغيل بما فيها انتهاء الوقت وفشل الموديل وإعادة المحاولة المحدودة.
+- Acceptance tests مرتبطة بـFR01–FR10 حسب النطاق المعتمد.
+- Regression suite من أمثلة موثوقة باختبارات مرجعية مكتوبة أو مراجعة بشريًا قبل توليد التعديل.
+- فحص Runner: حد وقت وذاكرة ومعالج، لا شبكة أو أسرار أو وصول خارج مجلد المهمة، لا عمليات مستمرة بعد انتهاء المهمة.
+- تشغيل من بيئة نظيفة وجهاز ثانٍ قبل التسليم.
 
-## Limits of this evidence
+اختبارات يولدها نفس الموديل لا تكفي وحدها للحكم على تعديلاته. نستخدم اختبارات مرجعية وتحليلًا بشريًا مع عرض القيود. لا ندعي التكافؤ الدلالي الكامل بناءً على نجاح مجموعة اختبارات.
 
-Tests generated by the same model are not used as evidence for its own changes. Reference tests are combined with a declared rubric, and passing tests does not prove that the refactoring keeps the behavior for every input. The runner tests show that the listed attack routes are refused; they do not make the runner a sandbox for hostile code ([runner safety](runner-safety.md)).
+## CI
 
-## Continuous integration
-
-GitHub Actions ([workflow](../../.github/workflows/ci.yml)) runs on every push to `main` and on pull requests. The `checks` job runs `uv sync --frozen`, ruff, pytest and the Markdown link check on Ubuntu and Windows; the `frontend` job runs `npm ci`, the type check, the tests and the build on Ubuntu. It does not train models, download weights or execute user-submitted code. The outcome of every run is listed in the [clean-worktree record](../../experiments/qa/2026-10-21-clean-worktree-verification.md#github-actions).
-
-## Clean setup
-
-A clean clone from GitHub on the demonstration laptop, with every check above, the dataset rebuild and one complete run in fake mode, is recorded in the [clean-clone record](../../experiments/qa/2026-10-21-clean-clone-reproduction.md). It is a same-laptop clean setup; a second machine has not been tested.
+GitHub Actions يشغّل lint وformat وpytest وفحص روابط Markdown المحلية والتحقق من split البيانات
+وحارس انحراف العقد على Linux وWindows ببيئة uv مقفلة، ووظيفة مستقلة تبني الواجهة
+(`npm ci && npm run build`) على Linux لإثبات أنها تُبنى من المصدر في بيئة نظيفة، ووظيفة
+`smoke` تبني الواجهة ثم تشغّل `scripts/smoke_ui.py` (تشغيل كامل + ترويسات + مجاميع)، وخطوة
+`verify_release.py` على Linux تطابق شجرة العمل مع
+`RELEASE_MANIFEST.json`. بعد أي تغيير في dataset أو experiments أو `frontend/dist` أعد بناء المانيفست
+(`scripts/make_release.py`) قبل الدمج وإلا تفشل خطوة التحقق. لا يدرب الموديل ولا ينزل أوزانًا ولا
+ينفذ كودًا مقدمًا من مستخدم. حدود Actions المجانية تُراقب، ولا توجد موافقة على تجاوز مدفوع.

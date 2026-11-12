@@ -1,0 +1,30 @@
+# Fast local gates, mirroring the commands in AGENTS.md and CI.
+# Install once with:  pip install pre-commit && pre-commit install
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+        exclude: ^frontend/tsconfig.*\.json$
+      - id: end-of-file-fixer
+        exclude: ^frontend/dist/
+      - id: trailing-whitespace
+        exclude: ^frontend/dist/
+      - id: check-merge-conflict
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: contract-drift
+        name: API <-> web client contract drift
+        entry: python scripts/check_contract.py
+        language: system
+        pass_filenames: false
+        files: ^(src/core/schemas\.py|frontend/src/shared/api/contract\.ts)$

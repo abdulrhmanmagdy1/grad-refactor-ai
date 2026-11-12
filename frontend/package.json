@@ -1,37 +1,59 @@
 {
-  "name": "refactor-ai-frontend",
-  "version": "0.1.0",
+  "name": "grad-refactor-ui",
   "private": true,
-  "description": "Local web interface for the multi-agent guard-clause refactoring service",
+  "version": "1.0.0",
   "type": "module",
-  "engines": {
-    "node": "^24.12.0",
-    "npm": ">=11.6.0"
-  },
-  "packageManager": "npm@11.6.2",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,css,json,md,html}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,css,json,md,html}\"",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "verify": "npm run lint && npm run typecheck && npm run test && npm run build"
   },
   "dependencies": {
-    "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "@monaco-editor/react": "^4.7.0",
+    "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-virtual": "^3.13.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "lucide-react": "^1.58.0",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.0.0",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@testing-library/dom": "10.4.2",
-    "@testing-library/jest-dom": "7.0.1",
-    "@testing-library/react": "16.3.3",
-    "@types/node": "24.19.2",
-    "@types/react": "19.3.0",
-    "@types/react-dom": "19.3.0",
-    "@vitejs/plugin-react": "6.1.2",
-    "jsdom": "29.1.1",
-    "typescript": "6.0.3",
-    "vite": "8.3.4",
-    "vitest": "5.0.5"
+    "@eslint/js": "^9.20.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.5",
+    "eslint": "^9.20.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.18",
+    "globals": "^15.15.0",
+    "jsdom": "^26.0.0",
+    "prettier": "^3.5.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.24.0",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.5"
+  },
+  "overrides": {
+    "dompurify": "^3.4.17"
   }
 }

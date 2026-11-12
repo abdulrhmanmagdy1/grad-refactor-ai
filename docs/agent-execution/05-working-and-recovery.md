@@ -1,33 +1,61 @@
-# Single-laptop working and recovery
+# 05 — Working and recovery
 
-## Initial setup
+Single-laptop setup, Git workflow, state, restart and blocker handling.
 
-Use the private repository's normal authenticated clone flow. On an existing clone, inspect git status and git log, then fetch. Pull with --ff-only only when the working tree is clean and the current branch is intended. If histories diverge or local work exists, preserve it and resolve deliberately; do not reset --hard, force-push or overwrite changes. Never put a token in a command line or prompt.
+## Setup
 
-Use Python 3.11 and uv sync --frozen for the current core environment. Run the commands in docs/development/setup.md. Frontend and training environments are introduced only when their steps begin, each with a version/lock and startup instructions. Record the laptop OS. Avoid running training and inference concurrently on constrained hardware. CI remains GPU independent.
+```bash
+git clone https://github.com/abdulrhmanmagdy1/grad-refactor-ai.git
+cd grad-refactor-ai
+uv sync --frozen
+uv run python scripts/doctor.py
+uv run pytest
+```
 
-## Per-step loop
+The base environment runs on CPU and does not download a model. Training uses a separate,
+hardware-matched environment (see the [training plan](../data-and-training/training-plan.md)).
+Never paste credentials into a prompt or commit them; keep `.env`, `data/`, `models/`, `runs/`
+and `.venv/` out of Git.
 
-1. Read the step, mapped Issues and actual dependency evidence.
-2. Implement one coherent change using the existing layout and shared contracts.
-3. Run relevant checks and record the exact command, timestamp, code version, exit status and artifact references. Do not dump credentials or private inputs.
-4. Update affected guides, experiment notes and execution-state.json.
-5. Commit a focused change if authorized. Update GitHub Issues only if the current session authorizes remote project changes. No teammate approval is required by this plan.
+## Git workflow
 
-The coding tool can implement all workstreams sequentially on one laptop; Issue ownership still identifies the student responsible for understanding and validating that area. Never claim to be that student or to have met the supervisor. The team handles communications and academic submission.
+```bash
+git switch main
+git pull --ff-only
+git switch -c feat/123-short-description
+# focused change + checks + docs
+# open a linked PR using "Closes #123"
+```
 
-## Checkpoints and resume
+- Do not force-push `main`; a second-person approval is not required (the task owner checks and
+  merges when ready).
+- Record blockers and needed help in the Issue. Uploading a file alone is not completion.
+- Training work includes versions, settings, artifacts and actual results.
 
-Copy execution-state.template.json to execution-state.json when starting. Record status as not_started, in_progress, completed, blocked or pending_human. For each completed step retain evidence and exit checks. Include last known commit, environment references, active branch, next action and blockers. Keep tokens, personal emails and full private inputs out of this tracked file.
+## State and checkpoints
 
-On resume, read this state, then verify its claims against Git and actual artifacts. A stale state is a hint, not authority. Re-run only checks invalidated by new changes or missing evidence. Resume the first incomplete dependency-ready step. An interrupted training run needs an existing validated checkpoint and matching config/data; otherwise restart with a new run ID and retain the failed record.
+- Copy `execution-state.template.json` to a working file before starting and update it after each
+  step. **Resume from state, not memory.**
+- Keep evidence links (command output, files, hashes) next to each step in the state file.
+- Use `--resume-from-checkpoint` for training; save checkpoints within the storage quota.
 
-## Blockers and human gates
+## Restart procedure
 
-Missing GPU, data rights, model access, insufficient disk, unsupported platform, rejected isolation checks or required supervisor decisions are real blockers. Record what failed, evidence, impact, options and the specific human action needed. Continue independent steps using clearly named test fixtures or a fake provider where appropriate. Keep actual-model, training, reference-runner and final-evaluation tasks open when unmet.
+1. Read the state file and the current `git status` / recent commits.
+2. Re-run `uv run pytest` and `uv run python scripts/doctor.py` to confirm the baseline.
+3. Continue from the first incomplete step in
+   [`02-execution-plan.md`](02-execution-plan.md); do not redo verified steps.
 
-Prepare supervisor review materials at Days 2, 5, 10, 15 and 21. Store summaries as prepared/pending until the human supplies feedback. Do not infer approval from silence. Final human inspection is required before the team claims an accepted deliverable; independent coding does not need repeated confirmation of routine reversible implementation choices.
+## Blocker handling
 
-## Reproducibility and storage
+Record the blocker with: what was attempted, the exact error, the affected step, the proposed
+reduced-scope alternative, and the decision needed. Blocked items stay visible rather than being
+silently dropped. The hardware gate in particular may end in a **recorded blocker** instead of a
+training run; that is an acceptable, honest outcome.
 
-Keep downloads in ignored directories. Document required disk and exact download revisions; do not move huge weights into Git history. Save sanitized small evidence under experiments/. Define cleanup and user-input retention without deleting needed experimental records. For a clean install test, use another directory and fresh environment; same-laptop evidence must not be described as second-machine validation.
+## Boundaries
+
+- The API must not execute submitted code. Enable a separate runner only after its isolation
+  checks pass on trusted examples.
+- Do not commit credentials, private contact details, unlicensed data or large model weights.
+- Do not mark a supervisor review approved before it happens.

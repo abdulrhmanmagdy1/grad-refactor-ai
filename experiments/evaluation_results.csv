@@ -1,0 +1,389 @@
+case_id,source_group,group,refactoring_type,variant,expected_rule,status,failure_type,error,syntax_valid,preserved_symbols,smell_rule_resolved,refactor_success,tests_available,tests_passed,execution_pass_at_1,review_verdict,is_accepted,duration_ms,retries_used,prompt_tokens,completion_tokens,total_tokens,loc_before,loc_after,loc_delta,codebleu_score,ast_similarity_score,mi_before,mi_after,mi_delta,complexity_before,complexity_after,complexity_reduction_pct,model,candidates_generated,selected_candidate,original_code,refactored_code
+case-01-long-fn,repo-core,Group-A-Baseline,long-function,findings,long-function,executed,,,True,True,False,False,True,True,True,approved,True,10.69,0,502,122,624,37,41,4,0.9171,0.9669,46.97,45.92,-1.05,1,2,-100.0,mock-refactor-v2,1,0,"def process_batch(items):
+    x_0 = 0
+    x_1 = 1
+    x_2 = 2
+    x_3 = 3
+    x_4 = 4
+    x_5 = 5
+    x_6 = 6
+    x_7 = 7
+    x_8 = 8
+    x_9 = 9
+    x_10 = 10
+    x_11 = 11
+    x_12 = 12
+    x_13 = 13
+    x_14 = 14
+    x_15 = 15
+    x_16 = 16
+    x_17 = 17
+    x_18 = 18
+    x_19 = 19
+    x_20 = 20
+    x_21 = 21
+    x_22 = 22
+    x_23 = 23
+    x_24 = 24
+    x_25 = 25
+    x_26 = 26
+    x_27 = 27
+    x_28 = 28
+    x_29 = 29
+    x_30 = 30
+    x_31 = 31
+    x_32 = 32
+    x_33 = 33
+    x_34 = 34
+    return items
+","def _process_batch_chunk():
+    """"""Extracted helper reducing the size of its parent function (_process_batch_chunk).""""""
+    x_0 = 0
+    x_1 = 1
+    x_2 = 2
+    x_3 = 3
+    x_4 = 4
+    x_5 = 5
+    x_6 = 6
+    x_7 = 7
+    x_8 = 8
+    x_9 = 9
+    x_10 = 10
+    x_11 = 11
+    x_12 = 12
+    x_13 = 13
+    x_14 = 14
+    x_15 = 15
+    x_16 = 16
+    x_17 = 17
+    x_18 = 18
+    x_19 = 19
+    x_20 = 20
+    x_21 = 21
+    x_22 = 22
+    x_23 = 23
+    x_24 = 24
+    x_25 = 25
+    x_26 = 26
+    x_27 = 27
+    x_28 = 28
+    x_29 = 29
+    x_30 = 30
+    x_31 = 31
+    x_32 = 32
+    x_33 = 33
+    x_34 = 34
+
+def process_batch(items):
+    _process_batch_chunk()
+    return items"
+case-01-long-fn,repo-core,Group-B-MultiAgent,long-function,findings,long-function,executed,,,True,True,False,False,True,True,True,approved,True,3467.99,0,502,122,624,37,41,4,0.9171,0.9669,46.97,45.92,-1.05,1,2,-100.0,mock-refactor-v2,1,0,"def process_batch(items):
+    x_0 = 0
+    x_1 = 1
+    x_2 = 2
+    x_3 = 3
+    x_4 = 4
+    x_5 = 5
+    x_6 = 6
+    x_7 = 7
+    x_8 = 8
+    x_9 = 9
+    x_10 = 10
+    x_11 = 11
+    x_12 = 12
+    x_13 = 13
+    x_14 = 14
+    x_15 = 15
+    x_16 = 16
+    x_17 = 17
+    x_18 = 18
+    x_19 = 19
+    x_20 = 20
+    x_21 = 21
+    x_22 = 22
+    x_23 = 23
+    x_24 = 24
+    x_25 = 25
+    x_26 = 26
+    x_27 = 27
+    x_28 = 28
+    x_29 = 29
+    x_30 = 30
+    x_31 = 31
+    x_32 = 32
+    x_33 = 33
+    x_34 = 34
+    return items
+","def _process_batch_chunk():
+    """"""Extracted helper reducing the size of its parent function (_process_batch_chunk).""""""
+    x_0 = 0
+    x_1 = 1
+    x_2 = 2
+    x_3 = 3
+    x_4 = 4
+    x_5 = 5
+    x_6 = 6
+    x_7 = 7
+    x_8 = 8
+    x_9 = 9
+    x_10 = 10
+    x_11 = 11
+    x_12 = 12
+    x_13 = 13
+    x_14 = 14
+    x_15 = 15
+    x_16 = 16
+    x_17 = 17
+    x_18 = 18
+    x_19 = 19
+    x_20 = 20
+    x_21 = 21
+    x_22 = 22
+    x_23 = 23
+    x_24 = 24
+    x_25 = 25
+    x_26 = 26
+    x_27 = 27
+    x_28 = 28
+    x_29 = 29
+    x_30 = 30
+    x_31 = 31
+    x_32 = 32
+    x_33 = 33
+    x_34 = 34
+
+def process_batch(items):
+    _process_batch_chunk()
+    return items"
+case-01-long-fn,repo-core,Group-C-FineTunedSingle,long-function,findings,long-function,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,37,0,0,,,,,,,,,unavailable,0,-1,,
+case-01-long-fn,repo-core,Group-D-FineTunedMultiAgent,long-function,findings,long-function,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,37,0,0,,,,,,,,,unavailable,0,-1,,
+case-02-deep-nesting,repo-utils,Group-A-Baseline,deep-nesting,findings,deep-nesting,executed,,,True,True,True,True,True,True,True,approved,True,2.79,0,27,19,46,7,4,-3,0.7116,0.6667,68.32,73.36,5.04,5,5,0.0,mock-refactor-v2,1,0,"def check_permissions(user, resource, action, env):
+    if user:
+        if resource:
+            if action:
+                if env == 'prod':
+                    return True
+    return False
+","def check_permissions(user, resource, action, env):
+    if user and resource and action and (env == 'prod'):
+        return True
+    return False"
+case-02-deep-nesting,repo-utils,Group-B-MultiAgent,deep-nesting,findings,deep-nesting,executed,,,True,True,True,True,True,True,True,approved,True,3295.8,0,27,19,46,7,4,-3,0.7116,0.6667,68.32,73.36,5.04,5,5,0.0,mock-refactor-v2,1,0,"def check_permissions(user, resource, action, env):
+    if user:
+        if resource:
+            if action:
+                if env == 'prod':
+                    return True
+    return False
+","def check_permissions(user, resource, action, env):
+    if user and resource and action and (env == 'prod'):
+        return True
+    return False"
+case-02-deep-nesting,repo-utils,Group-C-FineTunedSingle,deep-nesting,findings,deep-nesting,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,7,0,0,,,,,,,,,unavailable,0,-1,,
+case-02-deep-nesting,repo-utils,Group-D-FineTunedMultiAgent,deep-nesting,findings,deep-nesting,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,7,0,0,,,,,,,,,unavailable,0,-1,,
+case-03-async-stream,repo-async,Group-A-Baseline,async-function,findings,long-function,executed,,,True,True,False,False,True,True,True,approved,True,27.28,0,493,148,641,34,38,4,0.9615,0.9797,46.87,45.8,-1.07,1,2,-100.0,mock-refactor-v2,1,0,"async def handle_stream(data):
+    step_0 = await fetch(0)
+    step_1 = await fetch(1)
+    step_2 = await fetch(2)
+    step_3 = await fetch(3)
+    step_4 = await fetch(4)
+    step_5 = await fetch(5)
+    step_6 = await fetch(6)
+    step_7 = await fetch(7)
+    step_8 = await fetch(8)
+    step_9 = await fetch(9)
+    step_10 = await fetch(10)
+    step_11 = await fetch(11)
+    step_12 = await fetch(12)
+    step_13 = await fetch(13)
+    step_14 = await fetch(14)
+    step_15 = await fetch(15)
+    step_16 = await fetch(16)
+    step_17 = await fetch(17)
+    step_18 = await fetch(18)
+    step_19 = await fetch(19)
+    step_20 = await fetch(20)
+    step_21 = await fetch(21)
+    step_22 = await fetch(22)
+    step_23 = await fetch(23)
+    step_24 = await fetch(24)
+    step_25 = await fetch(25)
+    step_26 = await fetch(26)
+    step_27 = await fetch(27)
+    step_28 = await fetch(28)
+    step_29 = await fetch(29)
+    step_30 = await fetch(30)
+    step_31 = await fetch(31)
+    return len(data)
+","async def _handle_stream_chunk():
+    """"""Extracted helper reducing the size of its parent function (_handle_stream_chunk).""""""
+    step_0 = await fetch(0)
+    step_1 = await fetch(1)
+    step_2 = await fetch(2)
+    step_3 = await fetch(3)
+    step_4 = await fetch(4)
+    step_5 = await fetch(5)
+    step_6 = await fetch(6)
+    step_7 = await fetch(7)
+    step_8 = await fetch(8)
+    step_9 = await fetch(9)
+    step_10 = await fetch(10)
+    step_11 = await fetch(11)
+    step_12 = await fetch(12)
+    step_13 = await fetch(13)
+    step_14 = await fetch(14)
+    step_15 = await fetch(15)
+    step_16 = await fetch(16)
+    step_17 = await fetch(17)
+    step_18 = await fetch(18)
+    step_19 = await fetch(19)
+    step_20 = await fetch(20)
+    step_21 = await fetch(21)
+    step_22 = await fetch(22)
+    step_23 = await fetch(23)
+    step_24 = await fetch(24)
+    step_25 = await fetch(25)
+    step_26 = await fetch(26)
+    step_27 = await fetch(27)
+    step_28 = await fetch(28)
+    step_29 = await fetch(29)
+    step_30 = await fetch(30)
+    step_31 = await fetch(31)
+
+async def handle_stream(data):
+    await _handle_stream_chunk()
+    return len(data)"
+case-03-async-stream,repo-async,Group-B-MultiAgent,async-function,findings,long-function,executed,,,True,True,False,False,True,True,True,approved,True,3617.28,0,493,148,641,34,38,4,0.9615,0.9797,46.87,45.8,-1.07,1,2,-100.0,mock-refactor-v2,1,0,"async def handle_stream(data):
+    step_0 = await fetch(0)
+    step_1 = await fetch(1)
+    step_2 = await fetch(2)
+    step_3 = await fetch(3)
+    step_4 = await fetch(4)
+    step_5 = await fetch(5)
+    step_6 = await fetch(6)
+    step_7 = await fetch(7)
+    step_8 = await fetch(8)
+    step_9 = await fetch(9)
+    step_10 = await fetch(10)
+    step_11 = await fetch(11)
+    step_12 = await fetch(12)
+    step_13 = await fetch(13)
+    step_14 = await fetch(14)
+    step_15 = await fetch(15)
+    step_16 = await fetch(16)
+    step_17 = await fetch(17)
+    step_18 = await fetch(18)
+    step_19 = await fetch(19)
+    step_20 = await fetch(20)
+    step_21 = await fetch(21)
+    step_22 = await fetch(22)
+    step_23 = await fetch(23)
+    step_24 = await fetch(24)
+    step_25 = await fetch(25)
+    step_26 = await fetch(26)
+    step_27 = await fetch(27)
+    step_28 = await fetch(28)
+    step_29 = await fetch(29)
+    step_30 = await fetch(30)
+    step_31 = await fetch(31)
+    return len(data)
+","async def _handle_stream_chunk():
+    """"""Extracted helper reducing the size of its parent function (_handle_stream_chunk).""""""
+    step_0 = await fetch(0)
+    step_1 = await fetch(1)
+    step_2 = await fetch(2)
+    step_3 = await fetch(3)
+    step_4 = await fetch(4)
+    step_5 = await fetch(5)
+    step_6 = await fetch(6)
+    step_7 = await fetch(7)
+    step_8 = await fetch(8)
+    step_9 = await fetch(9)
+    step_10 = await fetch(10)
+    step_11 = await fetch(11)
+    step_12 = await fetch(12)
+    step_13 = await fetch(13)
+    step_14 = await fetch(14)
+    step_15 = await fetch(15)
+    step_16 = await fetch(16)
+    step_17 = await fetch(17)
+    step_18 = await fetch(18)
+    step_19 = await fetch(19)
+    step_20 = await fetch(20)
+    step_21 = await fetch(21)
+    step_22 = await fetch(22)
+    step_23 = await fetch(23)
+    step_24 = await fetch(24)
+    step_25 = await fetch(25)
+    step_26 = await fetch(26)
+    step_27 = await fetch(27)
+    step_28 = await fetch(28)
+    step_29 = await fetch(29)
+    step_30 = await fetch(30)
+    step_31 = await fetch(31)
+
+async def handle_stream(data):
+    await _handle_stream_chunk()
+    return len(data)"
+case-03-async-stream,repo-async,Group-C-FineTunedSingle,async-function,findings,long-function,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,34,0,0,,,,,,,,,unavailable,0,-1,,
+case-03-async-stream,repo-async,Group-D-FineTunedMultiAgent,async-function,findings,long-function,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,34,0,0,,,,,,,,,unavailable,0,-1,,
+case-04-high-complexity,repo-calc,Group-A-Baseline,high-complexity,findings,high-complexity,executed,,,True,True,False,False,True,False,False,rejected,False,5.64,0,65,41,106,14,14,0,1.0,1.0,,,,,,,mock-refactor-v2,1,0,"def route_event(event_type, payload):
+    if event_type == 'a':
+        return 1
+    elif event_type == 'b':
+        return 2
+    elif event_type == 'c':
+        return 3
+    elif event_type == 'd':
+        return 4
+    elif event_type == 'e':
+        return 5
+    elif event_type == 'f':
+        return 6
+    return 0
+","def route_event(event_type, payload):
+    if event_type == 'a':
+        return 1
+    elif event_type == 'b':
+        return 2
+    elif event_type == 'c':
+        return 3
+    elif event_type == 'd':
+        return 4
+    elif event_type == 'e':
+        return 5
+    elif event_type == 'f':
+        return 6
+    return 0
+"
+case-04-high-complexity,repo-calc,Group-B-MultiAgent,high-complexity,findings,high-complexity,executed,,,True,True,False,False,True,False,False,rejected,False,23.49,1,65,41,106,14,14,0,1.0,1.0,,,,,,,mock-refactor-v2,1,0,"def route_event(event_type, payload):
+    if event_type == 'a':
+        return 1
+    elif event_type == 'b':
+        return 2
+    elif event_type == 'c':
+        return 3
+    elif event_type == 'd':
+        return 4
+    elif event_type == 'e':
+        return 5
+    elif event_type == 'f':
+        return 6
+    return 0
+","def route_event(event_type, payload):
+    if event_type == 'a':
+        return 1
+    elif event_type == 'b':
+        return 2
+    elif event_type == 'c':
+        return 3
+    elif event_type == 'd':
+        return 4
+    elif event_type == 'e':
+        return 5
+    elif event_type == 'f':
+        return 6
+    return 0
+"
+case-04-high-complexity,repo-calc,Group-C-FineTunedSingle,high-complexity,findings,high-complexity,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,14,0,0,,,,,,,,,unavailable,0,-1,,
+case-04-high-complexity,repo-calc,Group-D-FineTunedMultiAgent,high-complexity,findings,high-complexity,provider_unavailable,provider_unavailable,"Fine-tuned LoRA adapter 'runs\lora-first\adapter' was requested but could not be loaded (torch/transformers are not installed in this environment). Install training/requirements.txt and train the adapter, or select a different provider.",False,False,,False,False,False,,not_reviewed,False,0.0,0,0,0,0,14,0,0,,,,,,,,,unavailable,0,-1,,

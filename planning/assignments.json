@@ -1,398 +1,448 @@
-[
-  {
-    "key": "T01",
-    "phase": "P1",
-    "title": "Run kickoff and record hardware and availability",
-    "issue": 1,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/1",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
+{
+  "note": "Owners and dependencies for the 33 planned tasks. The owner is the team member accountable for the task's workstream. Set status from the live GitHub Project, not from this snapshot; this file records the foundation defaults agreed for the delivery plan.",
+  "source": "planning/backlog.json",
+  "review_policy": "Each task has exactly one accountable owner; no peer reviewer is assigned.",
+  "members": [
+    {
+      "member": "Abdelrahman Magdy",
+      "github": "abdulrhmanmagdy1",
+      "role": "owner-coordinator",
+      "workstream": "Backend, integration, and coordination"
+    },
+    {
+      "member": "Abdullah Tarek",
+      "github": "abdallah414",
+      "role": "member",
+      "workstream": "Agent workflow and verification"
+    },
+    {
+      "member": "Abdelrahman Adel",
+      "github": "abdelrhmanadel200",
+      "role": "member",
+      "workstream": "Model selection, fine-tuning, and inference"
+    },
+    {
+      "member": "Shahd Abdelhay",
+      "github": "shahd-abdelhay",
+      "role": "member",
+      "workstream": "Data, research, and evaluation"
+    },
+    {
+      "member": "Dania El-Walily",
+      "github": "d5ania",
+      "role": "member",
+      "workstream": "Frontend, report assembly, and presentation"
+    }
+  ],
+  "workstream_by_area": {
+    "coordination": "abdulrhmanmagdy1",
+    "environment": "abdulrhmanmagdy1",
+    "requirements": "abdulrhmanmagdy1",
+    "architecture": "abdulrhmanmagdy1",
+    "backend": "abdulrhmanmagdy1",
+    "integration": "abdulrhmanmagdy1",
+    "supervisor": "abdulrhmanmagdy1",
+    "agents": "abdallah414",
+    "verification": "abdallah414",
+    "testing": "abdallah414",
+    "model": "abdelrhmanadel200",
+    "training": "abdelrhmanadel200",
+    "data": "shahd-abdelhay",
+    "research": "shahd-abdelhay",
+    "evaluation": "shahd-abdelhay",
+    "frontend": "d5ania",
+    "documentation": "d5ania",
+    "delivery": "d5ania"
   },
-  {
-    "key": "T02",
-    "phase": "P1",
-    "title": "Reproduce the environment on all team machines",
-    "issue": 2,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/2",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "T03",
-    "phase": "P1",
-    "title": "Review related work and candidate data sources",
-    "issue": 3,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/3",
-    "owner_name": "Shahd Abdelhay",
-    "owner_login": "shahd-abdelhay",
-    "workstream": "Data, research, and evaluation",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "T04",
-    "phase": "P1",
-    "title": "Benchmark candidate models on the demonstration machine",
-    "issue": 4,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/4",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "T05",
-    "phase": "P1",
-    "title": "Run a small LoRA feasibility experiment",
-    "issue": 5,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/5",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "T06",
-    "phase": "P1",
-    "title": "Agree on Python scope and supported refactoring types",
-    "issue": 6,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/6",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "R1",
-    "phase": "P1",
-    "title": "Supervisor review: scope and feasibility",
-    "issue": 7,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/7",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 1-2 (Week 1)"
-  },
-  {
-    "key": "T07",
-    "phase": "P2",
-    "title": "Curate a licensed sample dataset",
-    "issue": 8,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/8",
-    "owner_name": "Shahd Abdelhay",
-    "owner_login": "shahd-abdelhay",
-    "workstream": "Data, research, and evaluation",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "T08",
-    "phase": "P2",
-    "title": "Split data and check leakage and duplicates",
-    "issue": 9,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/9",
-    "owner_name": "Shahd Abdelhay",
-    "owner_login": "shahd-abdelhay",
-    "workstream": "Data, research, and evaluation",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "T09",
-    "phase": "P2",
-    "title": "Implement and measure the single-role baseline",
-    "issue": 10,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/10",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "T10",
-    "phase": "P2",
-    "title": "Freeze the comparison protocol and numerical targets",
-    "issue": 11,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/11",
-    "owner_name": "Shahd Abdelhay",
-    "owner_login": "shahd-abdelhay",
-    "workstream": "Data, research, and evaluation",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "T11",
-    "phase": "P2",
-    "title": "Specify API and role contracts and run states",
-    "issue": 12,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/12",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "R2",
-    "phase": "P2",
-    "title": "Supervisor review: data and baseline",
-    "issue": 13,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/13",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 3-5 (Week 1)"
-  },
-  {
-    "key": "T12",
-    "phase": "P3",
-    "title": "Implement a replaceable local model provider",
-    "issue": 14,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/14",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T13",
-    "phase": "P3",
-    "title": "Implement structured analysis-role outputs",
-    "issue": 15,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/15",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T14",
-    "phase": "P3",
-    "title": "Implement bounded refactoring proposals",
-    "issue": 16,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/16",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T15",
-    "phase": "P3",
-    "title": "Implement run API and state records",
-    "issue": 17,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/17",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T16",
-    "phase": "P3",
-    "title": "Build the initial code-input and result interface",
-    "issue": 18,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/18",
-    "owner_name": "Dania El-Walily",
-    "owner_login": "d5ania",
-    "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T17",
-    "phase": "P3",
-    "title": "Run and record the first fine-tuning experiment",
-    "issue": 19,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/19",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T18",
-    "phase": "P3",
-    "title": "Demonstrate an early end-to-end case",
-    "issue": 20,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/20",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "R3",
-    "phase": "P3",
-    "title": "Supervisor review: integration and first training run",
-    "issue": 21,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/21",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 6-10 (Weeks 1-2)"
-  },
-  {
-    "key": "T19",
-    "phase": "P4",
-    "title": "Implement review and role coordination",
-    "issue": 22,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/22",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "T20",
-    "phase": "P4",
-    "title": "Design and verify a separate runner for trusted examples",
-    "issue": 23,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/23",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "T21",
-    "phase": "P4",
-    "title": "Integrate verification and failure results into the interface",
-    "issue": 24,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/24",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "T22",
-    "phase": "P4",
-    "title": "Select and integrate the model using validation data",
-    "issue": 25,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/25",
-    "owner_name": "Abdelrahman Adel",
-    "owner_login": "abdelrhmanadel200",
-    "workstream": "Model selection, fine-tuning, and inference",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "T23",
-    "phase": "P4",
-    "title": "Verify first-release acceptance criteria",
-    "issue": 26,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/26",
-    "owner_name": "Abdullah Tarek",
-    "owner_login": "abdallah414",
-    "workstream": "Agent workflow and verification",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "R4",
-    "phase": "P4",
-    "title": "Supervisor review: integrated first release",
-    "issue": 27,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/27",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 11-15 (Weeks 2-3)"
-  },
-  {
-    "key": "T24",
-    "phase": "P5",
-    "title": "Run the independent final evaluation",
-    "issue": 28,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/28",
-    "owner_name": "Shahd Abdelhay",
-    "owner_login": "shahd-abdelhay",
-    "workstream": "Data, research, and evaluation",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
-  },
-  {
-    "key": "T25",
-    "phase": "P5",
-    "title": "Verify clean setup and fix critical defects",
-    "issue": 29,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/29",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
-  },
-  {
-    "key": "T26",
-    "phase": "P5",
-    "title": "Write the academic report and update the guides",
-    "issue": 30,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/30",
-    "owner_name": "Dania El-Walily",
-    "owner_login": "d5ania",
-    "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
-  },
-  {
-    "key": "T27",
-    "phase": "P5",
-    "title": "Prepare the presentation and repeatable demonstration",
-    "issue": 31,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/31",
-    "owner_name": "Dania El-Walily",
-    "owner_login": "d5ania",
-    "workstream": "Frontend, report assembly, and presentation",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
-  },
-  {
-    "key": "T28",
-    "phase": "P5",
-    "title": "Publish the initial delivery release",
-    "issue": 32,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/32",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
-  },
-  {
-    "key": "R5",
-    "phase": "P5",
-    "title": "Supervisor review: initial delivery and next priorities",
-    "issue": 33,
-    "url": "https://github.com/abdulrhmanmagdy1/grad-refactor-ai/issues/33",
-    "owner_name": "Abdelrahman Magdy",
-    "owner_login": "abdulrhmanmagdy1",
-    "workstream": "Backend, integration, and coordination",
-    "github_assigned": true,
-    "window": "Days 16-21 (Week 3)"
+  "assignments": {
+    "T01": {
+      "phase": "P1",
+      "area": "coordination",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [],
+      "status": "planned"
+    },
+    "T02": {
+      "phase": "P1",
+      "area": "environment",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T01"
+      ],
+      "status": "planned"
+    },
+    "T03": {
+      "phase": "P1",
+      "area": "research",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "T01"
+      ],
+      "status": "planned"
+    },
+    "T04": {
+      "phase": "P1",
+      "area": "model",
+      "priority": "P0",
+      "owner": "abdelrhmanadel200",
+      "reviewer": null,
+      "dependencies": [
+        "T01"
+      ],
+      "status": "planned"
+    },
+    "T05": {
+      "phase": "P1",
+      "area": "training",
+      "priority": "P0",
+      "owner": "abdelrhmanadel200",
+      "reviewer": null,
+      "dependencies": [
+        "T04"
+      ],
+      "status": "planned"
+    },
+    "T06": {
+      "phase": "P1",
+      "area": "requirements",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T03",
+        "T04"
+      ],
+      "status": "planned"
+    },
+    "R1": {
+      "phase": "P1",
+      "area": "supervisor",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T02",
+        "T05",
+        "T06"
+      ],
+      "status": "planned"
+    },
+    "T07": {
+      "phase": "P2",
+      "area": "data",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "R1"
+      ],
+      "status": "planned"
+    },
+    "T08": {
+      "phase": "P2",
+      "area": "data",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "T07"
+      ],
+      "status": "planned"
+    },
+    "T09": {
+      "phase": "P2",
+      "area": "evaluation",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "T04",
+        "T06",
+        "T08"
+      ],
+      "status": "planned"
+    },
+    "T10": {
+      "phase": "P2",
+      "area": "evaluation",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "T09"
+      ],
+      "status": "planned"
+    },
+    "T11": {
+      "phase": "P2",
+      "area": "architecture",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "R1"
+      ],
+      "status": "planned"
+    },
+    "R2": {
+      "phase": "P2",
+      "area": "supervisor",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T08",
+        "T10",
+        "T11"
+      ],
+      "status": "planned"
+    },
+    "T12": {
+      "phase": "P3",
+      "area": "model",
+      "priority": "P0",
+      "owner": "abdelrhmanadel200",
+      "reviewer": null,
+      "dependencies": [
+        "R2",
+        "T05"
+      ],
+      "status": "planned"
+    },
+    "T13": {
+      "phase": "P3",
+      "area": "agents",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "T12",
+        "T11"
+      ],
+      "status": "planned"
+    },
+    "T14": {
+      "phase": "P3",
+      "area": "agents",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "T12",
+        "T11"
+      ],
+      "status": "planned"
+    },
+    "T15": {
+      "phase": "P3",
+      "area": "backend",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T11",
+        "T12"
+      ],
+      "status": "planned"
+    },
+    "T16": {
+      "phase": "P3",
+      "area": "frontend",
+      "priority": "P0",
+      "owner": "d5ania",
+      "reviewer": null,
+      "dependencies": [
+        "T11",
+        "T15"
+      ],
+      "status": "planned"
+    },
+    "T17": {
+      "phase": "P3",
+      "area": "training",
+      "priority": "P0",
+      "owner": "abdelrhmanadel200",
+      "reviewer": null,
+      "dependencies": [
+        "R2",
+        "T05",
+        "T08"
+      ],
+      "status": "planned"
+    },
+    "T18": {
+      "phase": "P3",
+      "area": "integration",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T13",
+        "T14",
+        "T16"
+      ],
+      "status": "planned"
+    },
+    "R3": {
+      "phase": "P3",
+      "area": "supervisor",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T17",
+        "T18"
+      ],
+      "status": "planned"
+    },
+    "T19": {
+      "phase": "P4",
+      "area": "agents",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "R3",
+        "T13",
+        "T14"
+      ],
+      "status": "planned"
+    },
+    "T20": {
+      "phase": "P4",
+      "area": "verification",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "R3"
+      ],
+      "status": "planned"
+    },
+    "T21": {
+      "phase": "P4",
+      "area": "integration",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T19",
+        "T20",
+        "T16"
+      ],
+      "status": "planned"
+    },
+    "T22": {
+      "phase": "P4",
+      "area": "model",
+      "priority": "P0",
+      "owner": "abdelrhmanadel200",
+      "reviewer": null,
+      "dependencies": [
+        "T17",
+        "T19"
+      ],
+      "status": "planned"
+    },
+    "T23": {
+      "phase": "P4",
+      "area": "testing",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "T21",
+        "T22"
+      ],
+      "status": "planned"
+    },
+    "R4": {
+      "phase": "P4",
+      "area": "supervisor",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T23"
+      ],
+      "status": "planned"
+    },
+    "T24": {
+      "phase": "P5",
+      "area": "evaluation",
+      "priority": "P0",
+      "owner": "shahd-abdelhay",
+      "reviewer": null,
+      "dependencies": [
+        "R4",
+        "T10",
+        "T22"
+      ],
+      "status": "planned"
+    },
+    "T25": {
+      "phase": "P5",
+      "area": "testing",
+      "priority": "P0",
+      "owner": "abdallah414",
+      "reviewer": null,
+      "dependencies": [
+        "R4"
+      ],
+      "status": "planned"
+    },
+    "T26": {
+      "phase": "P5",
+      "area": "documentation",
+      "priority": "P0",
+      "owner": "d5ania",
+      "reviewer": null,
+      "dependencies": [
+        "T24",
+        "T25"
+      ],
+      "status": "planned"
+    },
+    "T27": {
+      "phase": "P5",
+      "area": "delivery",
+      "priority": "P0",
+      "owner": "d5ania",
+      "reviewer": null,
+      "dependencies": [
+        "T24",
+        "T25"
+      ],
+      "status": "planned"
+    },
+    "T28": {
+      "phase": "P5",
+      "area": "delivery",
+      "priority": "P0",
+      "owner": "d5ania",
+      "reviewer": null,
+      "dependencies": [
+        "T26",
+        "T27"
+      ],
+      "status": "planned"
+    },
+    "R5": {
+      "phase": "P5",
+      "area": "supervisor",
+      "priority": "P0",
+      "owner": "abdulrhmanmagdy1",
+      "reviewer": null,
+      "dependencies": [
+        "T28"
+      ],
+      "status": "planned"
+    }
   }
-]
+}

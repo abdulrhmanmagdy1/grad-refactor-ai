@@ -3,42 +3,28 @@ name = "grad-refactor-ai"
 version = "0.1.0"
 description = "Python multi-agent refactoring graduation project foundation"
 requires-python = ">=3.11,<3.12"
-# ruff, mypy and pytest are runtime dependencies: the project review mode runs ruff and mypy
-# on uploaded projects and, when the user enables it, the projects' own tests with pytest.
-dependencies = [
-    "fastapi>=0.115,<1",
-    "uvicorn>=0.30,<1",
-    "ruff>=0.9,<1",
-    "pytest>=8,<10",
-    "mypy>=1.13,<2",
-]
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
 
 [dependency-groups]
-dev = ["httpx>=0.27,<1"]
+dev = ["pytest>=8,<10", "httpx>=0.27,<1", "ruff>=0.9,<1"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/refactor_ai"]
+packages = ["src/refactor_ai", "src/core", "src/agents", "src/models", "src/api", "src/runner", "src/evaluation"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-# Benchmark projects contain seeded problems on purpose.
-extend-exclude = ["datasets/project_bench"]
+# The blinded review packet contains candidate code that raters must see exactly
+# as the harness produced it; formatting it would silently rewrite review inputs.
+extend-exclude = ["experiments/review"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-
-[tool.ruff.lint.isort]
-# The datasets/ directory holds data; "datasets" imports refer to the Hugging Face package.
-known-third-party = ["datasets"]
-
-[tool.ruff.format]
-# Markdown code blocks show real tool output (for example ast.unparse quoting); do not rewrite them.
-exclude = ["*.md"]
